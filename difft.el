@@ -341,8 +341,6 @@ perform cleanup."
 When REV couldn't be guessed or called with prefix arg ask for REV."
   (interactive
    (list (or
-          ;; If REV is given, just use it.
-          (when (boundp 'rev) rev)
           ;; If not invoked with prefix arg, try to guess the REV from
           ;; point's position.
           (and (not current-prefix-arg)
@@ -363,9 +361,6 @@ When REV couldn't be guessed or called with prefix arg ask for REV."
 When ARG couldn't be guessed or called with prefix arg ask for ARG."
   (interactive
    (list (or
-          ;; If RANGE is given, just use it.
-          (when (boundp 'range) range)
-          ;; If prefix arg is given, query the user.
           (and current-prefix-arg
                (magit-diff-read-range-or-commit "Range/Commit"))
           ;; Otherwise, auto-guess based on position of point, e.g., in a file

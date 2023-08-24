@@ -21,7 +21,7 @@ The `difft` is designed to integrate [`difftastic`](https://github.com/wilfred/d
 
 ## Configuration
 
-To configure the `difft` package, use the following code snippet in your Emacs configuration:
+To configure the `difft` commands in `magit-diff` prefix, use the following code snippet in your Emacs configuration:
 
 ```emacs-lisp
 (require 'difft)

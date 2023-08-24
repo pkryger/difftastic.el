@@ -29,6 +29,20 @@
 ;; displays difftastic's output within Emacs using faces from your user
 ;; theme, ensuring consistency with your overall coding environment.
 ;;
+;; Configuration
+;;
+;; To configure the `difft` commands in `magit-diff` prefix, use the following
+;; code snippet in your Emacs configuration:
+;;
+;; (require 'difft)
+;;
+;; ;; Add commands to a `magit-difft'
+;; (transient-append-suffix 'magit-diff '(-1 -1)
+;;   [("D" "Difftastic diff (dwim)" difft-magit-diff)
+;;    ("S" "Difftastic show" difft-magit-show)])
+;;
+;; Usage
+;;
 ;; There are four commands to interact with difftastic:
 ;;
 ;; - `difft-magit-diff' - show the result of 'git diff ARG' with difftastic.

@@ -5,7 +5,7 @@
 ;; Author: Przemyslaw Kryger <pkryger@gmail.com>
 ;; Keywords: tools diff
 ;; Homepage: https://github.com/pkryger/difft.el.git
-;; Package-Requires: ((emacs "27.1") (compat "29.1.3.4") (magit "20220326"))
+;; Package-Requires: ((emacs "28.1") (magit "20220326"))
 ;; Version: 0.0.0
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -51,24 +51,9 @@
 
 (require 'ansi-color)
 (require 'cl-lib)
-(require 'compat)
 (require 'ediff)
 (require 'font-lock)
 (require 'magit)
-
-(defun difft--ansi-color-face (vector offset name)
-  "Get face from VECTOR with OFFSET or make a new one with NAME.
-
-New face is made when VECTOR is not bound."
-  ;;This is for backward compatibility with Emacs-27.  When dropping
-  ;; compatibility calls can be replaced with `(aref vector offset)'.
-  (if (version< emacs-version "28")
-      (custom-declare-face
-       `,(intern (concat "difft--ansi-color-" name))
-       `((t :foreground ,(cdr (aref (ansi-color-make-color-map)
-                                    (+ 30 offset)))))
-       (concat "Face used to render " name " color code."))
-    (aref (eval vector) offset)))
 
 (defun difft-requested-window-width ()
   "Get a window width for difftastic call."
@@ -91,21 +76,10 @@ display buffer at bottom."
   (with-current-buffer buffer-or-name
     ;; difftastic diffs are usually 2-column side-by-side,
     ;; so ensure our window is wide enough.
-    (let ((actual-width (if (version< emacs-version "28")
-                            (save-excursion
-                              (goto-char (point-min))
-                              (let ((m 0)
-                                    (to (point-max)))
-                                (while (< (point) to)
-                                  (end-of-line)
-                                  (setq m (max m (current-column)))
-                                  (forward-line))
-                                m))
-                          (cadr (buffer-line-statistics)))))
-      (pop-to-buffer
-       (current-buffer)
-       `(,(when (< requested-width actual-width)
-            #'display-buffer-at-bottom))))))
+    (pop-to-buffer
+     (current-buffer)
+     `(,(when (< requested-width (cadr (buffer-line-statistics)))
+          #'display-buffer-at-bottom)))))
 
 (defgroup difft nil
   "Integration with difftastic."
@@ -118,14 +92,14 @@ display buffer at bottom."
 
 (defcustom difft-normal-colors-vector
   (vector
-   (difft--ansi-color-face 'ansi-color-normal-colors-vector 0 "black")
+   (aref ansi-color-normal-colors-vector 0)
    'magit-diff-removed
    'magit-diff-added
    'magit-diff-file-heading
    font-lock-comment-face
    font-lock-string-face
    font-lock-warning-face
-   (difft--ansi-color-face 'ansi-color-normal-colors-vector 7 "white"))
+   (aref ansi-color-normal-colors-vector 7))
   "Faces to use for colors on difftastic output (normal).
 
 N.B. only foreground and background properties will be used."
@@ -134,14 +108,14 @@ N.B. only foreground and background properties will be used."
 
 (defcustom difft-bright-colors-vector
   (vector
-   (difft--ansi-color-face 'ansi-color-bright-colors-vector 0 "black")
+   (aref ansi-color-bright-colors-vector 0)
    'magit-diff-removed
    'magit-diff-added
    'magit-diff-file-heading
    font-lock-comment-face
    font-lock-string-face
    font-lock-warning-face
-   (difft--ansi-color-face 'ansi-color-bright-colors-vector 7 "white"))
+   (aref ansi-color-bright-colors-vector 7))
   "Faces to use for colors on difftastic output (bright).
 
 N.B. only foreground and background properties will be used."
@@ -221,7 +195,7 @@ conses."
      ((vectorp tree)
       (let ((i (length (setq tree (copy-sequence tree)))))
 	    (while (>= (setq i (1- i)) 0)
-	      (aset tree i (difft--copy-tree (aref tree i) vecp)))
+	      (aset tree i (difft--copy-tree (aref tree i))))
 	    tree))
      ;; Optimisation: bool vector doesn't need a deep copy
      ((bool-vector-p tree)
@@ -468,7 +442,7 @@ when it is a temporary file."
    '("Text")
    (cl-remove-if (lambda (line)
                    (string-match-p "^ \\*" line))
-                 (string-split
+                 (split-string
                   (shell-command-to-string
                    (concat difft-executable " --list-languages"))
                   "\n" t))))

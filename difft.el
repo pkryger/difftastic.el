@@ -192,15 +192,15 @@ conses."
   ;; adapted from `copy-tree'
   (if (consp tree)
       (let (result)
-	    (while (consp tree)
-	      (let ((newcar (car tree)))
-	        (when (or (consp newcar)
+        (while (consp tree)
+          (let ((newcar (car tree)))
+            (when (or (consp newcar)
                       (or (vectorp newcar)
                           (bool-vector-p newcar)))
-		      (setq newcar (difft--copy-tree newcar)))
-	        (push newcar result))
-	      (setq tree (cdr tree)))
-	    (nconc (nreverse result)
+              (setq newcar (difft--copy-tree newcar)))
+            (push newcar result))
+          (setq tree (cdr tree)))
+        (nconc (nreverse result)
                (if (or (vectorp tree)
                        (bool-vector-p tree))
                    (difft--copy-tree tree)
@@ -208,9 +208,9 @@ conses."
     (cond
      ((vectorp tree)
       (let ((i (length (setq tree (copy-sequence tree)))))
-	    (while (>= (setq i (1- i)) 0)
-	      (aset tree i (difft--copy-tree (aref tree i))))
-	    tree))
+        (while (>= (setq i (1- i)) 0)
+          (aset tree i (difft--copy-tree (aref tree i))))
+        tree))
      ;; Optimisation: bool vector doesn't need a deep copy
      ((bool-vector-p tree)
       (copy-sequence tree))
@@ -410,13 +410,13 @@ When ARG couldn't be guessed or called with prefix arg ask for ARG."
     (let ((buffer-name (buffer-name))
           (limit 0))
       (while (string-match "[^A-Za-z0-9_.~#+-]" buffer-name limit)
-	    (let* ((character (aref buffer-name (match-beginning 0)))
-	           (replacement
+        (let* ((character (aref buffer-name (match-beginning 0)))
+               (replacement
                 ;; For multibyte characters, this will produce more than
                 ;; 2 hex digits, so is not true URL encoding.
                 (format "%%%02X" character)))
-	      (setq buffer-name (replace-match replacement t t buffer-name))
-	      (setq limit (1+ (match-end 0)))))
+          (setq buffer-name (replace-match replacement t t buffer-name))
+          (setq limit (1+ (match-end 0)))))
       (make-temp-file (format "difft-%s-%s-" prefix buffer-name)
                       nil nil (buffer-string)))))
 
@@ -512,14 +512,14 @@ then ask for language before running difftastic."
   (interactive
    (let (bf-A bf-B)
      (list (setq bf-A (read-buffer "Buffer A to compare: "
-				                   (ediff-other-buffer "") t))
-	       (setq bf-B (read-buffer "Buffer B to compare: "
-			                       (progn
-			                         ;; realign buffers so that two visible
-			                         ;; buffers will be at the top
-			                         (save-window-excursion (other-window 1))
-			                         (ediff-other-buffer bf-A))
-			                       t))
+                                   (ediff-other-buffer "") t))
+           (setq bf-B (read-buffer "Buffer B to compare: "
+                                   (progn
+                                     ;; realign buffers so that two visible
+                                     ;; buffers will be at the top
+                                     (save-window-excursion (other-window 1))
+                                     (ediff-other-buffer bf-A))
+                                   t))
            (when (or current-prefix-arg
                      (and (not (buffer-file-name (get-buffer bf-A)))
                           (not (buffer-file-name (get-buffer bf-B)))))
@@ -556,27 +556,27 @@ running difftastic."
   ;; adapted from `ediff-files'
   (interactive
    (let ((dir-A (if ediff-use-last-dir
-		            ediff-last-dir-A
-		          default-directory))
-	     dir-B f)
+                    ediff-last-dir-A
+                  default-directory))
+         dir-B f)
      (list (setq f (ediff-read-file-name
-		            "File A to compare"
-		            dir-A
-		            (ediff-get-default-file-name)
-		            'no-dirs))
-	       (ediff-read-file-name "File B to compare"
-				                 (setq dir-B
-				                       (if ediff-use-last-dir
-					                       ediff-last-dir-B
-					                     (file-name-directory f)))
-				                 (progn
-				                   (add-to-history
-				                    'file-name-history
-				                    (ediff-abbreviate-file-name
-				                     (expand-file-name
-				                      (file-name-nondirectory f)
-				                      dir-B)))
-				                   (ediff-get-default-file-name f 1)))
+                    "File A to compare"
+                    dir-A
+                    (ediff-get-default-file-name)
+                    'no-dirs))
+           (ediff-read-file-name "File B to compare"
+                                 (setq dir-B
+                                       (if ediff-use-last-dir
+                                           ediff-last-dir-B
+                                         (file-name-directory f)))
+                                 (progn
+                                   (add-to-history
+                                    'file-name-history
+                                    (ediff-abbreviate-file-name
+                                     (expand-file-name
+                                      (file-name-nondirectory f)
+                                      dir-B)))
+                                   (ediff-get-default-file-name f 1)))
            (when current-prefix-arg
              (completing-read "Language: " (difft--languages) nil t)))))
   (difft--files-internal

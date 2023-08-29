@@ -1,8 +1,8 @@
-# difft.el - Emacs wrapper for difftastic
+# difftastic.el - Emacs wrapper for difftastic
 
 ## Description
 
-The `difft` is designed to integrate [`difftastic`](https://github.com/wilfred/difftastic) into your Emacs workflow, enhancing your code review and comparison experience. This package automatically displays `difftastic`'s output within Emacs using faces from your user theme, ensuring consistency with your overall coding environment.
+The `difftastic` is designed to integrate [`difftastic`](https://github.com/wilfred/difftastic) into your Emacs workflow, enhancing your code review and comparison experience. This package automatically displays `difftastic`'s output within Emacs using faces from your user theme, ensuring consistency with your overall coding environment.
 
 ## Features
 
@@ -15,31 +15,31 @@ The `difft` is designed to integrate [`difftastic`](https://github.com/wilfred/d
 2. Add the following lines to your Emacs configuration file (usually `~/.emacs` or `~/.emacs.d/init.el`):
 
 ```emacs-lisp
-(add-to-list 'load-path "/path/to/difft.el")
-(require 'difft)
+(add-to-list 'load-path "/path/to/difftastic.el")
+(require 'difftastic)
 ```
 
 ## Configuration
 
-To configure the `difft` commands in `magit-diff` prefix, use the following code snippet in your Emacs configuration:
+To configure the `difftastic` commands in `magit-diff` prefix, use the following code snippet in your Emacs configuration:
 
 ```emacs-lisp
-(require 'difft)
+(require 'difftastic)
 
-;; Add commands to a `magit-difft'
+;; Add commands to a `magit-difftastic'
 (transient-append-suffix 'magit-diff '(-1 -1)
-  [("D" "Difftastic diff (dwim)" difft-magit-diff)
-   ("S" "Difftastic show" difft-magit-show)])
+  [("D" "Difftastic diff (dwim)" difftastic-magit-diff)
+   ("S" "Difftastic show" difftastic-magit-show)])
 ```
 
 
 ## Usage
 There are four commands to interact with `difftastic`:
 
-- `difft-magit-diff` - show the result of `git diff ARG` with `difftastic`. It tries to guess `ARG`, and ask for it when can't. When called with prefix argument it will ask for `ARG`.
-- `difft-magit-show` - show the result of `git show ARG` with `difftastic`. It tries to guess `ARG`, and ask for it when can't. When called with prefix argument it will ask for `ARG`.
-- `difft-files` - show the result of `difft FILE-A FILE-B`. When called with prefix argument it will ask for language to use, instead of relaying on `difftastic`'s detection mechanism.
-- `difft-buffers` - show the result of `difft BUFFER-A BUFFER-B`. Language is guessed based on buffers modes. When called with prefix argument it will ask for language to use.
+- `difftastic-magit-diff` - show the result of `git diff ARG` with `difftastic`. It tries to guess `ARG`, and ask for it when can't. When called with prefix argument it will ask for `ARG`.
+- `difftastic-magit-show` - show the result of `git show ARG` with `difftastic`. It tries to guess `ARG`, and ask for it when can't. When called with prefix argument it will ask for `ARG`.
+- `difftastic-files` - show the result of `difft FILE-A FILE-B`. When called with prefix argument it will ask for language to use, instead of relaying on `difftastic`'s detection mechanism.
+- `difftastic-buffers` - show the result of `difft BUFFER-A BUFFER-B`. Language is guessed based on buffers modes. When called with prefix argument it will ask for language to use.
 
 ## Customization
 
@@ -49,11 +49,11 @@ You can customize the appearance of `difftastic` output by adjusting the faces u
 
 ```emacs-lisp
 ;; Customize faces used to display difftastic output.
-(setq difft-normal-colors-vector
+(setq difftastic-normal-colors-vector
   (vector
    (aref ansi-color-normal-colors-vector 0) ; use black face from `ansi-color'
-   (aref difft-normal-colors-vector 1) ; use face for removed marker from `difft'
-   (aref difft-normal-colors-vector 2) ; use face for added markder from `difft'
+   (aref difftastic-normal-colors-vector 1) ; use face for removed marker from `difftastic'
+   (aref difftastic-normal-colors-vector 2) ; use face for added markder from `difftastic'
    'my-section-face
    'my-comment-face
    'my-string-face
@@ -62,12 +62,12 @@ You can customize the appearance of `difftastic` output by adjusting the faces u
    )
 
 ;; Customize highlight faces
-(setq difft-highlight-alist
-  `((,(aref difft-normal-colors-vector 2) . my-added-highlight)
-    (,(aref difft-normal-colors-vector 1) . my-removed-highlight)))
+(setq difftastic-highlight-alist
+  `((,(aref difftastic-normal-colors-vector 2) . my-added-highlight)
+    (,(aref difftastic-normal-colors-vector 1) . my-removed-highlight)))
 
 ;; Disable highlight faces (use difftastic's default)
-(setq difft-highlight-alist nil)
+(setq difftastic-highlight-alist nil)
 ```
 
 ## Acknowledgments
@@ -84,7 +84,7 @@ There's a [`diff-ansi`](https://codeberg.org/ideasman42/emacs-diff-ansi) package
 
 ## Contributing
 
-Contributions are welcome! Feel free to submit issues and pull requests on the [GitHub repository](https://github.com/pkryger/difft.el).
+Contributions are welcome! Feel free to submit issues and pull requests on the [GitHub repository](https://github.com/pkryger/difftastic.el).
 
 ## License
 
@@ -92,4 +92,4 @@ This package is licensed under the [GPLv3 License](https://www.gnu.org/licenses/
 
 ---
 
-Happy coding! If you encounter any issues or have suggestions for improvements, please don't hesitate to reach out on the [GitHub repository](https://github.com/pkryger/difft.el). Your feedback is highly appreciated.
+Happy coding! If you encounter any issues or have suggestions for improvements, please don't hesitate to reach out on the [GitHub repository](https://github.com/pkryger/difftastic.el). Your feedback is highly appreciated.

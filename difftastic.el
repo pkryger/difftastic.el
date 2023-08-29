@@ -1,10 +1,10 @@
-;;; difft.el --- Emacs wrapper for difftastic       -*- lexical-binding: t; -*-
+;;; difftastic.el --- Emacs wrapper for difftastic  -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2023 Przemyslaw Kryger
 
 ;; Author: Przemyslaw Kryger <pkryger@gmail.com>
 ;; Keywords: tools diff
-;; Homepage: https://github.com/pkryger/difft.el.git
+;; Homepage: https://github.com/pkryger/difftastic.el.git
 ;; Package-Requires: ((emacs "28.1") (magit "20220326"))
 ;; Version: 0.0.0
 
@@ -23,7 +23,7 @@
 
 ;;; Commentary:
 
-;; The difft is designed to integrate difftastic
+;; The difftastic is designed to integrate difftastic
 ;; (https://github.com/wilfred/difftastic) into your Emacs workflow, enhancing
 ;; your code review and comparison experience.  This package automatically
 ;; displays difftastic's output within Emacs using faces from your user
@@ -31,35 +31,35 @@
 ;;
 ;; Configuration
 ;;
-;; To configure the `difft` commands in `magit-diff` prefix, use the following
-;; code snippet in your Emacs configuration:
+;; To configure the `difftastic` commands in `magit-diff` prefix, use the
+;; following code snippet in your Emacs configuration:
 ;;
-;; (require 'difft)
+;; (require 'difftastic)
 ;;
-;; ;; Add commands to a `magit-difft'
+;; ;; Add commands to a `magit-difftastic'
 ;; (transient-append-suffix 'magit-diff '(-1 -1)
-;;   [("D" "Difftastic diff (dwim)" difft-magit-diff)
-;;    ("S" "Difftastic show" difft-magit-show)])
+;;   [("D" "Difftastic diff (dwim)" difftastic-magit-diff)
+;;    ("S" "Difftastic show" difftastic-magit-show)])
 ;;
 ;; Usage
 ;;
 ;; There are four commands to interact with difftastic:
 ;;
-;; - `difft-magit-diff' - show the result of 'git diff ARG' with difftastic.
-;;   It tries to guess ARG, and ask for it when can't. When called with
-;;   prefix argument it will ask for ARG.
+;; - `difftastic-magit-diff' - show the result of 'git diff ARG' with
+;;   difftastic.  It tries to guess ARG, and ask for it when can't. When called
+;;   with prefix argument it will ask for ARG.
 ;;
-;; - `difft-magit-show' - show the result of 'git show ARG' with difftastic.
-;;   It tries to guess ARG, and ask for it when can't. When called with prefix
-;;   argument it will ask for ARG.
+;; - `difftastic-magit-show' - show the result of 'git show ARG' with
+;;   difftastic.  It tries to guess ARG, and ask for it when can't. When called
+;;   with prefix argument it will ask for ARG.
 ;;
-;; - `difft-files' - show the result of 'difft FILE-A FILE-B'.  When called
-;;   with prefix argument it will ask for language to use, instead of relaying
-;;   on difftastic's detection mechanism.
+;; - `difftastic-files' - show the result of 'difft FILE-A FILE-B'.  When
+;;   called with prefix argument it will ask for language to use, instead of
+;;   relaying on difftastic's detection mechanism.
 ;;
-;; - `difft-buffers' - show the result of 'difft BUFFER-A BUFFER-B'.  Language
-;;   is guessed based on buffers modes.  When called with prefix argument it
-;;   will ask for language to use.
+;; - `difftastic-buffers' - show the result of 'difft BUFFER-A BUFFER-B'.
+;;   Language is guessed based on buffers modes.  When called with prefix
+;;   argument it will ask for language to use.
 
 ;;; Code:
 
@@ -69,7 +69,7 @@
 (require 'font-lock)
 (require 'magit)
 
-(defun difft-requested-window-width ()
+(defun difftastic-requested-window-width ()
   "Get a window width for difftastic call."
   (- (if (< 1 (count-windows))
          (save-window-excursion
@@ -82,7 +82,7 @@
      (fringe-columns 'left)
      (fringe-columns 'rigth)))
 
-(defun difft-pop-to-buffer (buffer-or-name requested-width)
+(defun difftastic-pop-to-buffer (buffer-or-name requested-width)
   "Display BUFFER-OR-NAME with REQUESTED-WIDTH and select its window.
 
 When actual window width is greater than REQUESTED-WIDTH then
@@ -95,16 +95,16 @@ display buffer at bottom."
      `(,(when (< requested-width (cadr (buffer-line-statistics)))
           #'display-buffer-at-bottom)))))
 
-(defgroup difft nil
+(defgroup difftastic nil
   "Integration with difftastic."
   :group 'tools)
 
-(defcustom difft-executable "difft"
+(defcustom difftastic-executable "difft"
   "Location of difftastic executable."
   :type 'file
-  :group 'difft)
+  :group 'difftastic)
 
-(defcustom difft-normal-colors-vector
+(defcustom difftastic-normal-colors-vector
   (vector
    (aref ansi-color-normal-colors-vector 0)
    'magit-diff-removed
@@ -118,9 +118,9 @@ display buffer at bottom."
 
 N.B. only foreground and background properties will be used."
   :type '(vector face face face face face face face face)
-  :group 'difft)
+  :group 'difftastic)
 
-(defcustom difft-bright-colors-vector
+(defcustom difftastic-bright-colors-vector
   (vector
    (aref ansi-color-bright-colors-vector 0)
    'magit-diff-removed
@@ -134,9 +134,9 @@ N.B. only foreground and background properties will be used."
 
 N.B. only foreground and background properties will be used."
   :type '(vector face face face face face face face face)
-  :group 'difft)
+  :group 'difftastic)
 
-(defcustom difft-highlight-alist
+(defcustom difftastic-highlight-alist
   '((magit-diff-added . magit-diff-added-highlight)
     (magit-diff-removed . magit-diff-removed-highlight))
   "Faces to replace underlined highlight in difftastic output.
@@ -147,25 +147,25 @@ you prefer unaltered difftastic output.
 
 N.B. only foreground and background properties will be used."
   :type '(alist :key-type face :value-type face)
-  :group 'difft)
+  :group 'difftastic)
 
-(defcustom difft-requested-window-width-function
-  #'difft-requested-window-width
+(defcustom difftastic-requested-window-width-function
+  #'difftastic-requested-window-width
   "Function used to calculate a requested width for difftastic call."
   :type 'function
-  :group 'difft)
+  :group 'difftastic)
 
-(defcustom difft-display-buffer-function
-  #'difft-pop-to-buffer
+(defcustom difftastic-display-buffer-function
+  #'difftastic-pop-to-buffer
   "Function used diplay buffer with output of difftastic call.
 
 It will be called with two arguments: BUFFER-OR-NAME: a buffer to
 display and REQUESTED-WIDTH: a with requested for difftastic
 call."
   :type 'function
-  :group 'difft)
+  :group 'difftastic)
 
-(defmacro difft--with-temp-advice (symbol how function &rest body)
+(defmacro difftastic--with-temp-advice (symbol how function &rest body)
   ;; checkdoc-params: (symbol how function)
   "Execute BODY with advice temporarily enabled.
 
@@ -178,11 +178,11 @@ See `advice-add' for explanation of SYMBOL, HOW, and FUNCTION arguments."
            ,@body)
        (advice-remove ,symbol fn-advice-var))))
 
-(define-derived-mode difft-mode fundamental-mode "difft"
+(define-derived-mode difftastic-mode fundamental-mode "difftastic"
   (view-mode)
   (setq buffer-read-only t))
 
-(defun difft--copy-tree (tree)
+(defun difftastic--copy-tree (tree)
   "Make a copy of TREE.
 
 If TREE is a cons cell, this recursively copies both its car and
@@ -197,37 +197,37 @@ conses."
             (when (or (consp newcar)
                       (or (vectorp newcar)
                           (bool-vector-p newcar)))
-              (setq newcar (difft--copy-tree newcar)))
+              (setq newcar (difftastic--copy-tree newcar)))
             (push newcar result))
           (setq tree (cdr tree)))
         (nconc (nreverse result)
                (if (or (vectorp tree)
                        (bool-vector-p tree))
-                   (difft--copy-tree tree)
+                   (difftastic--copy-tree tree)
                  tree)))
     (cond
      ((vectorp tree)
       (let ((i (length (setq tree (copy-sequence tree)))))
         (while (>= (setq i (1- i)) 0)
-          (aset tree i (difft--copy-tree (aref tree i))))
+          (aset tree i (difftastic--copy-tree (aref tree i))))
         tree))
      ;; Optimisation: bool vector doesn't need a deep copy
      ((bool-vector-p tree)
       (copy-sequence tree))
      (t tree))))
 
-(defun difft--ansi-color-add-background (face)
+(defun difftastic--ansi-color-add-background (face)
   "Add :background to FACE.
 
 N.B.  This is meant to filter-result of either
 `ansi-color--face-vec-face' or `ansi-color-get-face-1' by
 adding background to faces if they have a foreground set."
-  (if-let ((difft-face
+  (if-let ((difftastic-face
             (and (listp face)
                  (cl-find-if
-                  (lambda (difft-face)
+                  (lambda (difftastic-face)
                     (and (string=
-                          (face-foreground difft-face)
+                          (face-foreground difftastic-face)
                           (or
                            (plist-get face :foreground)
                            (plist-get
@@ -238,16 +238,16 @@ adding background to faces if they have a foreground set."
                             :foreground)))
                          ;; ansi-color-* faces have the same
                          ;; foreground and background - don't use them
-                         (not (string= (face-foreground difft-face)
-                                       (face-background difft-face)))
-                         (face-background difft-face)))
-                  (vconcat difft-normal-colors-vector
-                           difft-bright-colors-vector)))))
+                         (not (string= (face-foreground difftastic-face)
+                                       (face-background difftastic-face)))
+                         (face-background difftastic-face)))
+                  (vconcat difftastic-normal-colors-vector
+                           difftastic-bright-colors-vector)))))
       ;; difftastic uses underline to highlight some changes;
       ;; it uses bold as well, but it's not as unambiguous as underline
       (if-let ((highlight-face (and (cl-member 'ansi-color-underline face)
-                                    (alist-get difft-face
-                                               difft-highlight-alist))))
+                                    (alist-get difftastic-face
+                                               difftastic-highlight-alist))))
           (append (cl-remove-if (lambda (elt)
                                   (and (listp elt)
                                        (plist-get elt :foreground)))
@@ -259,43 +259,43 @@ adding background to faces if they have a foreground set."
                         (face-foreground highlight-face nil 'default)))
         (append face
                 (list :background
-                      (face-background difft-face nil 'default))))
+                      (face-background difftastic-face nil 'default))))
     face))
 
 ;; In practice there are only dozens or so different faces used,
 ;; so we can cache them each time anew.
-(defvar-local difft--ansi-color-add-background-cache nil)
+(defvar-local difftastic--ansi-color-add-background-cache nil)
 
-(defun difft--ansi-color-add-background-cached (orig-fun face-vec)
+(defun difftastic--ansi-color-add-background-cached (orig-fun face-vec)
   "Memoise ORIG-FUN based on FACE-VEC.
 
-Utilise `difft--ansi-color-add-background-cache' to cache
+Utilise `difftastic--ansi-color-add-background-cache' to cache
 `ansi-color--face-vec-face' calls."
   (if-let ((cached (assoc face-vec
-                          difft--ansi-color-add-background-cache)))
+                          difftastic--ansi-color-add-background-cache)))
       (cdr cached)
-    (let ((face (difft--ansi-color-add-background
+    (let ((face (difftastic--ansi-color-add-background
                  (funcall orig-fun face-vec))))
-      (push (cons (difft--copy-tree face-vec) face)
-            difft--ansi-color-add-background-cache)
+      (push (cons (difftastic--copy-tree face-vec) face)
+            difftastic--ansi-color-add-background-cache)
       face)))
 
-(defun difft--magit-with-difftastic (buffer command)
+(defun difftastic--magit-with-difftastic (buffer command)
   "Run COMMAND with GIT_EXTERNAL_DIFF then show result in BUFFER."
-  (let* ((requested-width (funcall difft-requested-window-width-function))
+  (let* ((requested-width (funcall difftastic-requested-window-width-function))
          (process-environment
           (cons (format "GIT_EXTERNAL_DIFF=%s --width %s --background %s"
-                        difft-executable
+                        difftastic-executable
                         requested-width
                         (frame-parameter nil 'background-mode))
                 process-environment)))
-    (difft--run-command
+    (difftastic--run-command
      buffer
      command
      (lambda ()
-       (funcall difft-display-buffer-function buffer requested-width)))))
+       (funcall difftastic-display-buffer-function buffer requested-width)))))
 
-(defun difft--run-command (buffer command action)
+(defun difftastic--run-command (buffer command action)
   "Run COMMAND, show its results in BUFFER, then execute ACTION.
 
 The ACTION is meant to display the BUFFER in some window and, optionally,
@@ -319,18 +319,20 @@ perform cleanup."
                              (process-buffer process))))
        (with-current-buffer buffer
          (let ((inhibit-read-only t)
-               (ansi-color-normal-colors-vector difft-normal-colors-vector)
-               (ansi-color-bright-colors-vector difft-bright-colors-vector))
+               (ansi-color-normal-colors-vector
+                difftastic-normal-colors-vector)
+               (ansi-color-bright-colors-vector
+                difftastic-bright-colors-vector))
            (if (fboundp 'ansi-color--face-vec-face) ;; since Emacs-29
-               ( difft--with-temp-advice
+               ( difftastic--with-temp-advice
                  'ansi-color--face-vec-face
                  :around
-                 #'difft--ansi-color-add-background-cached
+                 #'difftastic--ansi-color-add-background-cached
                  (insert (ansi-color-apply string)))
-             ( difft--with-temp-advice
+             ( difftastic--with-temp-advice
                'ansi-color-get-face-1
                :filter-return
-               #'difft--ansi-color-add-background
+               #'difftastic--ansi-color-add-background
                (insert (ansi-color-apply string))))))))
    ;; Disable write access and call `action' when process is finished.
    :sentinel
@@ -338,7 +340,7 @@ perform cleanup."
      (let (output)
        (when (eq (process-status proc) 'exit)
          (with-current-buffer (process-buffer proc)
-           (difft-mode)
+           (difftastic-mode)
            (goto-char (point-min))
            (setq output (not (eq (point-min) (point-max)))))
          (if output
@@ -349,7 +351,7 @@ perform cleanup."
                     (mapconcat #'identity command " "))))))))
 
 ;;;###autoload
-(defun difft-magit-show (rev)
+(defun difftastic-magit-show (rev)
   "Show the result of \\='git show REV\\=' with difftastic.
 
 When REV couldn't be guessed or called with prefix arg ask for REV."
@@ -364,12 +366,12 @@ When REV couldn't be guessed or called with prefix arg ask for REV."
           (magit-read-branch-or-commit "Revision"))))
   (if (not rev)
       (error "No revision specified")
-    (difft--magit-with-difftastic
-     (get-buffer-create (concat "*git show difftastic " rev "*"))
+    (difftastic--magit-with-difftastic
+     (get-buffer-create (concat "*difftastic git show " rev "*"))
      (list "git" "--no-pager" "show" "--ext-diff" rev))))
 
 ;;;###autoload
-(defun difft-magit-diff (arg)
+(defun difftastic-magit-diff (arg)
   "Show the result of \\='git diff ARG\\=' with difftastic.
 
 When ARG couldn't be guessed or called with prefix arg ask for ARG."
@@ -390,20 +392,20 @@ When ARG couldn't be guessed or called with prefix arg ask for ARG."
             (`(commit . ,value) (format "%s^..%s" value value))
             ((and range (pred stringp)) range)
             (_ (magit-diff-read-range-or-commit "Range/Commit"))))))
-  (let* ((name (concat "*git difftastic"
+  (let* ((name (concat "*difftastic git diff"
                        (if arg (concat " " arg) "")
                        "*"))
          (file (magit-file-relative-name))
          (default-directory (if file
                                 (magit-toplevel)
                               default-directory)))
-    (difft--magit-with-difftastic
+    (difftastic--magit-with-difftastic
      (get-buffer-create name)
      `("git" "--no-pager" "diff" "--ext-diff"
        ,@(when file (list "--"))
        ,@(when arg (list arg))))))
 
-(defun difft---make-temp-file (prefix buffer)
+(defun difftastic---make-temp-file (prefix buffer)
   "Make a temp file for BUFFER content that with PREFIX included in file name."
   ;; adapted from `make-auto-save-file-name'
   (with-current-buffer buffer
@@ -417,10 +419,10 @@ When ARG couldn't be guessed or called with prefix arg ask for ARG."
                 (format "%%%02X" character)))
           (setq buffer-name (replace-match replacement t t buffer-name))
           (setq limit (1+ (match-end 0)))))
-      (make-temp-file (format "difft-%s-%s-" prefix buffer-name)
+      (make-temp-file (format "difftastic-%s-%s-" prefix buffer-name)
                       nil nil (buffer-string)))))
 
-(defun difft--get-file (prefix buffer)
+(defun difftastic--get-file (prefix buffer)
   "If BUFFER visits a file return it else create a temporary file with PREFIX.
 
 The return value is a cons where car is the file and cdr is non
@@ -432,10 +434,10 @@ nil if a temporary file has been created."
                 (save-buffer buffer)
                 buffer-file)
             (setq temp
-                  (difft---make-temp-file prefix buffer)))))
+                  (difftastic---make-temp-file prefix buffer)))))
     (cons file temp)))
 
-(defun difft--delete-temp-file (file-temp)
+(defun difftastic--delete-temp-file (file-temp)
   "Delete FILE-TEMP when it is a temporary file.
 
 The FILE-TEMP is a cons where car is the file and cdr is non nil
@@ -445,7 +447,7 @@ when it is a temporary file."
     (when (and temp (stringp file) (file-exists-p file))
       (delete-file file))))
 
-(defun difft--languages ()
+(defun difftastic--languages ()
   "Return list of language overrides supported by difftastic."
   (append
    '("Text")
@@ -453,10 +455,10 @@ when it is a temporary file."
                    (string-match-p "^ \\*" line))
                  (split-string
                   (shell-command-to-string
-                   (concat difft-executable " --list-languages"))
+                   (concat difftastic-executable " --list-languages"))
                   "\n" t))))
 
-(defun difft--make-suggestion (languages buffer-A buffer-B)
+(defun difftastic--make-suggestion (languages buffer-A buffer-B)
   "Suggest one of LANGUAGES based on mode of BUFFER-A and BUFFER-B."
   (when-let ((mode
               (or (with-current-buffer buffer-A
@@ -474,16 +476,16 @@ when it is a temporary file."
                                        (symbol-name mode))))))
                 languages)))
 
-(defun difft--files-internal (buffer file-temp-A file-temp-B &optional lang-override)
+(defun difftastic--files-internal (buffer file-temp-A file-temp-B &optional lang-override)
   "Run difftastic on files FILE-TEMP-A and FILE-TEMP-B and show results in BUFFER.
 
 The FILE-TEMP-A and FILE-TEMB-B are conses where car is the file
 and cdr is non nil when it is a temporary file.  LANG-OVERRIDE is
 passed to difftastic as \\='--override\\=' argument."
-  (let ((requested-width (funcall difft-requested-window-width-function)))
-    (difft--run-command
+  (let ((requested-width (funcall difftastic-requested-window-width-function)))
+    (difftastic--run-command
      buffer
-     `(,difft-executable
+     `(,difftastic-executable
        "--width" ,(number-to-string requested-width)
        "--background" ,(format "%s" (frame-parameter nil 'background-mode))
        ,@(when lang-override (list "--override"
@@ -491,12 +493,12 @@ passed to difftastic as \\='--override\\=' argument."
        ,(car file-temp-A)
        ,(car file-temp-B))
      (lambda ()
-       (funcall difft-display-buffer-function buffer requested-width)
-       (difft--delete-temp-file file-temp-A)
-       (difft--delete-temp-file file-temp-B)))))
+       (funcall difftastic-display-buffer-function buffer requested-width)
+       (difftastic--delete-temp-file file-temp-A)
+       (difftastic--delete-temp-file file-temp-B)))))
 
 ;;;###autoload
-(defun difft-buffers (buffer-A buffer-B &optional lang-override)
+(defun difftastic-buffers (buffer-A buffer-B &optional lang-override)
   "Run difftastic on a pair of buffers, BUFFER-A and BUFFER-B.
 
 Optionally, provide a LANG-OVERRIDE to override language used.
@@ -523,30 +525,31 @@ then ask for language before running difftastic."
            (when (or current-prefix-arg
                      (and (not (buffer-file-name (get-buffer bf-A)))
                           (not (buffer-file-name (get-buffer bf-B)))))
-             (let* ((languages (difft--languages))
-                    (suggested (difft--make-suggestion languages
-                                                       (get-buffer bf-A)
-                                                       (get-buffer bf-B))))
+             (let* ((languages (difftastic--languages))
+                    (suggested (difftastic--make-suggestion
+                                languages
+                                (get-buffer bf-A)
+                                (get-buffer bf-B))))
                (completing-read "Language: " languages nil t suggested))))))
 
   (let (file-temp-A file-temp-B)
     (condition-case err
         (progn
-          (setq file-temp-A (difft--get-file "A" (get-buffer buffer-A))
-                file-temp-B (difft--get-file "B" (get-buffer buffer-B)))
-          (difft--files-internal
+          (setq file-temp-A (difftastic--get-file "A" (get-buffer buffer-A))
+                file-temp-B (difftastic--get-file "B" (get-buffer buffer-B)))
+          (difftastic--files-internal
            (get-buffer-create
             (concat "*difftastic " buffer-A " " buffer-B "*"))
            file-temp-A
            file-temp-B
            lang-override))
       ((error debug)
-       (difft--delete-temp-file file-temp-A)
-       (difft--delete-temp-file file-temp-B)
+       (difftastic--delete-temp-file file-temp-A)
+       (difftastic--delete-temp-file file-temp-B)
        (signal (car err) (cdr err))))))
 
 ;;;###autoload
-(defun difft-files (file-A file-B &optional lang-override)
+(defun difftastic-files (file-A file-B &optional lang-override)
   "Run difftastic on a pair of files, FILE-A and FILE-B.
 
 Optionally, provide a LANG-OVERRIDE to override language used.
@@ -578,8 +581,8 @@ running difftastic."
                                       dir-B)))
                                    (ediff-get-default-file-name f 1)))
            (when current-prefix-arg
-             (completing-read "Language: " (difft--languages) nil t)))))
-  (difft--files-internal
+             (completing-read "Language: " (difftastic--languages) nil t)))))
+  (difftastic--files-internal
    (get-buffer-create (concat "*difftastic "
                               (file-name-nondirectory file-A)
                               " "
@@ -589,5 +592,5 @@ running difftastic."
    (cons file-B nil)
    lang-override))
 
-(provide 'difft)
-;;; difft.el ends here
+(provide 'difftastic)
+;;; difftastic.el ends here

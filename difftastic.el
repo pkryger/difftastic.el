@@ -1,4 +1,4 @@
-;;; difftastic.el --- Emacs wrapper for difftastic  -*- lexical-binding: t; -*-
+;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2023 Przemyslaw Kryger
 
@@ -23,11 +23,11 @@
 
 ;;; Commentary:
 
-;; The difftastic is designed to integrate difftastic
-;; (https://github.com/wilfred/difftastic) into your Emacs workflow, enhancing
-;; your code review and comparison experience.  This package automatically
-;; displays difftastic's output within Emacs using faces from your user
-;; theme, ensuring consistency with your overall coding environment.
+;; The difftastic is designed to integrate difftastic - a structural diff tool
+;; - (https://github.com/wilfred/difftastic) into your Emacs workflow,
+;; enhancing your code review and comparison experience.  This package
+;; automatically displays difftastic's output within Emacs using faces from
+;; your user theme, ensuring consistency with your overall coding environment.
 ;;
 ;; Configuration
 ;;

@@ -1,8 +1,8 @@
-# difftastic.el - Emacs wrapper for difftastic
+# difftastic.el - Wrapper for difftastic
 
 ## Description
 
-The `difftastic` is designed to integrate [`difftastic`](https://github.com/wilfred/difftastic) into your Emacs workflow, enhancing your code review and comparison experience. This package automatically displays `difftastic`'s output within Emacs using faces from your user theme, ensuring consistency with your overall coding environment.
+The `difftastic` is designed to integrate [`difftastic`](https://github.com/wilfred/difftastic) - a structural diff tool - into your Emacs workflow, enhancing your code review and comparison experience. This package automatically displays `difftastic`'s output within Emacs using faces from your user theme, ensuring consistency with your overall coding environment.
 
 ## Features
 

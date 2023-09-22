@@ -4,8 +4,8 @@
 
 ;; Author: Przemyslaw Kryger <pkryger@gmail.com>
 ;; Keywords: tools diff
-;; Homepage: https://github.com/pkryger/difftastic.el.git
-;; Package-Requires: ((emacs "28.1") (magit "20220326"))
+;; Homepage: https://github.com/pkryger/difftastic.el
+;; Package-Requires: ((emacs "27.1") (compat "29.1.3.4") (magit "20220326"))
 ;; Version: 0.0.0
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -76,8 +76,23 @@
 (require 'ansi-color)
 (require 'cl-lib)
 (require 'ediff)
+(require 'compat)
 (require 'font-lock)
 (require 'magit)
+
+(defun difftastic--ansi-color-face (vector offset name)
+  "Get face from VECTOR with OFFSET or make a new one with NAME.
+
+New face is made when VECTOR is not bound."
+  ;;This is for backward compatibility with Emacs-27.  When dropping
+  ;; compatibility calls can be replaced with `(aref vector offset)'.
+  (if (version< emacs-version "28")
+      (custom-declare-face
+       `,(intern (concat "difftastic--ansi-color-" name))
+       `((t :foreground ,(cdr (aref (ansi-color-make-color-map)
+                                    (+ 30 offset)))))
+       (concat "Face used to render " name " color code."))
+    (aref (eval vector) offset)))
 
 (defun difftastic-requested-window-width ()
   "Get a window width for difftastic call."
@@ -100,10 +115,21 @@ display buffer at bottom."
   (with-current-buffer buffer-or-name
     ;; difftastic diffs are usually 2-column side-by-side,
     ;; so ensure our window is wide enough.
-    (pop-to-buffer
-     (current-buffer)
-     `(,(when (< requested-width (cadr (buffer-line-statistics)))
-          #'display-buffer-at-bottom)))))
+    (let ((actual-width (if (version< emacs-version "28")
+                            (save-excursion
+                              (goto-char (point-min))
+                              (let ((m 0)
+                                    (to (point-max)))
+                                (while (< (point) to)
+                                  (end-of-line)
+                                  (setq m (max m (current-column)))
+                                  (forward-line))
+                                m))
+                          (cadr (buffer-line-statistics)))))
+      (pop-to-buffer
+       (current-buffer)
+       `(,(when (< requested-width actual-width)
+            #'display-buffer-at-bottom))))))
 
 (defgroup difftastic nil
   "Integration with difftastic."
@@ -116,14 +142,14 @@ display buffer at bottom."
 
 (defcustom difftastic-normal-colors-vector
   (vector
-   (aref ansi-color-normal-colors-vector 0)
+   (difftastic--ansi-color-face 'ansi-color-normal-colors-vector 0 "black")
    'magit-diff-removed
    'magit-diff-added
    'magit-diff-file-heading
    font-lock-comment-face
    font-lock-string-face
    font-lock-warning-face
-   (aref ansi-color-normal-colors-vector 7))
+   (difftastic--ansi-color-face 'ansi-color-normal-colors-vector 7 "white"))
   "Faces to use for colors on difftastic output (normal).
 
 N.B. only foreground and background properties will be used."
@@ -132,14 +158,14 @@ N.B. only foreground and background properties will be used."
 
 (defcustom difftastic-bright-colors-vector
   (vector
-   (aref ansi-color-bright-colors-vector 0)
+   (difftastic--ansi-color-face 'ansi-color-bright-colors-vector 0 "black")
    'magit-diff-removed
    'magit-diff-added
    'magit-diff-file-heading
    font-lock-comment-face
    font-lock-string-face
    font-lock-warning-face
-   (aref ansi-color-bright-colors-vector 7))
+   (difftastic--ansi-color-face 'ansi-color-bright-colors-vector 7 "white"))
   "Faces to use for colors on difftastic output (bright).
 
 N.B. only foreground and background properties will be used."
@@ -218,9 +244,9 @@ conses."
     (cond
      ((vectorp tree)
       (let ((i (length (setq tree (copy-sequence tree)))))
-        (while (>= (setq i (1- i)) 0)
-          (aset tree i (difftastic--copy-tree (aref tree i))))
-        tree))
+	    (while (>= (setq i (1- i)) 0)
+	      (aset tree i (difftastic--copy-tree (aref tree i))))
+	    tree))
      ;; Optimisation: bool vector doesn't need a deep copy
      ((bool-vector-p tree)
       (copy-sequence tree))
@@ -463,7 +489,7 @@ when it is a temporary file."
    '("Text")
    (cl-remove-if (lambda (line)
                    (string-match-p "^ \\*" line))
-                 (split-string
+                 (string-split
                   (shell-command-to-string
                    (concat difftastic-executable " --list-languages"))
                   "\n" t))))

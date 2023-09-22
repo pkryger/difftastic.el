@@ -5,7 +5,7 @@
 ;; Author: Przemyslaw Kryger <pkryger@gmail.com>
 ;; Keywords: tools diff
 ;; Homepage: https://github.com/pkryger/difftastic.el
-;; Package-Requires: ((emacs "27.1") (compat "29.1.3.4") (magit "20220326"))
+;; Package-Requires: ((emacs "27.1") (compat "29.1.4.2") (magit "20220326"))
 ;; Version: 0.0.0
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -75,21 +75,22 @@
 
 (require 'ansi-color)
 (require 'cl-lib)
-(require 'ediff)
 (require 'compat)
+(require 'ediff)
 (require 'font-lock)
 (require 'magit)
 
 (defun difftastic--ansi-color-face (vector offset name)
-  "Get face from VECTOR with OFFSET or make a new one with NAME.
+  "Get face from VECTOR with OFFSET or make a new one with NAME suffix.
 
 New face is made when VECTOR is not bound."
   ;;This is for backward compatibility with Emacs-27.  When dropping
-  ;; compatibility calls can be replaced with `(aref vector offset)'.
+  ;; compatibility, calls should be replaced with `(aref VECTOR offset)'.
   (if (version< emacs-version "28")
       (custom-declare-face
        `,(intern (concat "difftastic--ansi-color-" name))
-       `((t :foreground ,(cdr (aref (ansi-color-make-color-map)
+       `((t :foreground ,(cdr (aref (with-no-warnings
+                                      (ansi-color-make-color-map))
                                     (+ 30 offset)))))
        (concat "Face used to render " name " color code."))
     (aref (eval vector) offset)))
@@ -115,17 +116,18 @@ display buffer at bottom."
   (with-current-buffer buffer-or-name
     ;; difftastic diffs are usually 2-column side-by-side,
     ;; so ensure our window is wide enough.
-    (let ((actual-width (if (version< emacs-version "28")
-                            (save-excursion
-                              (goto-char (point-min))
-                              (let ((m 0)
-                                    (to (point-max)))
-                                (while (< (point) to)
-                                  (end-of-line)
-                                  (setq m (max m (current-column)))
-                                  (forward-line))
-                                m))
-                          (cadr (buffer-line-statistics)))))
+    (let ((actual-width (if (fboundp 'buffer-line-statistics)
+                            ;; since Emacs-28
+                            (cadr (buffer-line-statistics))
+                          (save-excursion
+                            (goto-char (point-min))
+                            (let ((max 0)
+                                  (to (point-max)))
+                              (while (< (point) to)
+                                (end-of-line)
+                                (setq max (max max (current-column)))
+                                (forward-line))
+                              max)))))
       (pop-to-buffer
        (current-buffer)
        `(,(when (< requested-width actual-width)
@@ -489,7 +491,8 @@ when it is a temporary file."
    '("Text")
    (cl-remove-if (lambda (line)
                    (string-match-p "^ \\*" line))
-                 (string-split
+                 (compat-call ;; since Emacs-29
+                  string-split
                   (shell-command-to-string
                    (concat difftastic-executable " --list-languages"))
                   "\n" t))))
@@ -505,7 +508,8 @@ when it is a temporary file."
                       major-mode)))))
     (cl-find-if (lambda (language)
                   (string= (downcase language)
-                           (downcase (string-replace
+                           (downcase (compat-call ;; since Emacs-28
+                                      string-replace
                                       "-" " "
                                       (replace-regexp-in-string
                                        "-mode$" ""

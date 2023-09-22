@@ -78,6 +78,7 @@
 (require 'compat)
 (require 'ediff)
 (require 'font-lock)
+(require 'fringe)
 (require 'magit)
 
 (defgroup difftastic nil

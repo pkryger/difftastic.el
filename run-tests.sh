@@ -1,12 +1,14 @@
 #!/bin/bash
 
-set -x
-set -e
 
 if [[ ! "${1}" =~ ^(all|package-init|byte-compile|package-lint)$ ]]; then
-    >&2 echo "Unsupported mode: ${1}"
+    >&2 echo "Unsupported mode: '${1}'."
+    >&2 echo "Usage ${0} [all|package-init|byte-compile|package-lint]"
     exit 1
 fi
+
+set -x
+set -e
 
 mode="${1}"
 

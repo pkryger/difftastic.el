@@ -363,6 +363,8 @@ perform cleanup."
                 difftastic-normal-colors-vector)
                (ansi-color-bright-colors-vector
                 difftastic-bright-colors-vector))
+           (ignore ansi-color-normal-colors-vector
+                   ansi-color-bright-colors-vector)
            (if (fboundp 'ansi-color--face-vec-face) ;; since Emacs-29
                ( difftastic--with-temp-advice
                  'ansi-color--face-vec-face

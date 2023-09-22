@@ -80,6 +80,10 @@
 (require 'font-lock)
 (require 'magit)
 
+(defgroup difftastic nil
+  "Integration with difftastic."
+  :group 'tools)
+
 (defun difftastic--ansi-color-face (vector offset name)
   "Get face from VECTOR with OFFSET or make a new one with NAME suffix.
 
@@ -92,7 +96,8 @@ New face is made when VECTOR is not bound."
        `((t :foreground ,(cdr (aref (with-no-warnings
                                       (ansi-color-make-color-map))
                                     (+ 30 offset)))))
-       (concat "Face used to render " name " color code."))
+       (concat "Face used to render " name " color code.")
+       :group 'difftastic)
     (aref (eval vector) offset)))
 
 (defun difftastic-requested-window-width ()
@@ -132,10 +137,6 @@ display buffer at bottom."
        (current-buffer)
        `(,(when (< requested-width actual-width)
             #'display-buffer-at-bottom))))))
-
-(defgroup difftastic nil
-  "Integration with difftastic."
-  :group 'tools)
 
 (defcustom difftastic-executable "difft"
   "Location of difftastic executable."

@@ -75,11 +75,13 @@
 
 (require 'ansi-color)
 (require 'cl-lib)
-(require 'compat)
 (require 'ediff)
 (require 'font-lock)
-(require 'fringe)
 (require 'magit)
+
+(eval-when-compile
+  (require 'compat)
+  (require 'fringe))
 
 (defgroup difftastic nil
   "Integration with difftastic."

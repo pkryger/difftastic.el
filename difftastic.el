@@ -221,6 +221,10 @@ See `advice-add' for explanation of SYMBOL, HOW, and FUNCTION arguments."
        (advice-remove ,symbol fn-advice-var))))
 
 (define-derived-mode difftastic-mode fundamental-mode "difftastic"
+  "Major mode to display output of difftastic.
+
+It uses `view-mode' to provide a familiar behaviour to view diffs."
+  :group 'difftastic
   (view-mode)
   (setq buffer-read-only t))
 

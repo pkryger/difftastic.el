@@ -32,7 +32,7 @@ jobs:
     - uses: actions/checkout@v4
     - name: package init
       run: './run-tests.sh package-init'
-    - name: package init
+    - name: byte compile
       run: './run-tests.sh byte-compile'
-    - name: package init
+    - name: package lint
       run: './run-tests.sh package-lint'

@@ -1,0 +1,38 @@
+name: CI Tests
+
+on:
+  pull_request:
+    paths-ignore:
+    - '**.md'
+    - '.gitignore'
+  push:
+    paths-ignore:
+    - '**.md'
+    - '.gitignore'
+
+jobs:
+  ci-tests:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+        emacs_version:
+          - 27.1
+          - 27.2
+          - 28.1
+          - 28.2
+          - 29.1
+          - snapshot
+    steps:
+    - uses: purcell/setup-emacs@master
+      with:
+        version: ${{ matrix.emacs_version }}
+    - uses: actions/checkout@v4
+    - name: package init
+      run: './run-tests.sh package-init'
+    - name: package init
+      run: './run-tests.sh byte-compile'
+    - name: package init
+      run: './run-tests.sh package-lint'

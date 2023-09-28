@@ -373,15 +373,15 @@ perform cleanup."
            (ignore ansi-color-normal-colors-vector
                    ansi-color-bright-colors-vector)
            (if (fboundp 'ansi-color--face-vec-face) ;; since Emacs-29
-               ( difftastic--with-temp-advice
-                 'ansi-color--face-vec-face
-                 :around
-                 #'difftastic--ansi-color-add-background-cached
+               (difftastic--with-temp-advice
+                   'ansi-color--face-vec-face
+                   :around
+                   #'difftastic--ansi-color-add-background-cached
                  (insert (ansi-color-apply string)))
-             ( difftastic--with-temp-advice
-               'ansi-color-get-face-1
-               :filter-return
-               #'difftastic--ansi-color-add-background
+             (difftastic--with-temp-advice
+                 'ansi-color-get-face-1
+                 :filter-return
+                 #'difftastic--ansi-color-add-background
                (insert (ansi-color-apply string))))))))
    ;; Disable write access and call `action' when process is finished.
    :sentinel

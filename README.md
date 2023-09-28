@@ -9,6 +9,7 @@ The `difftastic` is designed to integrate [`difftastic`](https://github.com/wilf
 ## Features
 
 - Configure faces to your likening. By default `magit-diff-*` faces from your user them are used for consistent visual experience.
+- Chunks and file navigation using `n`/`N` and `p`/`P` in generated diffs.
 - DWIM workflows from `magit`.
 
 ## Installation

@@ -41,10 +41,19 @@
 ;;   '(transient-append-suffix 'magit-diff '(-1 -1)
 ;;      [("D" "Difftastic diff (dwim)" difftastic-magit-diff)
 ;;       ("S" "Difftastic show" difftastic-magit-show)]))
+;; (add-hook 'magit-blame-read-only-mode-hook
+;;           (lambda ()
+;;             (kemap-set magit-blame-read-only-mode-map
+;;                        "D" #'difftastic-magit-show)
+;;             (kemap-set magit-blame-read-only-mode-map
+;;                        "S" #'difftastic-magit-show)))
 ;;
 ;; Or, if you use `use-package':
 ;;
 ;; (use-package difftastic
+;;   :bind (:map magit-blame-read-only-mode-map
+;;          ("D" . difftastic-magit-show)
+;;          ("S" . difftastic-magit-show))
 ;;   :config
 ;;   (eval-after-load 'magit-diff
 ;;     '(transient-append-suffix 'magit-diff '(-1 -1)

@@ -214,6 +214,15 @@ call."
   :type 'function
   :group 'difftastic)
 
+(defcustom difftastic-exits-all-viewing-windows nil
+  "Non-nil means restore all windows used to view buffer.
+Commands that restore windows when finished viewing a buffer,
+apply to all windows that display the buffer and have restore
+information.  If `difftastic-exits-all-viewing-windows' is nil, only
+the selected window is considered for restoring."
+  :type 'boolean
+  :group 'difftastic)
+
 (defmacro difftastic--with-temp-advice (symbol how function &rest body)
   ;; checkdoc-params: (symbol how function)
   "Execute BODY with advice temporarily enabled.
@@ -226,13 +235,195 @@ See `advice-add' for explanation of SYMBOL, HOW, and FUNCTION arguments."
            ,@body)
        (advice-remove ,symbol fn-advice-var))))
 
+(defun difftastic-next-file ()
+  "Move to the next file."
+  (interactive)
+  (if-let ((next (difftastic--next-chunk t)))
+      (goto-char next)
+    (user-error "No more files")))
+
+(defun difftastic-next-chunk ()
+  "Move to the next chunk."
+  (interactive)
+  (if-let ((next (difftastic--next-chunk)))
+      (goto-char next)
+    (user-error "No more chunks")))
+
+(defun difftastic-previous-file ()
+  "Move to the previous file."
+  (interactive)
+  (if-let ((previous (difftastic--prev-chunk t)))
+      (goto-char previous)
+    (user-error "No more files")))
+
+(defun difftastic-previous-chunk ()
+  "Move to the previous chunk."
+  (interactive)
+  (if-let ((previous (difftastic--prev-chunk)))
+      (goto-char previous)
+    (user-error "No more chunks")))
+
+(compat-call ;; since Emacs-29
+ defvar-keymap difftastic-mode-map
+  :doc "Keymap for `difftastic-mode'."
+  "n"     #'difftastic-next-chunk
+  "N"     #'difftastic-next-file
+  "p"     #'difftastic-previous-chunk
+  "P"     #'difftastic-previous-file
+  ;; some keys from `view-mode'
+  "C"     #'difftastic-quit-all
+  "c"     #'difftastic-leave
+  "Q"     #'difftastic-quit-all
+  "e"     #'difftastic-leave
+  "q"     #'difftastic-quit
+  ;; "?"  #'View-search-regexp-backward ; Less does this.
+  "\\"    #'View-search-regexp-backward
+  "/"     #'View-search-regexp-forward
+  "r"     #'isearch-backward
+  "s"     #'isearch-forward
+  "m"     #'point-to-register
+  "'"     #'register-to-point
+  "x"     #'exchange-point-and-mark
+  "@"     #'View-back-to-mark
+  "."     #'set-mark-command
+  "%"     #'View-goto-percent
+  "g"     #'View-goto-line
+  "="     #'what-line
+  "F"     #'View-revert-buffer-scroll-page-forward
+  "y"     #'View-scroll-line-backward
+  "C-j"   #'View-scroll-line-forward
+  "RET"   #'View-scroll-line-forward
+  "u"     #'View-scroll-half-page-backward
+  "d"     #'View-scroll-half-page-forward
+  "z"     #'View-scroll-page-forward-set-page-size
+  "w"     #'View-scroll-page-backward-set-page-size
+  "DEL"   #'View-scroll-page-backward
+  "SPC"   #'View-scroll-page-forward
+  "S-SPC" #'View-scroll-page-backward
+  "o"     #'View-scroll-to-buffer-end
+  ">"     #'end-of-buffer
+  "<"     #'beginning-of-buffer
+  "-"     #'negative-argument
+  "9"     #'digit-argument
+  "8"     #'digit-argument
+  "7"     #'digit-argument
+  "6"     #'digit-argument
+  "5"     #'digit-argument
+  "4"     #'digit-argument
+  "3"     #'digit-argument
+  "2"     #'digit-argument
+  "1"     #'digit-argument
+  "0"     #'digit-argument
+  "H"     #'describe-mode
+  "?"     #'describe-mode	; Maybe do as less instead? See above.
+  "h"     #'describe-mode)
+
 (define-derived-mode difftastic-mode fundamental-mode "difftastic"
   "Major mode to display output of difftastic.
-
-It uses `view-mode' to provide a familiar behaviour to view diffs."
+It uses many keybindings from `view-mode' to provide a familiar
+behaviour to view diffs."
   :group 'difftastic
-  (view-mode)
   (setq buffer-read-only t))
+
+(defun difftastic--chunk-regexp (file-chunk)
+  "Build a regexp that mathes a chunk.
+When FILE-CHUNK is t the regexp contains optional chunk match
+data."
+  (rx-to-string
+   `(seq
+     ;; non greedy filename to let following group match
+     bol (not " ") ,(if file-chunk '(+? any) '(+ any))
+     ;; search for optional chunk info only when searching for a file-chunk
+     ,@(when file-chunk
+         '((optional
+            " --- " (group (one-or-more digit)) "/" (one-or-more digit))))
+     ;; language
+     " --- " (or ,@(difftastic--languages)) eol)))
+
+(defun difftastic--chunk-bol (file-chunk)
+  "Find line beginning position.
+When FILE-CHUNK is t the line beginning position is only found
+when match data indicates this is the chunk number 1.  This
+function must be called with match data set by searching for a
+regexp from `difftastic--chunk-regexp'."
+  (if file-chunk
+      (when (let ((chunk-no (match-string 1)))
+              (or (not chunk-no)
+                  (string-equal "1" chunk-no)))
+        (line-beginning-position))
+    (line-beginning-position)))
+
+(defun difftastic--next-chunk (&optional file-chunk)
+  "Find line beginning position of next chunk.
+When FILE-CHUNK is t only first file chunks are searched
+for.  Return nil when no chunk is found."
+  (let ((chunk-regexp (difftastic--chunk-regexp file-chunk)))
+    (save-excursion
+      (goto-char (line-end-position))
+      (cl-block searching-next-chunk
+        (while (re-search-forward chunk-regexp nil t)
+          (when-let ((chunk-bol
+                      (difftastic--chunk-bol file-chunk)))
+            (cl-return-from searching-next-chunk chunk-bol)))))))
+
+(defun difftastic--prev-chunk (&optional file-chunk)
+"Find line beginning position of previous chunk.
+When FILE-CHUNK is t only first file chunks are searched
+for.  Return nil when no chunk is found."
+  (let ((chunk-regexp (difftastic--chunk-regexp file-chunk)))
+    (save-excursion
+      (goto-char (line-beginning-position))
+      (backward-char)
+      (cl-block searching-prev-chunk
+        (while (re-search-backward chunk-regexp nil t)
+          (when-let ((chunk-bol
+                      (difftastic--chunk-bol file-chunk)))
+            (cl-return-from searching-prev-chunk chunk-bol)))))))
+
+;; From `view-mode'
+
+;; This is awful because it assumes that the selected window shows the
+;; current buffer when this is called.
+(defun difftastic-mode--do-exit (&optional exit-action all-windows)
+  "Exit difftastic mode in various ways.
+If all arguments are nil, remove the current buffer from the
+selected window using the `quit-restore' information associated
+with the selected window.  If optional argument ALL-WINDOWS or
+`difftastic-exits-all-viewing-windows' are non-nil, remove the
+current buffer from all windows showing it.
+
+EXIT-ACTION, if non-nil, must specify a function that is called
+with the current buffer as argument and is called after disabling
+`view-mode' and removing any associations of windows with the
+current buffer."
+  (let ((buffer (window-buffer)))
+	(cond
+	 ((or all-windows difftastic-exits-all-viewing-windows)
+	  (dolist (window (get-buffer-window-list))
+	    (quit-window nil window)))
+	 ((eq (window-buffer) (current-buffer))
+	  (quit-window)))
+	(when exit-action
+	  (funcall exit-action buffer))))
+
+(defun difftastic-leave ()
+  "Quit difftastic mode and maybe switch buffers, but don't kill this buffer."
+  (interactive)
+  (difftastic-mode--do-exit))
+
+(defun difftastic-quit ()
+  "Quit difftastic mode, kill current buffer trying to restore window and buffer.
+Try to restore selected window to previous state and go to
+previous buffer or window."
+  (interactive)
+  (difftastic-mode--do-exit 'kill-buffer))
+
+(defun difftastic-quit-all ()
+  "Quit difftastic mode, kill current buffer trying to restore windows and buffers.
+Try to restore all windows viewing buffer to previous state and
+go to previous buffer or window."
+  (interactive)
+  (difftastic-mode--do-exit 'kill-buffer t))
 
 (defun difftastic--copy-tree (tree)
   "Make a copy of TREE.

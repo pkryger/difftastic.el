@@ -98,7 +98,6 @@
 
 (defun difftastic--ansi-color-face (vector offset name)
   "Get face from VECTOR with OFFSET or make a new one with NAME suffix.
-
 New face is made when VECTOR is not bound."
   ;;This is for backward compatibility with Emacs-27.  When dropping
   ;; compatibility, calls should be replaced with `(aref VECTOR offset)'.
@@ -127,7 +126,6 @@ New face is made when VECTOR is not bound."
 
 (defun difftastic-pop-to-buffer (buffer-or-name requested-width)
   "Display BUFFER-OR-NAME with REQUESTED-WIDTH and select its window.
-
 When actual window width is greater than REQUESTED-WIDTH then
 display buffer at bottom."
   (with-current-buffer buffer-or-name
@@ -191,7 +189,6 @@ N.B. only foreground and background properties will be used."
   '((magit-diff-added . magit-diff-added-highlight)
     (magit-diff-removed . magit-diff-removed-highlight))
   "Faces to replace underlined highlight in difftastic output.
-
 This is an alist, where each association defines a mapping
 between a non-highlighted face to a highlighted face.  Set to nil if
 you prefer unaltered difftastic output.
@@ -209,7 +206,6 @@ N.B. only foreground and background properties will be used."
 (defcustom difftastic-display-buffer-function
   #'difftastic-pop-to-buffer
   "Function used diplay buffer with output of difftastic call.
-
 It will be called with two arguments: BUFFER-OR-NAME: a buffer to
 display and REQUESTED-WIDTH: a with requested for difftastic
 call."
@@ -219,7 +215,6 @@ call."
 (defmacro difftastic--with-temp-advice (symbol how function &rest body)
   ;; checkdoc-params: (symbol how function)
   "Execute BODY with advice temporarily enabled.
-
 See `advice-add' for explanation of SYMBOL, HOW, and FUNCTION arguments."
   (declare (indent 3))
   `(let ((fn-advice-var ,function))
@@ -239,7 +234,6 @@ It uses `view-mode' to provide a familiar behaviour to view diffs."
 
 (defun difftastic--copy-tree (tree)
   "Make a copy of TREE.
-
 If TREE is a cons cell, this recursively copies both its car and
 its cdr.  Contrast to `copy-sequence', which copies only along
 the cdrs.  This copies vectors and bool vectors as well as
@@ -273,7 +267,6 @@ conses."
 
 (defun difftastic--ansi-color-add-background (face)
   "Add :background to FACE.
-
 N.B.  This is meant to filter-result of either
 `ansi-color--face-vec-face' or `ansi-color-get-face-1' by
 adding background to faces if they have a foreground set."
@@ -323,7 +316,6 @@ adding background to faces if they have a foreground set."
 
 (defun difftastic--ansi-color-add-background-cached (orig-fun face-vec)
   "Memoise ORIG-FUN based on FACE-VEC.
-
 Utilise `difftastic--ansi-color-add-background-cache' to cache
 `ansi-color--face-vec-face' calls."
   (if-let ((cached (assoc face-vec
@@ -352,7 +344,6 @@ Utilise `difftastic--ansi-color-add-background-cache' to cache
 
 (defun difftastic--run-command (buffer command action)
   "Run COMMAND, show its results in BUFFER, then execute ACTION.
-
 The ACTION is meant to display the BUFFER in some window and, optionally,
 perform cleanup."
   ;; Clear the result buffer (we might regenerate a diff, e.g., for
@@ -410,7 +401,6 @@ perform cleanup."
 ;;;###autoload
 (defun difftastic-magit-show (rev)
   "Show the result of \\='git show REV\\=' with difftastic.
-
 When REV couldn't be guessed or called with prefix arg ask for REV."
   (interactive
    (list (or
@@ -430,7 +420,6 @@ When REV couldn't be guessed or called with prefix arg ask for REV."
 ;;;###autoload
 (defun difftastic-magit-diff (arg)
   "Show the result of \\='git diff ARG\\=' with difftastic.
-
 When ARG couldn't be guessed or called with prefix arg ask for ARG."
   (interactive
    (list (or
@@ -481,7 +470,6 @@ When ARG couldn't be guessed or called with prefix arg ask for ARG."
 
 (defun difftastic--get-file (prefix buffer)
   "If BUFFER visits a file return it else create a temporary file with PREFIX.
-
 The return value is a cons where car is the file and cdr is non
 nil if a temporary file has been created."
   (let* (temp
@@ -496,7 +484,6 @@ nil if a temporary file has been created."
 
 (defun difftastic--delete-temp-file (file-temp)
   "Delete FILE-TEMP when it is a temporary file.
-
 The FILE-TEMP is a cons where car is the file and cdr is non nil
 when it is a temporary file."
   (let ((file (car file-temp))
@@ -537,7 +524,6 @@ when it is a temporary file."
 
 (defun difftastic--files-internal (buffer file-temp-A file-temp-B &optional lang-override)
   "Run difftastic on files FILE-TEMP-A and FILE-TEMP-B and show results in BUFFER.
-
 The FILE-TEMP-A and FILE-TEMB-B are conses where car is the file
 and cdr is non nil when it is a temporary file.  LANG-OVERRIDE is
 passed to difftastic as \\='--override\\=' argument."
@@ -559,7 +545,6 @@ passed to difftastic as \\='--override\\=' argument."
 ;;;###autoload
 (defun difftastic-buffers (buffer-A buffer-B &optional lang-override)
   "Run difftastic on a pair of buffers, BUFFER-A and BUFFER-B.
-
 Optionally, provide a LANG-OVERRIDE to override language used.
 See \\='difft --list-languages\\=' for language list.
 
@@ -610,7 +595,6 @@ then ask for language before running difftastic."
 ;;;###autoload
 (defun difftastic-files (file-A file-B &optional lang-override)
   "Run difftastic on a pair of files, FILE-A and FILE-B.
-
 Optionally, provide a LANG-OVERRIDE to override language used.
 See \\='difft --list-languages\\=' for language list.  When
 function is called with a prefix arg then ask for language before

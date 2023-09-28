@@ -87,6 +87,7 @@
 (require 'ediff)
 (require 'font-lock)
 (require 'magit)
+(require 'view)
 
 (eval-when-compile
   (require 'compat)

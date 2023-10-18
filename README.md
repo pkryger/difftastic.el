@@ -44,6 +44,7 @@ To configure the `difftastic` commands in `magit-diff` prefix, use the following
 Or, if you use `use-package`:
 ```emacs-lisp
 (use-package difftastic
+  :demand t
   :bind (:map magit-blame-read-only-mode-map
          ("D" . difftastic-magit-show)
          ("S" . difftastic-magit-show))

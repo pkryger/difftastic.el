@@ -51,6 +51,7 @@
 ;; Or, if you use `use-package':
 ;;
 ;; (use-package difftastic
+;;   :demand t
 ;;   :bind (:map magit-blame-read-only-mode-map
 ;;          ("D" . difftastic-magit-show)
 ;;          ("S" . difftastic-magit-show))

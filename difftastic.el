@@ -325,20 +325,28 @@ behaviour to view diffs."
   :group 'difftastic
   (setq buffer-read-only t))
 
+(defvar-local difftastic--chunk-regexp-chunk nil)
+(defvar-local difftastic--chunk-regexp-file nil)
+
 (defun difftastic--chunk-regexp (file-chunk)
   "Build a regexp that mathes a chunk.
 When FILE-CHUNK is t the regexp contains optional chunk match
 data."
-  (rx-to-string
-   `(seq
-     ;; non greedy filename to let following group match
-     bol (not " ") ,(if file-chunk '(+? any) '(+ any))
-     ;; search for optional chunk info only when searching for a file-chunk
-     ,@(when file-chunk
-         '((optional
-            " --- " (group (one-or-more digit)) "/" (one-or-more digit))))
-     ;; language
-     " --- " (or ,@(difftastic--languages)) eol)))
+  (let ((chunk-regexp (if file-chunk
+                          'difftastic--chunk-regexp-file
+                        'difftastic--chunk-regexp-chunk)))
+    (or (eval chunk-regexp)
+        (set chunk-regexp
+             (rx-to-string
+              `(seq
+                ;; non greedy filename to let following group match
+                bol (not " ") ,(if file-chunk '(+? any) '(+ any))
+                ;; search for optional chunk info only when searching for a
+                ;; file-chunk
+                ,@(when file-chunk
+                    '((optional " --- " (group (1+ digit)) "/" (1+ digit))))
+                ;; language at the end
+                " --- " (or ,@(difftastic--languages)) eol))))))
 
 (defun difftastic--chunk-bol (file-chunk)
   "Find line beginning position.

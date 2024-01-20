@@ -23,11 +23,12 @@
 
 ;;; Commentary:
 
-;; The difftastic is designed to integrate difftastic - a structural diff tool
-;; - (https://github.com/wilfred/difftastic) into your Emacs workflow,
-;; enhancing your code review and comparison experience.  This package
-;; automatically displays difftastic's output within Emacs using faces from
-;; your user theme, ensuring consistency with your overall coding environment.
+;; The difftastic Emacs package is designed to integrate difftastic - a
+;; structural diff tool - (https://github.com/wilfred/difftastic) into your
+;; Emacs workflow, enhancing your code review and comparison experience.  This
+;; package automatically displays difftastic's output within Emacs using faces
+;; from your user theme, ensuring consistency with your overall coding
+;; environment.
 ;;
 ;; Configuration
 ;;
@@ -63,11 +64,11 @@
 ;;
 ;; Usage
 ;;
-;; There are four commands to interact with difftastic:
+;; The following commands are meant to help to interact with difftastic:
 ;;
-;; - `difftastic-magit-diff' - show the result of 'git diff ARG' with
-;;   difftastic.  It tries to guess ARG, and ask for it when can't. When called
-;;   with prefix argument it will ask for ARG.
+;; - `difftastic-magit-diff' - show the result of 'git diff ARGS -- FILES' with
+;;   difftastic.  This is the main entry point for DWIM action, so it tries to
+;;   guess revision or range.
 ;;
 ;; - `difftastic-magit-show' - show the result of 'git show ARG' with
 ;;   difftastic.  It tries to guess ARG, and ask for it when can't. When called
@@ -80,6 +81,9 @@
 ;; - `difftastic-buffers' - show the result of 'difft BUFFER-A BUFFER-B'.
 ;;   Language is guessed based on buffers modes.  When called with prefix
 ;;   argument it will ask for language to use.
+;;
+;; - `difftastic-git-diff-range' - transform ARGS for difftastic and show the
+;;   result of 'git diff ARGS REV-OR-RANGE -- FILES' with difftastic.
 
 ;;; Code:
 
@@ -534,14 +538,21 @@ Utilise `difftastic--ansi-color-add-background-cache' to cache
             difftastic--ansi-color-add-background-cache)
       face)))
 
-(defun difftastic--magit-with-difftastic (buffer command)
-  "Run COMMAND with GIT_EXTERNAL_DIFF then show result in BUFFER."
+(defun difftastic--git-with-difftastic (buffer command &optional difftastic-args)
+  "Run COMMAND with GIT_EXTERNAL_DIFF then show result in BUFFER.
+The DIFFTASTIC-ARGS is a list of extra arguments to pass to
+`difftastic-executable'."
   (let* ((requested-width (funcall difftastic-requested-window-width-function))
          (process-environment
-          (cons (format "GIT_EXTERNAL_DIFF=%s --width %s --background %s"
+          (cons (format "GIT_EXTERNAL_DIFF=%s --width %s --background %s%s"
                         difftastic-executable
                         requested-width
-                        (frame-parameter nil 'background-mode))
+                        (frame-parameter nil 'background-mode)
+                        (if difftastic-args
+                            (mapconcat #'identity
+                                       (cons "" difftastic-args)
+                                       " ")
+                          ""))
                 process-environment)))
     (difftastic--run-command
      buffer
@@ -605,6 +616,136 @@ perform cleanup."
            (message "Process %s returned no output"
                     (mapconcat #'identity command " "))))))))
 
+(defvar difftastic--transform-git-to-difft
+  '(("^-\\(?:U\\|-unified=\\)\\([0-9]+\\)$" . "--context \\1"))
+  "Alist with entries in a from of (GIT-ARG-REGEXP . DIFFT-REPLACEMENT).
+When git argument matches GIT-ARG-REGEXP it will be replaces with
+DIFFT-REPLACEMENT.")
+
+(defvar difftastic--transform-incompatible
+  '("^--stat$"
+    "^--no-ext-diff$"
+    "^--ignore-space-change$"
+    "^--ignore-all-space$"
+    "^--irreversible-delete$"
+    "^--function-context$"
+    "^-\\(?:M\\|-find-renames=?\\)\\(?:[0-9]+%?\\)?$"
+    "^-\\(?:C\\|-find-copies=?\\)\\(?:[0-9]+%?\\)?$"
+    "^-R$"
+    "^--show-signature$")
+  "List of git arguments that are incompatible in a context of difftastic.
+Each argument is matched as regexp.")
+
+(defun difftastic--transform-diff-arguments (args)
+  "Transform \\='git diff\\=' ARGS to be compatible with difftastic.
+This removes arguments converts some arguments to be compatible
+with difftastic (i.e., \\='-U\\=' to \\='--context\\=')and
+removes some that are incompatible (i.e., \\='--stat\\=',
+\\='--no-ext-diff\\=').  The return value is a list in a form
+of (GIT-ARGS DIFFT-ARGS), where GIT-ARGS are arguments to be
+passed to \\='git\\', and DIFFT-ARGS are arguments to be passed
+to difftastic."
+  (let (case-fold-search)
+    (list
+     (cl-remove-if
+      (lambda (arg)
+        (cl-member arg
+                   (append
+                    difftastic--transform-incompatible
+                    (cl-mapcar #'car difftastic--transform-git-to-difft))
+                   :test (lambda (arg regexp)
+                           (string-match regexp arg))))
+      args)
+     (cl-remove
+      nil
+      (cl-mapcar
+       (lambda (arg)
+         (cl-dolist (regexp-replacement difftastic--transform-git-to-difft)
+           (when (string-match (car regexp-replacement) arg)
+             (cl-return
+              (replace-match (cdr regexp-replacement) t nil arg)))))
+       args)))))
+
+;;;###autoload
+(defun difftastic-git-diff-range (&optional rev-or-range args files)
+  "Show difference between two commits using difftastic.
+The meaning of REV-OR-RANGE, ARGS, and FILES is like in
+`magit-diff-range', but ARGS are adjusted for difftastic with
+`difftastic--transform-diff-arguments'."
+  (interactive (cons (magit-diff-read-range-or-commit "Diff for range"
+                                                      nil current-prefix-arg)
+                     (magit-diff-arguments)))
+  (pcase-let* ((`(,git-args ,difftastic-args)
+                (difftastic--transform-diff-arguments args))
+               (buffer-name
+                (concat
+                 "*difftastic git diff"
+                 (if git-args
+                     (mapconcat #'identity (cons "" git-args) " ")
+                   "")
+                 (if rev-or-range (concat " " rev-or-range)
+                   "")
+                 (if files
+                     (mapconcat #'identity (cons " --" files) " ")
+                   "")
+                 "*")))
+    (difftastic--git-with-difftastic
+     (get-buffer-create buffer-name)
+     `("git" "--no-pager" "diff" "--ext-diff"
+       ,@(when git-args git-args)
+       ,@(when rev-or-range (list rev-or-range))
+       ,@(when files (cons "--" files)))
+     difftastic-args)))
+
+;;;###autoload
+(defun difftastic-magit-diff (&optional args files)
+  "Show the result of \\='git diff ARGS -- FILES\\=' with difftastic."
+  (interactive (magit-diff-arguments))
+  (let ((default-directory (magit-toplevel))
+        (section (magit-current-section)))
+    (cond
+     ((magit-section-match 'module section)
+      (setq default-directory
+            (expand-file-name
+             (file-name-as-directory (oref section value))))
+      (difftastic-git-diff-range (oref section range)))
+     (t
+      (when (magit-section-match 'module-commit section)
+        (setq args nil)
+        (setq files nil)
+        (setq default-directory
+              (expand-file-name
+               (file-name-as-directory (magit-section-parent-value section)))))
+      (pcase (magit-diff--dwim)
+        ('unmerged
+         (unless (magit-merge-in-progress-p)
+           (user-error "No merge is in progress"))
+         (difftastic-git-diff-range (magit--merge-range) args files))
+        ('unstaged
+         (difftastic-git-diff-range nil args files))
+        ('staged
+         (let ((file (magit-file-at-point)))
+           (if (and file (equal (cddr (car (magit-file-status file)))
+                                '(?D ?U)))
+               ;; File was deleted by us and modified by them.  Show the latter.
+               (progn
+                 (unless (magit-merge-in-progress-p)
+                   (user-error "No merge is in progress"))
+                 (difftastic-git-diff-range
+                  (magit--merge-range) args (list file)))
+             (difftastic-git-diff-range
+              nil (cl-pushnew "--cached" args :test #'string=) files))))
+        (`(stash . ,value)
+         ;; ATM, `magit-diff--dwim' evaluates to `commit' when point is on stash
+         ;; section
+         (difftastic-git-diff-range (format "%s^..%s" value value) args files))
+        (`(commit . ,value)
+         (difftastic-git-diff-range (format "%s^..%s" value value) args files))
+        ((and range (pred stringp))
+         (difftastic-git-diff-range range args files))
+        (_
+         (call-interactively #'difftastic-git-diff-range)))))))
+
 ;;;###autoload
 (defun difftastic-magit-show (rev)
   "Show the result of \\='git show REV\\=' with difftastic.
@@ -620,43 +761,9 @@ When REV couldn't be guessed or called with prefix arg ask for REV."
           (magit-read-branch-or-commit "Revision"))))
   (if (not rev)
       (error "No revision specified")
-    (difftastic--magit-with-difftastic
+    (difftastic--git-with-difftastic
      (get-buffer-create (concat "*difftastic git show " rev "*"))
      (list "git" "--no-pager" "show" "--ext-diff" rev))))
-
-;;;###autoload
-(defun difftastic-magit-diff (arg)
-  "Show the result of \\='git diff ARG\\=' with difftastic.
-When ARG couldn't be guessed or called with prefix arg ask for ARG."
-  (interactive
-   (list (or
-          (and current-prefix-arg
-               (magit-diff-read-range-or-commit "Range/Commit"))
-          ;; Otherwise, auto-guess based on position of point, e.g., in a file
-          ;; or based on the Staged or Unstaged section.
-          (when-let ((file (magit-file-relative-name)))
-            (save-buffer)
-            file)
-          (pcase (magit-diff--dwim)
-            ('unmerged (error "Unmerged is not yet implemented"))
-            ('unstaged nil)
-            ('staged "--cached")
-            (`(stash . ,_) (error "Stash is not yet implemented"))
-            (`(commit . ,value) (format "%s^..%s" value value))
-            ((and range (pred stringp)) range)
-            (_ (magit-diff-read-range-or-commit "Range/Commit"))))))
-  (let* ((name (concat "*difftastic git diff"
-                       (if arg (concat " " arg) "")
-                       "*"))
-         (file (magit-file-relative-name))
-         (default-directory (if file
-                                (magit-toplevel)
-                              default-directory)))
-    (difftastic--magit-with-difftastic
-     (get-buffer-create name)
-     `("git" "--no-pager" "diff" "--ext-diff"
-       ,@(when file (list "--"))
-       ,@(when arg (list arg))))))
 
 (defun difftastic---make-temp-file (prefix buffer)
   "Make a temp file for BUFFER content that with PREFIX included in file name."

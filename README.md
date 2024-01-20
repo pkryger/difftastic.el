@@ -4,7 +4,7 @@
 
 ## Description
 
-The `difftastic` is designed to integrate [`difftastic`](https://github.com/wilfred/difftastic) - a structural diff tool - into your Emacs workflow, enhancing your code review and comparison experience. This package automatically displays `difftastic`'s output within Emacs using faces from your user theme, ensuring consistency with your overall coding environment.
+The `difftastic` Emacs package is designed to integrate [`difftastic`](https://github.com/wilfred/difftastic) - a structural diff tool - into your Emacs workflow, enhancing your code review and comparison experience. This package automatically displays `difftastic`'s output within Emacs using faces from your user theme, ensuring consistency with your overall coding environment.
 
 ## Features
 
@@ -56,14 +56,14 @@ Or, if you use `use-package`:
         ("S" "Difftastic show" difftastic-magit-show)])))
 ```
 
-
 ## Usage
-There are four commands to interact with `difftastic`:
+The following commands are meant to help to interact with `difftastic`:
 
-- `difftastic-magit-diff` - show the result of `git diff ARG` with `difftastic`. It tries to guess `ARG`, and ask for it when can't. When called with prefix argument it will ask for `ARG`.
+- `difftastic-magit-diff` - show the result of `git diff ARGS -- FILES` with `difftastic`. This is the main entry point for DWIM action, so it tries to guess revision or range.
 - `difftastic-magit-show` - show the result of `git show ARG` with `difftastic`. It tries to guess `ARG`, and ask for it when can't. When called with prefix argument it will ask for `ARG`.
 - `difftastic-files` - show the result of `difft FILE-A FILE-B`. When called with prefix argument it will ask for language to use, instead of relaying on `difftastic`'s detection mechanism.
 - `difftastic-buffers` - show the result of `difft BUFFER-A BUFFER-B`. Language is guessed based on buffers modes. When called with prefix argument it will ask for language to use.
+- `difftastic-git-diff-range` - transform `ARGS` for difftastic and show the result of `git diff ARGS REV-OR-RANGE -- FILES` with `difftastic`.
 
 ## Customization
 

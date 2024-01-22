@@ -345,8 +345,14 @@ data."
                 ;; file-chunk
                 ,@(when file-chunk
                     '((optional " --- " (group (1+ digit)) "/" (1+ digit))))
-                ;; language at the end
-                " --- " (or ,@(difftastic--languages)) eol))))))
+                ;; language or error at the end
+                (or
+                 (seq " --- " (or ,@(difftastic--languages)))
+                 (seq " --- Text ("
+                      (1+ digit)
+                      " " (or ,@(difftastic--languages))
+                      " parse errors, exceeded DFT_PARSE_ERROR_LIMIT)"))
+                eol))))))
 
 (defun difftastic--chunk-bol (file-chunk)
   "Find line beginning position.

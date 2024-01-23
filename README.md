@@ -98,7 +98,11 @@ You can customize the appearance of `difftastic` output by adjusting the faces u
 
 This package was inspired by the need for an integration of `difftastic` within Emacs, enhancing the code review process for developers.
 
-This work is based on [a Tassilo Horn blog entry](https://tsdh.org/posts/2022-08-01-difftastic-diffing-with-magit.html). `magit-diff` keybindings and a concept of updating faces comes from a [Shiv J.M. blog](https://shivjm.blog/better-magit-diffs/).
+This work is based on Tassilo Horn's [blog entry](https://tsdh.org/posts/2022-08-01-difftastic-diffing-with-magit.html).
+
+`magit-diff` keybindings and a concept of updating faces comes from a Shiv Jha-Mathur's [blog entry](https://shivjm.blog/better-magit-diffs/).
+
+This all has been strongly influenced by - a class in itself - Magit and Transient Emacs packages by Jonas Bernoulli.
 
 ## Similar packages
 

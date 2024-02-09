@@ -353,9 +353,14 @@ data."
                 (or
                  (seq " --- " (or ,@(difftastic--languages)))
                  (seq " --- Text ("
-                      (1+ digit)
-                      " " (or ,@(difftastic--languages))
-                      " parse errors, exceeded DFT_PARSE_ERROR_LIMIT)"))
+                      (? (1+ digit)
+                         " " (or ,@(difftastic--languages))
+                         " parse error" (? "s") ", ")
+                      "exceeded "
+                      (or "DFT_PARSE_ERROR_LIMIT"
+                          "DFT_GRAPH_LIMIT"
+                          "DFT_BYTE_LIMIT")
+                      ")"))
                 eol))))))
 
 (defun difftastic--chunk-bol (file-chunk)

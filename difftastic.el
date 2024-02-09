@@ -351,15 +351,18 @@ data."
                     '((optional " --- " (group (1+ digit)) "/" (1+ digit))))
                 ;; language or error at the end
                 (or
-                 (seq " --- " (or ,@(difftastic--languages)))
+                 (seq " --- " (or ,@(cl-remove "Text"
+                                               (difftastic--languages)
+                                               :test #'string=)))
                  (seq " --- Text ("
-                      (? (1+ digit)
-                         " " (or ,@(difftastic--languages))
-                         " parse error" (? "s") ", ")
-                      "exceeded "
-                      (or "DFT_PARSE_ERROR_LIMIT"
-                          "DFT_GRAPH_LIMIT"
-                          "DFT_BYTE_LIMIT")
+                      (or
+                       (seq (1+ digit)
+                               " " (or ,@(difftastic--languages))
+                               " parse error" (? "s")
+                               ", exceeded DFT_PARSE_ERROR_LIMIT")
+                       (seq "exceeded "
+                            (or "DFT_GRAPH_LIMIT"
+                                "DFT_BYTE_LIMIT")))
                       ")"))
                 eol))))))
 

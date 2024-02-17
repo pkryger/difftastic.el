@@ -36,10 +36,10 @@ To configure the `difftastic` commands in `magit-diff` prefix, use the following
       ("S" "Difftastic show" difftastic-magit-show)]))
 (add-hook 'magit-blame-read-only-mode-hook
           (lambda ()
-            (kemap-set magit-blame-read-only-mode-map
-                       "D" #'difftastic-magit-show)
-            (kemap-set magit-blame-read-only-mode-map
-                       "S" #'difftastic-magit-show)))
+            (keymap-set magit-blame-read-only-mode-map
+                        "D" #'difftastic-magit-show)
+            (keymap-set magit-blame-read-only-mode-map
+                        "S" #'difftastic-magit-show)))
 ```
 
 Or, if you use `use-package`:

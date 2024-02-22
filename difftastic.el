@@ -615,6 +615,7 @@ perform cleanup."
        (when (eq (process-status proc) 'exit)
          (with-current-buffer (process-buffer proc)
            (difftastic-mode)
+           (set-buffer-modified-p nil)
            (goto-char (point-min))
            (setq output (not (eq (point-min) (point-max)))))
          (if output

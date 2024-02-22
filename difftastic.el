@@ -840,7 +840,7 @@ when it is a temporary file."
                                       string-replace
                                       "-" " "
                                       (replace-regexp-in-string
-                                       "-mode$" ""
+                                       "\\(?:-ts\\)?-mode$" ""
                                        (symbol-name mode))))))
                 languages)))
 

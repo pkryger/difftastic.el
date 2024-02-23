@@ -938,6 +938,19 @@ argument."
        (difftastic--delete-temp-file file-buf-A)
        (difftastic--delete-temp-file file-buf-B)))))
 
+(defmacro difftastic--with-temp-files (file-bufs &rest body)
+  "Exectue the forms in BODY with each symbol in FILE-BUFS list `let'-bound to nil.
+If any form in BODY signals an error each element in FILE-BUFS will be passed
+to `difftastic--delete-temp-file'."
+  (declare (indent 1) (debug t))
+  `(let ,file-bufs
+     (condition-case err
+         (progn ,@body)
+       ((error debug)
+        (dolist (file-buf (list ,@file-bufs))
+          (difftastic--delete-temp-file file-buf))
+        (signal (car err) (cdr err))))))
+
 ;;;###autoload
 (defun difftastic-buffers (buffer-A buffer-B &optional lang-override)
   "Run difftastic on a pair of buffers, BUFFER-A and BUFFER-B.
@@ -972,21 +985,15 @@ then ask for language before running difftastic."
                                 (get-buffer bf-B))))
                (completing-read "Language: " languages nil t suggested))))))
 
-  (let (file-buf-A file-buf-B)
-    (condition-case err
-        (progn
-          (setq file-buf-A (difftastic--get-file "A" (get-buffer buffer-A))
-                file-buf-B (difftastic--get-file "B" (get-buffer buffer-B)))
-          (difftastic--files-internal
-           (get-buffer-create
-            (concat "*difftastic " buffer-A " " buffer-B "*"))
-           file-buf-A
-           file-buf-B
-           lang-override))
-      ((error debug)
-       (difftastic--delete-temp-file file-buf-A)
-       (difftastic--delete-temp-file file-buf-B)
-       (signal (car err) (cdr err))))))
+  (difftastic--with-temp-files (file-buf-A file-buf-B)
+    (setq file-buf-A (difftastic--get-file "A" (get-buffer buffer-A))
+          file-buf-B (difftastic--get-file "B" (get-buffer buffer-B)))
+    (difftastic--files-internal
+     (get-buffer-create
+      (concat "*difftastic " buffer-A " " buffer-B "*"))
+     file-buf-A
+     file-buf-B
+     lang-override)))
 
 ;;;###autoload
 (defun difftastic-files (file-A file-B &optional lang-override)
@@ -1060,50 +1067,42 @@ In order to determine requested width for difftastic a call to
                       (completing-read "Language: "
                                        (difftastic--languages) nil t))
                     (alist-get 'lang-override difftastic--rerun-alist))))
-  (if (and (eq major-mode 'difftastic-mode)
-           difftastic--rerun-alist)
-      (let ((rerun-alist (copy-tree difftastic--rerun-alist))
-            file-buf-A file-buf-B)
-        (condition-case err
-            (let-alist rerun-alist
-              (setq file-buf-A
-                    (difftastic--rerun-file-buf "A" .file-buf-A rerun-alist)
-                    file-buf-B
-                    (difftastic--rerun-file-buf "B" .file-buf-B rerun-alist))
-              (let* ((default-directory .default-directory)
-                     (requested-width
-                      (funcall
-                       difftastic-rerun-requested-window-width-function))
-                     (process-environment
-                      (if .git-command
-                          (difftastic--build-git-process-environment
-                           requested-width
-                           (append .difftastic-args
-                                   (when lang-override
-                                     (list "--override"
-                                           (format "*:%s" lang-override)))))
-                        process-environment))
-                     (command (or .git-command
-                                  (difftastic--build-files-command
-                                   file-buf-A
-                                   file-buf-B
-                                   requested-width
-                                   lang-override)))
-                     (buffer (current-buffer)))
-                (difftastic--run-command
-                 buffer
-                 command
-                 (lambda ()
-                   (with-current-buffer buffer
-                     (setq difftastic--rerun-alist rerun-alist))
-                   (difftastic--delete-temp-file file-buf-A)
-                   (difftastic--delete-temp-file file-buf-B)))))
-          ((error debug)
-           (difftastic--delete-temp-file file-buf-A)
-           (difftastic--delete-temp-file file-buf-B)
-           (signal (car err) (cdr err)))))
+  (if-let (((eq major-mode 'difftastic-mode))
+           (rerun-alist (copy-tree difftastic--rerun-alist)))
+      (difftastic--with-temp-files (file-buf-A file-buf-B)
+        (let-alist rerun-alist
+          (setq file-buf-A
+                (difftastic--rerun-file-buf "A" .file-buf-A rerun-alist)
+                file-buf-B
+                (difftastic--rerun-file-buf "B" .file-buf-B rerun-alist))
+          (let* ((default-directory .default-directory)
+                 (requested-width
+                  (funcall difftastic-rerun-requested-window-width-function))
+                 (process-environment
+                  (if .git-command
+                      (difftastic--build-git-process-environment
+                       requested-width
+                       (append .difftastic-args
+                               (when lang-override
+                                 (list "--override"
+                                       (format "*:%s" lang-override)))))
+                    process-environment))
+                 (command (or .git-command
+                              (difftastic--build-files-command
+                               file-buf-A
+                               file-buf-B
+                               requested-width
+                               lang-override)))
+                 (buffer (current-buffer)))
+            (difftastic--run-command
+             buffer
+             command
+             (lambda ()
+               (with-current-buffer buffer
+                 (setq difftastic--rerun-alist rerun-alist))
+               (difftastic--delete-temp-file file-buf-A)
+               (difftastic--delete-temp-file file-buf-B))))))
     (user-error "Nothing to rerun")))
-
 
 (provide 'difftastic)
 ;;; difftastic.el ends here

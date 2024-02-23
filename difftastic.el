@@ -609,7 +609,8 @@ The DIFFTASTIC-ARGS is a list of extra arguments to pass to
   (let* ((requested-width (funcall difftastic-requested-window-width-function))
          (process-environment (difftastic--build-git-process-environment
                                requested-width
-                               difftastic-args)))
+                               difftastic-args))
+         (display-buffer-function difftastic-display-buffer-function))
     (difftastic--run-command
      buffer
      command
@@ -619,7 +620,7 @@ The DIFFTASTIC-ARGS is a list of extra arguments to pass to
                  `((default-directory . ,default-directory)
                    (git-command . ,command)
                    (difftastic-args . ,difftastic-args))))
-       (funcall difftastic-display-buffer-function buffer requested-width)))))
+       (funcall display-buffer-function buffer requested-width)))))
 
 (defun difftastic--run-command (buffer command &optional action)
   "Run COMMAND, show its results in BUFFER, then execute ACTION.
@@ -920,7 +921,8 @@ The FILE-BUF-A and FILE-BUF-B are conses where car is the file
 and cdr is a buffer when it is a temporary file and nil otherwise.
 LANG-OVERRIDE is passed to difftastic as \\='--override\\='
 argument."
-  (let ((requested-width (funcall difftastic-requested-window-width-function)))
+  (let ((requested-width (funcall difftastic-requested-window-width-function))
+        (display-buffer-function difftastic-display-buffer-function))
     (difftastic--run-command
      buffer
      (difftastic--build-files-command file-buf-A
@@ -934,7 +936,7 @@ argument."
                  (lang-override . ,lang-override)
                  (file-buf-A . ,file-buf-A)
                  (file-buf-B . ,file-buf-B))))
-       (funcall difftastic-display-buffer-function buffer requested-width)
+       (funcall display-buffer-function buffer requested-width)
        (difftastic--delete-temp-file file-buf-A)
        (difftastic--delete-temp-file file-buf-B)))))
 

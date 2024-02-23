@@ -1065,8 +1065,7 @@ In order to determine requested width for difftastic a call to
   (interactive (list
                 (or (when current-prefix-arg
                       (completing-read "Language: "
-                                       (difftastic--languages) nil t))
-                    (alist-get 'lang-override difftastic--rerun-alist))))
+                                       (difftastic--languages) nil t)))))
   (if-let (((eq major-mode 'difftastic-mode))
            (rerun-alist (copy-tree difftastic--rerun-alist)))
       (difftastic--with-temp-files (file-buf-A file-buf-B)
@@ -1076,6 +1075,8 @@ In order to determine requested width for difftastic a call to
                 file-buf-B
                 (difftastic--rerun-file-buf "B" .file-buf-B rerun-alist))
           (let* ((default-directory .default-directory)
+                 (lang-override (or lang-override
+                                    (alist-get 'lang-override rerun-alist)))
                  (requested-width
                   (funcall difftastic-rerun-requested-window-width-function))
                  (process-environment

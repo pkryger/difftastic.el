@@ -367,7 +367,8 @@ When FILE-CHUNK is t the regexp contains optional chunk match
 data."
   (let ((chunk-regexp (if file-chunk
                           'difftastic--chunk-regexp-file
-                        'difftastic--chunk-regexp-chunk)))
+                        'difftastic--chunk-regexp-chunk))
+        (languages (difftastic--languages)))
     (or (eval chunk-regexp)
         (set chunk-regexp
              (rx-to-string
@@ -380,13 +381,12 @@ data."
                     '((optional " --- " (group (1+ digit)) "/" (1+ digit))))
                 ;; language or error at the end
                 (or
-                 (seq " --- " (or ,@(cl-remove "Text"
-                                               (difftastic--languages)
-                                               :test #'string=)))
+                 (seq " --- " (or ,@languages))
                  (seq " --- Text ("
                       (or
                        (seq (1+ digit)
-                               " " (or ,@(difftastic--languages))
+                               " " (or ,@(cl-remove "Text" languages
+                                          :test #'string=))
                                " parse error" (? "s")
                                ", exceeded DFT_PARSE_ERROR_LIMIT")
                        (seq "exceeded "

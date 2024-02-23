@@ -9,8 +9,9 @@ The `difftastic` Emacs package is designed to integrate [`difftastic`](https://g
 ## Features
 
 - Configure faces to your likening. By default `magit-diff-*` faces from your user them are used for consistent visual experience.
-- Chunks and file navigation using `n`/`N` and `p`/`P` in generated diffs.
+- Chunks and file navigation using <kbd>n</kbd>/<kbd>N</kbd> and <kbd>p</kbd>/<kbd>P</kbd> in generated diffs.
 - DWIM workflows from `magit`.
+- Rerun `difftastic` with <kbd>g</kbd> to use your window width and/or to force language change (when called with prefix).
 
 ## Installation
 
@@ -24,7 +25,7 @@ The `difftastic` Emacs package is designed to integrate [`difftastic`](https://g
 
 ## Configuration
 
-To configure the `difftastic` commands in `magit-diff` prefix, use the following code snippet in your Emacs configuration:
+To configure `difftastic` commands in `magit-diff` prefix, use the following code snippet in your Emacs configuration:
 
 ```emacs-lisp
 (require 'difftastic)
@@ -97,6 +98,15 @@ You can customize the appearance of `difftastic` output by adjusting the faces u
 ;; Disable highlight faces (use difftastic's default)
 (setq difftastic-highlight-alist nil)
 ```
+
+### Window management
+
+The `difftastic` relies on the `difft` command line tool to produce an output that can be displayed in an Emacs buffer window. In short: it runs the `difft`, converts ANSI codes into user defined colors and displays it in window. The `difft` can be instructed with a hint to help it produce a content that can fit into user output, by specifying a requested width. However, the latter is not always respected.
+
+The `difftastic` provides a few variables to let you customize these aspects of interaction with `difft`:
+- `difftastic-requested-window-width-function` - this function is called for a first (i.e., not a rerun) call to `difft`. It shall return the requested width of the output. For example this can be a half of a current frame (or a window) if the output is meant to be presented side by side.
+- `difftastic-rerun-requested-window-width-function` - this function is called for a rerun (i.e., not a first) call to `difft`. It shall return requested window width of the output. For example this can be a current window width if the output is meant to fill the whole window.
+- `difftastic-display-buffer-function` - this function is called after a first call to `difft`. It is meant to select an appropriate Emacs mechanism to display the `difft` output.
 
 ## Acknowledgments
 

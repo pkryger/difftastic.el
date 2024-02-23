@@ -57,14 +57,16 @@ Or, if you use `use-package`:
 ```
 
 ## Usage
-The following commands are meant to help to interact with `difftastic`:
+The following commands are meant to help to interact with `difftastic`. Commands are followed by their default keybindings in `difftastic-mode` (in parenthesis).
 
 - `difftastic-magit-diff` - show the result of `git diff ARGS -- FILES` with `difftastic`. This is the main entry point for DWIM action, so it tries to guess revision or range.
 - `difftastic-magit-show` - show the result of `git show ARG` with `difftastic`. It tries to guess `ARG`, and ask for it when can't. When called with prefix argument it will ask for `ARG`.
 - `difftastic-files` - show the result of `difft FILE-A FILE-B`. When called with prefix argument it will ask for language to use, instead of relaying on `difftastic`'s detection mechanism.
 - `difftastic-buffers` - show the result of `difft BUFFER-A BUFFER-B`. Language is guessed based on buffers modes. When called with prefix argument it will ask for language to use.
-- `difftastic-rerun` - rerun difftastic for the current buffer. It runs difftastic again in the current buffer, but respects the window configuration.
+- `difftastic-rerun` (<kbd>g</kbd>) - rerun difftastic for the current buffer. It runs difftastic again in the current buffer, but respects the window configuration.
 It uses `difftastic-rerun-requested-window-width-function` which, by default, returns current window width (instead of `difftastic-requested-window-width-function`). It will also reuse current buffer and will not call `difftastic-display-buffer-function`. When called with prefix argument it will ask for language to use.
+- `difftastic-next-chunk` (<kbd>n</kbd>), `difftastic-next-file` (<kbd>N</kbd>) - move point to a next logical chunk or a next file respectively.
+- `difftastic-previous-chunk` (<kbd>p</kbd>), `difftastic-previous-file` (<kbd>P</kbd>) - move point to a previous logical chunk or a previous file respectively.
 - `difftastic-git-diff-range` - transform `ARGS` for difftastic and show the result of `git diff ARGS REV-OR-RANGE -- FILES` with `difftastic`.
 
 ## Customization

@@ -720,11 +720,11 @@ Each argument is matched as regexp.")
 (defun difftastic--transform-diff-arguments (args)
   "Transform \\='git diff\\=' ARGS to be compatible with difftastic.
 This removes arguments converts some arguments to be compatible
-with difftastic (i.e., \\='-U\\=' to \\='--context\\=')and
+with difftastic (i.e., \\='-U\\=' to \\='--context\\=') and
 removes some that are incompatible (i.e., \\='--stat\\=',
 \\='--no-ext-diff\\=').  The return value is a list in a form
 of (GIT-ARGS DIFFT-ARGS), where GIT-ARGS are arguments to be
-passed to \\='git\\', and DIFFT-ARGS are arguments to be passed
+passed to \\='git\\=', and DIFFT-ARGS are arguments to be passed
 to difftastic."
   (let (case-fold-search)
     (list
@@ -846,7 +846,7 @@ When REV couldn't be guessed or called with prefix arg ask for REV."
      (get-buffer-create (concat "*difftastic git show " rev "*"))
      (list "git" "--no-pager" "show" "--ext-diff" rev))))
 
-(defun difftastic---make-temp-file (prefix buffer)
+(defun difftastic--make-temp-file (prefix buffer)
   "Make a temporary file for BUFFER content with PREFIX included in file name."
   ;; adapted from `make-auto-save-file-name'
   (with-current-buffer buffer
@@ -875,7 +875,7 @@ or BUF is set to BUFFER if this is a temporary file."
                 (save-buffer buffer)
                 buffer-file)
             (setq buf buffer)
-            (difftastic---make-temp-file prefix buffer))))
+            (difftastic--make-temp-file prefix buffer))))
     (cons file buf)))
 
 (defun difftastic--delete-temp-file (file-buf)

@@ -281,6 +281,8 @@ See `advice-add' for explanation of SYMBOL, HOW, and FUNCTION arguments."
 
 (defun difftastic-next-file ()
   "Move to the next file."
+  ;; since Emacs-28 the `difftastic-mode' can be moved to interactive
+  (declare (modes difftastic-mode))
   (interactive)
   (if-let ((next (difftastic--next-chunk t)))
       (goto-char next)
@@ -288,6 +290,8 @@ See `advice-add' for explanation of SYMBOL, HOW, and FUNCTION arguments."
 
 (defun difftastic-next-chunk ()
   "Move to the next chunk."
+  ;; since Emacs-28 the `difftastic-mode' can be moved to interactive
+  (declare (modes difftastic-mode))
   (interactive)
   (if-let ((next (difftastic--next-chunk)))
       (goto-char next)
@@ -295,6 +299,8 @@ See `advice-add' for explanation of SYMBOL, HOW, and FUNCTION arguments."
 
 (defun difftastic-previous-file ()
   "Move to the previous file."
+  ;; since Emacs-28 the `difftastic-mode' can be moved to interactive
+  (declare (modes difftastic-mode))
   (interactive)
   (if-let ((previous (difftastic--prev-chunk t)))
       (goto-char previous)
@@ -302,6 +308,8 @@ See `advice-add' for explanation of SYMBOL, HOW, and FUNCTION arguments."
 
 (defun difftastic-previous-chunk ()
   "Move to the previous chunk."
+  ;; since Emacs-28 the `difftastic-mode' can be moved to interactive
+  (declare (modes difftastic-mode))
   (interactive)
   (if-let ((previous (difftastic--prev-chunk)))
       (goto-char previous)
@@ -475,6 +483,8 @@ current buffer."
 
 (defun difftastic-leave ()
   "Quit difftastic mode and maybe switch buffers, but don't kill this buffer."
+  ;; since Emacs-28 the `difftastic-mode' can be moved to interactive
+  (declare (modes difftastic-mode))
   (interactive)
   (difftastic-mode--do-exit))
 
@@ -482,6 +492,8 @@ current buffer."
   "Quit difftastic mode, kill current buffer trying to restore window and buffer.
 Try to restore selected window to previous state and go to
 previous buffer or window."
+  ;; since Emacs-28 the `difftastic-mode' can be moved to interactive
+  (declare (modes difftastic-mode))
   (interactive)
   (difftastic-mode--do-exit 'kill-buffer))
 
@@ -489,6 +501,8 @@ previous buffer or window."
   "Quit difftastic mode, kill current buffer trying to restore windows and buffers.
 Try to restore all windows viewing buffer to previous state and
 go to previous buffer or window."
+  ;; since Emacs-28 the `difftastic-mode' can be moved to interactive
+  (declare (modes difftastic-mode))
   (interactive)
   (difftastic-mode--do-exit 'kill-buffer t))
 

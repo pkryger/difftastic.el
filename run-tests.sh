@@ -1,9 +1,9 @@
 #!/bin/bash
 
 
-if [[ ! "${1}" =~ ^(all|package-init|byte-compile|package-lint)$ ]]; then
+if [[ ! "${1}" =~ ^(all|package-init|byte-compile|package-lint|test)$ ]]; then
     >&2 echo "Unsupported mode: '${1}'."
-    >&2 echo "Usage ${0} [all|package-init|byte-compile|package-lint]"
+    >&2 echo "Usage ${0} [all|package-init|byte-compile|package-lint|test]"
     exit 1
 fi
 
@@ -47,6 +47,13 @@ if [[ ${mode} =~ ^(all|byte-compile)$ ]]; then
              --eval "(setq byte-compile-error-on-warn ${ERROR_ON_WARN})" \
              --funcall batch-byte-compile \
              difftastic.el
+    "$EMACS" -Q --batch \
+             --eval "$INIT_PACKAGE_EL" \
+             --load difftastic.el \
+             --load test/difftastic.t.el \
+             --eval "(setq byte-compile-error-on-warn ${ERROR_ON_WARN})" \
+             --funcall batch-byte-compile \
+             test/difftastic.t.el
 fi
 
 # Lint ourselves
@@ -61,4 +68,13 @@ if [[ ${mode} =~ ^(all|package-lint)$ ]]; then
              --eval '(setq package-lint-batch-fail-on-warnings nil)' \
              --funcall package-lint-batch-and-exit \
              difftastic.el || [ -n "${EMACS_LINT_IGNORE+x}" ]
+fi
+
+
+if [[ ${mode} =~ ^(all|test)$ ]]; then
+    "$EMACS" -Q --batch \
+             --eval "$INIT_PACKAGE_EL" \
+             --load difftastic.el \
+             --load test/difftastic.t.el \
+             --eval "(ert-run-tests-batch-and-exit)"
 fi

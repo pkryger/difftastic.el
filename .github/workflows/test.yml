@@ -37,3 +37,5 @@ jobs:
       run: './run-tests.sh byte-compile'
     - name: package lint
       run: './run-tests.sh package-lint'
+    - name: test
+      run: './run-tests.sh test'

@@ -968,7 +968,7 @@ to `difftastic--delete-temp-file-buf'."
   `(let ,file-bufs
      (condition-case err
          (progn ,@body)
-       ((error debug)
+       (error
         (dolist (file-buf (list ,@file-bufs))
           (difftastic--delete-temp-file-buf file-buf))
         (signal (car err) (cdr err))))))

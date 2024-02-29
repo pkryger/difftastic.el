@@ -388,7 +388,7 @@ data."
   (let ((chunk-regexp (if file-chunk
                           'difftastic--chunk-regexp-file
                         'difftastic--chunk-regexp-chunk))
-        (languages (difftastic--languages)))
+        (languages (difftastic--get-languages)))
     (or (eval chunk-regexp)
         (set chunk-regexp
              (rx-to-string
@@ -863,7 +863,7 @@ When REV couldn't be guessed or called with prefix arg ask for REV."
       (make-temp-file (format "difftastic-%s-%s-" prefix buffer-name)
                       nil nil (buffer-string)))))
 
-(defun difftastic--get-file (prefix buffer)
+(defun difftastic--get-file-buf (prefix buffer)
   "If BUFFER visits a file return it else create a temporary file with PREFIX.
 The return value is a cons in a form of (FILE . BUF) where FILE
 is the file and BUF either is  nil if this is non temporary file,
@@ -878,15 +878,15 @@ or BUF is set to BUFFER if this is a temporary file."
             (difftastic--make-temp-file prefix buffer))))
     (cons file buf)))
 
-(defun difftastic--delete-temp-file (file-buf)
+(defun difftastic--delete-temp-file-buf (file-buf)
   "Delete FILE-BUF when it is a temporary file.
-The FILE-BUF is a cons where car is the file and cdr is a buffer
-when it is a temporary file or nil otherwise."
+The FILE-BUF is a cons where car is the file and cdr is non-nil
+when it is a temporary or nil otherwise."
   (when-let ((file (car file-buf)))
     (when (and (cdr file-buf) (stringp file) (file-exists-p file))
       (delete-file file))))
 
-(defun difftastic--languages ()
+(defun difftastic--get-languages ()
   "Return list of language overrides supported by difftastic."
   (append
    '("Text")
@@ -955,20 +955,20 @@ argument."
                  (file-buf-A . ,file-buf-A)
                  (file-buf-B . ,file-buf-B))))
        (funcall difftastic-display-buffer-function buffer requested-width)
-       (difftastic--delete-temp-file file-buf-A)
-       (difftastic--delete-temp-file file-buf-B)))))
+       (difftastic--delete-temp-file-buf file-buf-A)
+       (difftastic--delete-temp-file-buf file-buf-B)))))
 
-(defmacro difftastic--with-temp-files (file-bufs &rest body)
+(defmacro difftastic--with-file-bufs (file-bufs &rest body)
   "Exectue the forms in BODY with each symbol in FILE-BUFS list `let'-bound to nil.
 If any form in BODY signals an error each element in FILE-BUFS will be passed
-to `difftastic--delete-temp-file'."
+to `difftastic--delete-temp-file-buf'."
   (declare (indent 1) (debug t))
   `(let ,file-bufs
      (condition-case err
          (progn ,@body)
        ((error debug)
         (dolist (file-buf (list ,@file-bufs))
-          (difftastic--delete-temp-file file-buf))
+          (difftastic--delete-temp-file-buf file-buf))
         (signal (car err) (cdr err))))))
 
 ;;;###autoload
@@ -998,16 +998,16 @@ then ask for language before running difftastic."
            (when (or current-prefix-arg
                      (and (not (buffer-file-name (get-buffer bf-A)))
                           (not (buffer-file-name (get-buffer bf-B)))))
-             (let* ((languages (difftastic--languages))
+             (let* ((languages (difftastic--get-languages))
                     (suggested (difftastic--make-suggestion
                                 languages
                                 (get-buffer bf-A)
                                 (get-buffer bf-B))))
                (completing-read "Language: " languages nil t suggested))))))
 
-  (difftastic--with-temp-files (file-buf-A file-buf-B)
-    (setq file-buf-A (difftastic--get-file "A" (get-buffer buffer-A))
-          file-buf-B (difftastic--get-file "B" (get-buffer buffer-B)))
+  (difftastic--with-file-bufs (file-buf-A file-buf-B)
+    (setq file-buf-A (difftastic--get-file-buf "A" (get-buffer buffer-A))
+          file-buf-B (difftastic--get-file-buf "B" (get-buffer buffer-B)))
     (difftastic--files-internal
      (get-buffer-create
       (concat "*difftastic " buffer-A " " buffer-B "*"))
@@ -1047,7 +1047,7 @@ running difftastic."
                                       dir-B)))
                                    (ediff-get-default-file-name f 1)))
            (when current-prefix-arg
-             (completing-read "Language: " (difftastic--languages) nil t)))))
+             (completing-read "Language: " (difftastic--get-languages) nil t)))))
   (difftastic--files-internal
    (get-buffer-create (concat "*difftastic "
                               (file-name-nondirectory file-A)
@@ -1070,7 +1070,7 @@ makes the function prompt for LANG-OVERRIDE.  See \\='difft
   (interactive
    (list 'interactive
          (when current-prefix-arg
-           (completing-read "Language: " (difftastic--languages) nil t))))
+           (completing-read "Language: " (difftastic--get-languages) nil t))))
   (cl-letf (((symbol-function 'diff)
              (lambda (current file _switches)
                (difftastic-files current file lang-override)))
@@ -1087,7 +1087,7 @@ temporary file or nil otherwise."
   (if-let ((buffer (cdr file-buf)))
       (if (buffer-live-p buffer)
           (setf (alist-get (intern (concat "file-buf-" prefix)) rerun-alist)
-                (difftastic--get-file prefix buffer))
+                (difftastic--get-file-buf prefix buffer))
         (user-error "Buffer %s [%s] doesn't exist anymore" prefix buffer))
     file-buf))
 
@@ -1106,10 +1106,10 @@ In order to determine requested width for difftastic a call to
   (interactive (list
                 (or (when current-prefix-arg
                       (completing-read "Language: "
-                                       (difftastic--languages) nil t)))))
+                                       (difftastic--get-languages) nil t)))))
   (if-let (((eq major-mode 'difftastic-mode))
            (rerun-alist (copy-tree difftastic--rerun-alist)))
-      (difftastic--with-temp-files (file-buf-A file-buf-B)
+      (difftastic--with-file-bufs (file-buf-A file-buf-B)
         (let-alist rerun-alist
           (setq file-buf-A
                 (difftastic--rerun-file-buf "A" .file-buf-A rerun-alist)
@@ -1142,8 +1142,8 @@ In order to determine requested width for difftastic a call to
              (lambda ()
                (with-current-buffer buffer
                  (setq difftastic--rerun-alist rerun-alist))
-               (difftastic--delete-temp-file file-buf-A)
-               (difftastic--delete-temp-file file-buf-B))))))
+               (difftastic--delete-temp-file-buf file-buf-A)
+               (difftastic--delete-temp-file-buf file-buf-B))))))
     (user-error "Nothing to rerun")))
 
 (provide 'difftastic)

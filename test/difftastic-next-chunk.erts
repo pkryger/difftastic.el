@@ -1,0 +1,247 @@
+Code: difftastic-next-chunk
+
+Name: difftastic-next-chunk:file-wo-chunks-to-file-wo-chunks-1
+Point-Char: |
+=-=
+|difftastic.el --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+=-=
+difftastic.el --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+|test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+=-=-=
+
+Name: difftastic-next-chunk:file-wo-chunks-to-file-wo-chunks-2
+Point-Char: |
+=-=
+difftastic.el| --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+=-=
+difftastic.el --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+|test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+=-=-=
+
+Name: difftastic-next-chunk:file-wo-chunks-to-file-wo-chunks-3
+Point-Char: |
+=-=
+difftastic.el --- Emacs Lisp
+|1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+=-=
+difftastic.el --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+|test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+=-=-=
+
+Name: difftastic-next-chunk:file-with-chunks-to-chunk-1
+Point-Char: |
+=-=
+|test/difftastic.t.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+
+test/difftastic.t.el --- 2/2 --- Emacs Lisp
+5 (require 'difftastic)
+=-=
+test/difftastic.t.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+
+|test/difftastic.t.el --- 2/2 --- Emacs Lisp
+5 (require 'difftastic)
+=-=-=
+
+Name: difftastic-next-chunk:file-with-chunks-to-chunk-2
+Point-Char: |
+=-=
+test/difftastic.t.el ---| 1/2 --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+
+test/difftastic.t.el --- 2/2 --- Emacs Lisp
+5 (require 'difftastic)
+=-=
+test/difftastic.t.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+
+|test/difftastic.t.el --- 2/2 --- Emacs Lisp
+5 (require 'difftastic)
+=-=-=
+
+Name: difftastic-next-chunk:file-with-chunks-to-chunk-3
+Point-Char: |
+=-=
+test/difftastic.t.el --- 1/2 --- Emacs Lisp
+1 ;;|; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+
+test/difftastic.t.el --- 2/2 --- Emacs Lisp
+5 (require 'difftastic)
+=-=
+test/difftastic.t.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+
+|test/difftastic.t.el --- 2/2 --- Emacs Lisp
+5 (require 'difftastic)
+=-=-=
+
+Name: difftastic-next-chunk:chunk-to-file-wo-chunks-1
+Point-Char: |
+=-=
+difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+|difftastic.el --- 2/2 --- Emacs Lisp
+9 ;; Version: 0.0.0
+
+test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+=-=
+difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+difftastic.el --- 2/2 --- Emacs Lisp
+9 ;; Version: 0.0.0
+
+|test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+=-=-=
+
+Name: difftastic-next-chunk:chunk-to-file-wo-chunks-2
+Point-Char: |
+=-=
+difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+difftastic.el --- 2/2 --- Emacs Li|sp
+9 ;; Version: 0.0.0
+
+test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+=-=
+difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+difftastic.el --- 2/2 --- Emacs Lisp
+9 ;; Version: 0.0.0
+
+|test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+=-=-=
+
+Name: difftastic-next-chunk:chunk-to-file-wo-chunks-3
+Point-Char: |
+=-=
+difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+difftastic.el --- 2/2 --- Emacs Lisp
+9 ;; Version: 0.0.0|
+
+test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+=-=
+difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+difftastic.el --- 2/2 --- Emacs Lisp
+9 ;; Version: 0.0.0
+
+|test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+=-=-=
+
+Name: difftastic-next-chunk:chunk-to-file-with-chunks-1
+Point-Char: |
+=-=
+difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+|difftastic.el --- 2/2 --- Emacs Lisp
+9 ;; Version: 0.0.0
+
+test/difftastic.t.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+
+test/difftastic.t.el --- 2/2 --- Emacs Lisp
+5 (require 'difftastic)
+=-=
+difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+difftastic.el --- 2/2 --- Emacs Lisp
+9 ;; Version: 0.0.0
+
+|test/difftastic.t.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+
+test/difftastic.t.el --- 2/2 --- Emacs Lisp
+5 (require 'difftastic)
+=-=-=
+
+Name: difftastic-next-chunk:chunk-to-file-with-chunks-2
+Point-Char: |
+=-=
+difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+difftastic.el --- 2/2 --- Emacs Lisp|
+9 ;; Version: 0.0.0
+
+test/difftastic.t.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+
+test/difftastic.t.el --- 2/2 --- Emacs Lisp
+5 (require 'difftastic)
+=-=
+difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+difftastic.el --- 2/2 --- Emacs Lisp
+9 ;; Version: 0.0.0
+
+|test/difftastic.t.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+
+test/difftastic.t.el --- 2/2 --- Emacs Lisp
+5 (require 'difftastic)
+=-=-=
+
+Name: difftastic-next-chunk:chunk-to-file-with-chunks-3
+Point-Char: |
+=-=
+difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+difftastic.el --- 2/2 --- Emacs Lisp
+9 ;; Version: 0.0.0
+|
+test/difftastic.t.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+
+test/difftastic.t.el --- 2/2 --- Emacs Lisp
+5 (require 'difftastic)
+=-=
+difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+difftastic.el --- 2/2 --- Emacs Lisp
+9 ;; Version: 0.0.0
+
+|test/difftastic.t.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+
+test/difftastic.t.el --- 2/2 --- Emacs Lisp
+5 (require 'difftastic)
+=-=-=

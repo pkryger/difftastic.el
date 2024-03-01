@@ -14,7 +14,7 @@ mode="${1}"
 
 EMACS="${EMACS:=emacs}"
 
-NEEDED_PACKAGES="magit compat package-lint"
+NEEDED_PACKAGES="magit compat package-lint el-mock"
 
 INIT_PACKAGE_EL="(progn \
   (require 'package) \
@@ -76,5 +76,7 @@ if [[ ${mode} =~ ^(all|test)$ ]]; then
              --eval "$INIT_PACKAGE_EL" \
              --load difftastic.el \
              --load test/difftastic.t.el \
-             --eval "(ert-run-tests-batch-and-exit)"
+             --eval "(let ((default-directory
+                            (file-name-concat default-directory \"test\")))
+                       (ert-run-tests-batch-and-exit))"
 fi

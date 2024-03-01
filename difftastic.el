@@ -407,13 +407,15 @@ data."
                  (seq " --- Text ("
                       (or
                        (seq (1+ digit)
-                               " " (or ,@(cl-remove "Text" languages
-                                          :test #'string=))
-                               " parse error" (? "s")
-                               ", exceeded DFT_PARSE_ERROR_LIMIT")
-                       (seq "exceeded "
-                            (or "DFT_GRAPH_LIMIT"
-                                "DFT_BYTE_LIMIT")))
+                            " " (or ,@(cl-remove "Text" languages
+                                                 :test #'string=))
+                            " parse error" (? "s")
+                            ", exceeded DFT_PARSE_ERROR_LIMIT")
+                       (seq "exceeded DFT_GRAPH_LIMIT")
+                       (seq (1+ digit)
+                            (or (seq "." (= 2 digit) " " (any "KMGTPE") "iB")
+                                (seq " " (? (any "KMGTPE") "i") "B"))
+                            " exceeded DFT_BYTE_LIMIT"))
                       ")"))
                 eol))))))
 

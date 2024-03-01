@@ -245,7 +245,9 @@ N.B. only foreground and background properties will be used."
 
 (defcustom difftastic-rerun-requested-window-width-function
   #'difftastic-rerun-requested-window-width
-  "Function used to calculate a requested width for a rerun of a difftastic call."
+  "Function used to calculate a requested width for a rerun of a difftastic call.
+When it is set to nil, the value of
+`difftastic-requested-window-width-function' is used."
   :type 'function
   :group 'difftastic)
 
@@ -1100,7 +1102,9 @@ function is called with a prefix arg then ask for language before
 running difftastic.
 
 In order to determine requested width for difftastic a call to
-`difftastic-rerun-requested-window-width-function' is made."
+`difftastic-rerun-requested-window-width-function' is made.  When
+the latter is set to nil the call is made to
+`difftastic-requested-window-width-function'."
   ;; since Emacs-28 the `difftastic-mode' can be moved to interactive
   (declare (modes difftastic-mode))
   (interactive (list
@@ -1119,7 +1123,9 @@ In order to determine requested width for difftastic a call to
                  (lang-override (or lang-override
                                     (alist-get 'lang-override rerun-alist)))
                  (requested-width
-                  (funcall difftastic-rerun-requested-window-width-function))
+                  (funcall (or
+                            difftastic-rerun-requested-window-width-function
+                            difftastic-requested-window-width-function)))
                  (process-environment
                   (if .git-command
                       (difftastic--build-git-process-environment

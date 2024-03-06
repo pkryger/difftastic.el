@@ -84,6 +84,9 @@
 ;;   Language is guessed based on buffers modes.  When called with prefix
 ;;   argument it will ask for language to use.
 ;;
+;; - `difftastic-dired' - same as `dired-diff', but with `difftastic-files'
+;;   instead of the built-in `diff'.
+;;
 ;; - `difftastic-rerun' ('g') - rerun difftastic for the current buffer.  It
 ;;   runs difftastic again in the current buffer, but respects the window
 ;;   configuration.  It uses `difftastic-rerun-requested-window-width-function'
@@ -105,6 +108,7 @@
 
 (require 'ansi-color)
 (require 'cl-lib)
+(require 'dired)
 (require 'ediff)
 (require 'font-lock)
 (require 'magit)
@@ -1039,6 +1043,17 @@ running difftastic."
    (cons file-A nil)
    (cons file-B nil)
    lang-override))
+
+;;;###autoload
+(defun difftastic-dired ()
+  "Compare file at point with FILE using difftastic.
+
+The behavior is the same as `dired-diff'."
+  (interactive)
+  (cl-letf (((symbol-function 'diff)
+             (lambda (current file _switches)
+               (difftastic-files current file))))
+    (call-interactively #'dired-diff)))
 
 (defun difftastic--rerun-file-buf (prefix file-buf rerun-alist)
   "Create a new temporary file for the FILE-BUF with PREFIX if needed.

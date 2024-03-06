@@ -84,8 +84,8 @@
 ;;   Language is guessed based on buffers modes.  When called with prefix
 ;;   argument it will ask for language to use.
 ;;
-;; - `difftastic-dired' - same as `dired-diff', but with `difftastic-files'
-;;   instead of the built-in `diff'.
+;; - `difftastic-dired-diff' - same as `dired-diff', but with
+;;   `difftastic-files' instead of the built-in `diff'.
 ;;
 ;; - `difftastic-rerun' ('g') - rerun difftastic for the current buffer.  It
 ;;   runs difftastic again in the current buffer, but respects the window

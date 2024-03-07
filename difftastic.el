@@ -1065,6 +1065,8 @@ running difftastic."
 The behavior is the same as `dired-diff', except for the prefix argument, which
 makes the function prompt for LANG-OVERRIDE.  See \\='difft
 --list-languages\\=' for language list."
+  ;; since Emacs-28 the `dired-mode' can be moved to interactive
+  (declare (modes dired-mode))
   (interactive
    (list 'interactive
          (when current-prefix-arg

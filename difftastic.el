@@ -446,18 +446,19 @@ for.  Return nil when no chunk is found."
             (cl-return-from searching-next-chunk chunk-bol)))))))
 
 (defun difftastic--prev-chunk (&optional file-chunk)
-"Find line beginning position of previous chunk.
+  "Find line beginning position of previous chunk.
 When FILE-CHUNK is t only first file chunks are searched
 for.  Return nil when no chunk is found."
   (let ((chunk-regexp (difftastic--chunk-regexp file-chunk)))
     (save-excursion
       (goto-char (line-beginning-position))
-      (backward-char)
-      (cl-block searching-prev-chunk
-        (while (re-search-backward chunk-regexp nil t)
-          (when-let ((chunk-bol
-                      (difftastic--chunk-bol file-chunk)))
-            (cl-return-from searching-prev-chunk chunk-bol)))))))
+      (when (> (point) (point-min))
+        (backward-char)
+        (cl-block searching-prev-chunk
+          (while (re-search-backward chunk-regexp nil t)
+            (when-let ((chunk-bol
+                        (difftastic--chunk-bol file-chunk)))
+              (cl-return-from searching-prev-chunk chunk-bol))))))))
 
 ;; From `view-mode'
 

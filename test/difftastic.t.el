@@ -662,6 +662,98 @@
                          "TypeScript TSX" "VHDL" "XML" "YAML" "Zig")
                        (difftastic--get-languages)))))))
 
+(ert-deftest difftastic--run-command-filter:file-ansi-colors-applied ()
+  (let ((difftastic-normal-colors-vector
+         (vector
+          (aref ansi-color-normal-colors-vector 0)
+          (aref ansi-color-normal-colors-vector 1)
+          (aref ansi-color-normal-colors-vector 2)
+          (aref ansi-color-normal-colors-vector 3)
+          font-lock-comment-face
+          font-lock-string-face
+          font-lock-warning-face
+          (aref ansi-color-normal-colors-vector 7))))
+  (with-temp-buffer
+    (eval
+     `(mocklet ((process-buffer => ,(current-buffer)))
+        (difftastic--run-command-filter
+         'test-process
+         "[1m[33mdifftastic.el[39m[0m[2m --- 1/2 --- Emacs Lisp[0m")
+        (should
+         (equal (buffer-string)
+                (concat
+                 (propertize
+                  "difftastic.el"
+                  'font-lock-face '(ansi-color-bold (:foreground "#6f5500")))
+                 (propertize
+                  " --- 1/2 --- Emacs Lisp"
+                  'font-lock-face 'ansi-color-faint)))))))))
+
+(ert-deftest difftastic--run-command-filter:chunk-ansi-colors-applied ()
+  (let ((difftastic-normal-colors-vector
+         (vector
+          (aref ansi-color-normal-colors-vector 0)
+          (aref ansi-color-normal-colors-vector 1)
+          (aref ansi-color-normal-colors-vector 2)
+          (aref ansi-color-normal-colors-vector 3)
+          font-lock-comment-face
+          font-lock-string-face
+          font-lock-warning-face
+          (aref ansi-color-normal-colors-vector 7))))
+  (with-temp-buffer
+    (eval
+     `(mocklet ((process-buffer => ,(current-buffer)))
+        (difftastic--run-command-filter
+         'test-process
+         "[1mdifftastic.el[0m[2m --- 2/2 --- Emacs Lisp[0m")
+        (should
+         (equal (buffer-string)
+                (concat
+                 (propertize
+                  "difftastic.el"
+                  'font-lock-face 'ansi-color-bold)
+                 (propertize
+                  " --- 2/2 --- Emacs Lisp"
+                  'font-lock-face 'ansi-color-faint)))))))))
+
+(ert-deftest difftastic--run-command-filter:modified-ansi-colors-applied ()
+  (let ((difftastic-normal-colors-vector
+         (vector
+          (aref ansi-color-normal-colors-vector 0)
+          (aref ansi-color-normal-colors-vector 1)
+          (aref ansi-color-normal-colors-vector 2)
+          (aref ansi-color-normal-colors-vector 3)
+          font-lock-comment-face
+          font-lock-string-face
+          font-lock-warning-face
+          (aref ansi-color-normal-colors-vector 7))))
+  (with-temp-buffer
+    (eval
+     `(mocklet ((process-buffer => ,(current-buffer)))
+        ;; modified line
+
+        ;; added (with bold, highlight, and string and comment)
+        ;; removed (with bold, highlight, and string and comment)
+        )))))
+
+(ert-deftest difftastic--run-command-filter:modified-underline-ansi-colors-applied ()
+  (let ((difftastic-normal-colors-vector
+         (vector
+          (aref ansi-color-normal-colors-vector 0)
+          (aref ansi-color-normal-colors-vector 1)
+          (aref ansi-color-normal-colors-vector 2)
+          (aref ansi-color-normal-colors-vector 3)
+          font-lock-comment-face
+          font-lock-string-face
+          font-lock-warning-face
+          (aref ansi-color-normal-colors-vector 7)))
+        difftastic-highlight-alist)
+  (with-temp-buffer
+    (eval
+     `(mocklet ((process-buffer => ,(current-buffer)))
+
+
+        )))))
 
 (provide 'difftastic.t)
 

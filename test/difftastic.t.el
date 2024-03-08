@@ -41,7 +41,11 @@
       (setq elisp-buffer (current-buffer))
       (with-temp-buffer
         (if (fboundp 'c++-ts-mode) ;; since Emacs-29
-            (c++-ts-mode)
+            ;; suppress warnings
+            (difftastic--with-temp-advice 'treesit-ready-p
+                :filter-args (lambda (&rest args)
+                               (list (car args) t))
+              (c++-ts-mode))
           (c++-mode))
         (setq c++-buffer (current-buffer))
         (with-temp-buffer

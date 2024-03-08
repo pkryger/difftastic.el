@@ -1,6 +1,7 @@
 # difftastic.el - Wrapper for difftastic
 
 [![MELPA](https://melpa.org/packages/difftastic-badge.svg)](https://melpa.org/#/difftastic)
+[![CI Tests](https://github.com/pkryger/difftastic.el/actions/workflows/test.yml/badge.svg)](https://github.com/pkryger/difftastic.el/actions/workflows/test.yml)
 
 ## Description
 

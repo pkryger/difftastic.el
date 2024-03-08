@@ -1,0 +1,118 @@
+Ada
+ *.ada *.adb *.ads
+Apex
+ *.cls *.apexc *.trigger
+Bash
+ *.bash *.bats *.cgi *.command *.env *.fcgi *.ksh *.sh *.sh.in *.tmux *.tool *.zsh .bash_aliases .bash_history .bash_logout .bash_profile .bashrc .cshrc .env .env.example .flaskenv .kshrc .login .profile .zlogin .zlogout .zprofile .zshenv .zshrc 9fs PKGBUILD bash_aliases bash_logout bash_profile bashrc cshrc gradlew kshrc login man profile zlogin zlogout zprofile zshenv zshrc
+C
+ *.c
+Clojure
+ *.bb *.boot *.clj *.cljc *.clje *.cljs *.cljx *.edn *.joke *.joker
+CMake
+ *.cmake *.cmake.in CMakeLists.txt
+Common Lisp
+ *.lisp *.lsp *.asd
+C++
+ *.cc *.cpp *.h *.hh *.hpp *.ino *.cxx *.cu
+C#
+ *.cs
+CSS
+ *.css
+Dart
+ *.dart
+Elixir
+ *.ex *.exs
+Elm
+ *.elm
+Elvish
+ *.elv
+Emacs Lisp
+ *.el .emacs _emacs Cask
+Erlang
+ *.erl *.app.src *.es *.escript *.hrl *.xrl *.yrl Emakefile
+Gleam
+ *.gleam
+Go
+ *.go
+Hack
+ *.hack *.hck *.hhi
+Hare
+ *.ha
+Haskell
+ *.hs
+HCL
+ *.hcl *.nomad *.tf *.tfvars *.workflow
+HTML
+ *.html *.htm *.xhtml
+Janet
+ *.janet *.jdn
+Java
+ *.java
+JavaScript
+ *.cjs *.js *.mjs *.snap
+JavaScript JSX
+ *.jsx
+JSON
+ *.json *.avsc *.geojson *.gltf *.har *.ice *.JSON-tmLanguage *.jsonl *.mcmeta *.tfstate *.tfstate.backup *.topojson *.webapp *.webmanifest .arcconfig .auto-changelog .c8rc .htmlhintrc .imgbotconfig .nycrc .tern-config .tern-project .watchmanconfig Pipfile.lock composer.lock mcmod.info
+Julia
+ *.jl
+Kotlin
+ *.kt *.ktm *.kts
+LaTeX
+ *.aux *.cls *.sty *.tex
+Lua
+ *.lua
+Make
+ *.mak *.d *.make *.makefile *.mk *.mkfile BSDmakefile GNUmakefile Kbuild Makefile Makefile.am Makefile.boot Makefile.frag Makefile.in Makefile.inc Makefile.wat makefile makefile.sco mkfile
+Newick
+ *.nhx *.nwk *.nh
+Nix
+ *.nix
+Objective-C
+ *.m
+OCaml
+ *.ml
+OCaml Interface
+ *.mli
+Pascal
+ *.pas *.dfm *.dpr *.lpr *.pascal
+Perl
+ *.pm *.pl
+PHP
+ *.php
+Python
+ *.py *.py3 *.pyi *.bzl TARGETS BUCK DEPS
+QML
+ *.qml
+R
+ *.R *.r *.rd *.rsx .Rprofile expr-dist
+Racket
+ *.rkt
+Ruby
+ *.rb *.builder *.spec *.rake Gemfile Rakefile
+Rust
+ *.rs
+Scala
+ *.scala *.sbt *.sc
+SCSS
+ *.scss
+Solidity
+ *.sol
+SQL
+ *.sql *.pgsql
+Swift
+ *.swift
+TOML
+ *.toml Cargo.lock Gopkg.lock Pipfile poetry.lock
+TypeScript
+ *.ts
+TypeScript TSX
+ *.tsx
+VHDL
+ *.vhdl *.vhd
+XML
+ *.ant *.csproj *.plist *.resx *.svg *.ui *.vbproj *.xaml *.xml *.xsd *.xsl *.xslt *.zcml App.config nuget.config packages.config .classpath .cproject .project
+YAML
+ *.yaml *.yml
+Zig
+ *.zig

@@ -627,6 +627,33 @@
                     :type 'user-error)
       (should (equal (point-min) (point))))))
 
+(ert-deftest difftastic--get-languages:parse-output ()
+  (let ((file "difft--list-languages.out")
+        out)
+    (should (or (file-exists-p file)
+                (file-exists-p (format "test/%s" file))))
+    (setq out (if (file-exists-p file)
+                  file
+                (format "test/%s" file)))
+    (eval
+     `(mocklet ((shell-command-to-string => (with-temp-buffer
+                                              (insert-file-contents ,out)
+                                              (buffer-string))))
+        ;; Hints for updating the test when difft output changes:
+        ;; $ difft --list-languages > difft--list-languages.out
+        ;; (insert (format "%S" (difftastic--get-languages)))
+        (should (equal '("Text" "Ada" "Apex" "Bash" "C" "Clojure" "CMake"
+                         "Common Lisp" "C++" "C#" "CSS" "Dart" "Elixir" "Elm"
+                         "Elvish" "Emacs Lisp" "Erlang" "Gleam" "Go" "Hack"
+                         "Hare" "Haskell" "HCL" "HTML" "Janet" "Java"
+                         "JavaScript" "JavaScript JSX" "JSON" "Julia" "Kotlin"
+                         "LaTeX" "Lua" "Make" "Newick" "Nix" "Objective-C"
+                         "OCaml" "OCaml Interface" "Pascal" "Perl" "PHP"
+                         "Python" "QML" "R" "Racket" "Ruby" "Rust" "Scala"
+                         "SCSS" "Solidity" "SQL" "Swift" "TOML" "TypeScript"
+                         "TypeScript TSX" "VHDL" "XML" "YAML" "Zig")
+                       (difftastic--get-languages)))))))
+
 
 (provide 'difftastic.t)
 

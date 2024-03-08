@@ -5,7 +5,7 @@
 ;; Author: Przemyslaw Kryger <pkryger@gmail.com>
 ;; Keywords: tools diff
 ;; Homepage: https://github.com/pkryger/difftastic.el
-;; Package-Requires: ((emacs "27.1") (compat "29.1.4.2") (magit "20220326"))
+;; Package-Requires: ((emacs "28.1") (compat "29.1.4.2") (magit "20220326"))
 ;; Version: 0.0.0
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -122,21 +122,6 @@
   "Integration with difftastic."
   :group 'tools)
 
-(defun difftastic--ansi-color-face (vector offset name)
-  "Get face from VECTOR with OFFSET or make a new one with NAME suffix.
-New face is made when VECTOR is not bound."
-  ;;This is for backward compatibility with Emacs-27.  When dropping
-  ;; compatibility, calls should be replaced with `(aref VECTOR offset)'.
-  (if (version< emacs-version "28")
-      (custom-declare-face
-       `,(intern (concat "difftastic--ansi-color-" name))
-       `((t :foreground ,(cdr (aref (with-no-warnings
-                                      (ansi-color-make-color-map))
-                                    (+ 30 offset)))))
-       (concat "Face used to render " name " color code.")
-       :group 'difftastic)
-    (aref (eval vector) offset)))
-
 (defun difftastic-requested-window-width ()
   "Get a window width for a first difftastic call.
 It returns a number that will let difftastic to fit content
@@ -171,18 +156,7 @@ display buffer at bottom."
   (with-current-buffer buffer-or-name
     ;; difftastic diffs are usually 2-column side-by-side,
     ;; so ensure our window is wide enough.
-    (let ((actual-width (if (fboundp 'buffer-line-statistics)
-                            ;; since Emacs-28
-                            (cadr (buffer-line-statistics))
-                          (save-excursion
-                            (goto-char (point-min))
-                            (let ((max 0)
-                                  (to (point-max)))
-                              (while (< (point) to)
-                                (end-of-line)
-                                (setq max (max max (current-column)))
-                                (forward-line))
-                              max)))))
+    (let ((actual-width (cadr (buffer-line-statistics))))
       (pop-to-buffer
        (current-buffer)
        `(,(when (< requested-width actual-width)
@@ -195,14 +169,14 @@ display buffer at bottom."
 
 (defcustom difftastic-normal-colors-vector
   (vector
-   (difftastic--ansi-color-face 'ansi-color-normal-colors-vector 0 "black")
+   (aref ansi-color-normal-colors-vector 0)
    'magit-diff-removed
    'magit-diff-added
    'magit-diff-file-heading
    font-lock-comment-face
    font-lock-string-face
    font-lock-warning-face
-   (difftastic--ansi-color-face 'ansi-color-normal-colors-vector 7 "white"))
+   (aref ansi-color-normal-colors-vector 7))
   "Faces to use for colors on difftastic output (normal).
 
 N.B. only foreground and background properties will be used."
@@ -211,14 +185,14 @@ N.B. only foreground and background properties will be used."
 
 (defcustom difftastic-bright-colors-vector
   (vector
-   (difftastic--ansi-color-face 'ansi-color-bright-colors-vector 0 "black")
+   (aref ansi-color-bright-colors-vector 0)
    'magit-diff-removed
    'magit-diff-added
    'magit-diff-file-heading
    font-lock-comment-face
    font-lock-string-face
    font-lock-warning-face
-   (difftastic--ansi-color-face 'ansi-color-bright-colors-vector 7 "white"))
+   (aref ansi-color-bright-colors-vector 7))
   "Faces to use for colors on difftastic output (bright).
 
 N.B. only foreground and background properties will be used."
@@ -283,36 +257,28 @@ See `advice-add' for explanation of SYMBOL, HOW, and FUNCTION arguments."
 
 (defun difftastic-next-file ()
   "Move to the next file."
-  ;; since Emacs-28 the `difftastic-mode' can be moved to interactive
-  (declare (modes difftastic-mode))
-  (interactive)
+  (interactive nil difftastic-mode)
   (if-let ((next (difftastic--next-chunk t)))
       (goto-char next)
     (user-error "No more files")))
 
 (defun difftastic-next-chunk ()
   "Move to the next chunk."
-  ;; since Emacs-28 the `difftastic-mode' can be moved to interactive
-  (declare (modes difftastic-mode))
-  (interactive)
+  (interactive nil difftastic-mode)
   (if-let ((next (difftastic--next-chunk)))
       (goto-char next)
     (user-error "No more chunks")))
 
 (defun difftastic-previous-file ()
   "Move to the previous file."
-  ;; since Emacs-28 the `difftastic-mode' can be moved to interactive
-  (declare (modes difftastic-mode))
-  (interactive)
+  (interactive nil difftastic-mode)
   (if-let ((previous (difftastic--prev-chunk t)))
       (goto-char previous)
     (user-error "No more files")))
 
 (defun difftastic-previous-chunk ()
   "Move to the previous chunk."
-  ;; since Emacs-28 the `difftastic-mode' can be moved to interactive
-  (declare (modes difftastic-mode))
-  (interactive)
+  (interactive nil difftastic-mode)
   (if-let ((previous (difftastic--prev-chunk)))
       (goto-char previous)
     (user-error "No more chunks")))
@@ -488,27 +454,21 @@ current buffer."
 
 (defun difftastic-leave ()
   "Quit difftastic mode and maybe switch buffers, but don't kill this buffer."
-  ;; since Emacs-28 the `difftastic-mode' can be moved to interactive
-  (declare (modes difftastic-mode))
-  (interactive)
+  (interactive nil difftastic-mode)
   (difftastic-mode--do-exit))
 
 (defun difftastic-quit ()
   "Quit difftastic mode, kill current buffer trying to restore window and buffer.
 Try to restore selected window to previous state and go to
 previous buffer or window."
-  ;; since Emacs-28 the `difftastic-mode' can be moved to interactive
-  (declare (modes difftastic-mode))
-  (interactive)
+  (interactive nil difftastic-mode)
   (difftastic-mode--do-exit 'kill-buffer))
 
 (defun difftastic-quit-all ()
   "Quit difftastic mode, kill current buffer trying to restore windows and buffers.
 Try to restore all windows viewing buffer to previous state and
 go to previous buffer or window."
-  ;; since Emacs-28 the `difftastic-mode' can be moved to interactive
-  (declare (modes difftastic-mode))
-  (interactive)
+  (interactive nil difftastic-mode)
   (difftastic-mode--do-exit 'kill-buffer t))
 
 (defun difftastic--copy-tree (tree)
@@ -907,8 +867,7 @@ when it is a temporary or nil otherwise."
                       major-mode)))))
     (cl-find-if (lambda (language)
                   (string= (downcase language)
-                           (downcase (compat-call ;; since Emacs-28
-                                      string-replace
+                           (downcase (string-replace
                                       "-" " "
                                       (replace-regexp-in-string
                                        "\\(?:-ts\\)?-mode$" ""
@@ -1063,12 +1022,11 @@ running difftastic."
 The behavior is the same as `dired-diff', except for the prefix argument, which
 makes the function prompt for LANG-OVERRIDE.  See \\='difft
 --list-languages\\=' for language list."
-  ;; since Emacs-28 the `dired-mode' can be moved to interactive
-  (declare (modes dired-mode))
   (interactive
    (list 'interactive
          (when current-prefix-arg
-           (completing-read "Language: " (difftastic--get-languages) nil t))))
+           (completing-read "Language: " (difftastic--get-languages) nil t)))
+   dired-mode)
   (cl-letf (((symbol-function 'diff)
              (lambda (current file _switches)
                (difftastic-files current file lang-override)))
@@ -1101,12 +1059,11 @@ In order to determine requested width for difftastic a call to
 `difftastic-rerun-requested-window-width-function' is made.  When
 the latter is set to nil the call is made to
 `difftastic-requested-window-width-function'."
-  ;; since Emacs-28 the `difftastic-mode' can be moved to interactive
-  (declare (modes difftastic-mode))
   (interactive (list
                 (or (when current-prefix-arg
                       (completing-read "Language: "
-                                       (difftastic--get-languages) nil t)))))
+                                       (difftastic--get-languages) nil t))))
+               difftastic-mode)
   (if-let (((eq major-mode 'difftastic-mode))
            (rerun-alist (copy-tree difftastic--rerun-alist)))
       (difftastic--with-file-bufs (file-buf-A file-buf-B)

@@ -515,7 +515,14 @@ adding background to faces if they have a foreground set."
                   (lambda (difftastic-face)
                     (and (string=
                           (face-foreground difftastic-face)
-                          (plist-get face :foreground))
+                          (or
+                           (plist-get face :foreground)
+                           (plist-get
+                            (cl-find-if (lambda (elt)
+                                          (and (listp elt)
+                                               (plist-get elt :foreground)))
+                                        face)
+                            :foreground)))
                          ;; ansi-color-* faces have the same
                          ;; foreground and background - don't use them
                          (not (string= (face-foreground difftastic-face)

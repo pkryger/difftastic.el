@@ -726,15 +726,38 @@
           font-lock-comment-face
           font-lock-string-face
           font-lock-warning-face
-          (aref ansi-color-normal-colors-vector 7))))
+          (aref ansi-color-normal-colors-vector 7)))
+        (difftastic-highlight-alist
+         `((ansi-color-green . ansi-color-bright-green)
+           (ansi-color-red . ansi-color-bright-red))))
   (with-temp-buffer
     (eval
      `(mocklet ((process-buffer => ,(current-buffer)))
-        ;; modified line
+        (difftastic--run-command-filter
+         'test-process
+         "[31;1m1 [0m(function [31marg1[0m [31m\"[0m[31marg[0m[31;1;4m2[0m[31m\"[0m) [31;3m;[0m[31;3m;[0m[31;3m [0m[31;3marg[0m[31;1;3;4m3[0m          [32;1m1 [0m(function [32marg0[0m [32m\"[0m[32marg[0m[32;1;4m1[0m[32m\"[0m) [32;3m;[0m[32;3m;[0m[32;3m [0m[32;3marg[0m[32;1;3;4m2[0m")
+        (kill-new (format "\n%S" (buffer-string)))))
 
+;; todo
+        (should
+         (equal
+          (buffer-string)
+          (concat
+           "1 (function arg1 \"arg2\") ;; arg3          1 (function arg0 \"arg1\") ;; "
+           (propertize
+            "arg"
+            'font-lock-face '(ansi-color-italic (:foreground "#005000")
+                                                :background "#d8f8e1"))
+           (propertize
+            "2"
+            'font-lock-face '(ansi-color-italic :background "#c1f2d1"
+                                                :foreground "#005000"))
         ;; added (with bold, highlight, and string and comment)
         ;; removed (with bold, highlight, and string and comment)
-        )))))
+        ))
+    )))))
+
+  ))
 
 (ert-deftest difftastic--run-command-filter:modified-underline-ansi-colors-applied ()
   (let ((difftastic-normal-colors-vector
@@ -751,10 +774,57 @@
   (with-temp-buffer
     (eval
      `(mocklet ((process-buffer => ,(current-buffer)))
+        ;;(difftastic--run-command-filter 'test-process "[31;1m1 [0m(function [31marg1[0m [31m\"[0m[31marg[0m[31;1;4m2[0m[31m\"[0m) [31;3m;[0m[31;3m;[0m[31;3m [0m[31;3marg[0m[31;1;3;4m3[0m          [32;1m1 [0m(function [32marg0[0m [32m\"[0m[32marg[0m[32;1;4m1[0m[32m\"[0m) [32;3m;[0m[32;3m;[0m[32;3m [0m[32;3marg[0m[32;1;3;4m2[0m")
+        (difftastic--run-command-filter 'test-process "[31;1m1 [0m(function [31marg1[0m [31m\"[0m[31marg[0m[31;1;4m2[0m[31m\"[0m) [31;3m;[0m[31;3m;[0m[31;3m [0m[31;3marg[0m[31;1;3;4m3[0m          [32;1m1 [0m(function [32marg0[0m [32m\"[0m[32marg[0m[32;1;4m1[0m[32m\"[0m) [32;3m;; arg[0m[32;1;3;4m2[0m")
+        ;; added (with bold, highlight, and string and comment)
+        ;; removed (with bold, highlight, and string and comment)
+        ))
+    (kill-new (format "%S" (buffer-string)))))
 
-
+    (should
+     (equal
+      (buffer-string)
+      (concat
+       "1 (function arg1 \"arg2\") ;; arg3          1 (function arg0 \"arg1\") ;;"
+       (propertize
+        " "
+        'font-lock-face '(ansi-color-italic (:foreground "#006800")))
+       (propertize
+        "arg"
+        'font-lock-face '(ansi-color-italic (:foreground "#006800")))
+       (propertize
+        "2"
+        'font-lock-face
+        '(ansi-color-bold ansi-color-italic ansi-color-underline (:foreground "#006800"))))
         )))))
+
+#("1 (function arg1 \"arg2\") ;; arg3          1 (function arg0 \"arg1\") ;; arg2"
+  0 2 (font-lock-face (ansi-color-bold (:foreground "#a60000")))
+  12 16 (font-lock-face (:foreground "#a60000"))
+  17 18 (font-lock-face (:foreground "#a60000"))
+  18 21 (font-lock-face (:foreground "#a60000"))
+  21 22 (font-lock-face (ansi-color-bold ansi-color-underline (:foreground "#a60000")))
+  22 23 (font-lock-face (:foreground "#a60000"))
+  25 26 (font-lock-face (ansi-color-italic (:foreground "#a60000")))
+  26 27 (font-lock-face (ansi-color-italic (:foreground "#a60000")))
+  27 28 (font-lock-face (ansi-color-italic (:foreground "#a60000")))
+  28 31 (font-lock-face (ansi-color-italic (:foreground "#a60000")))
+  31 32 (font-lock-face (ansi-color-bold ansi-color-italic ansi-color-underline (:foreground "#a60000")))
+  42 44 (font-lock-face (ansi-color-bold (:foreground "#006800")))
+  54 58 (font-lock-face (:foreground "#006800"))
+  59 60 (font-lock-face (:foreground "#006800"))
+  60 63 (font-lock-face (:foreground "#006800"))
+  63 64 (font-lock-face (ansi-color-bold ansi-color-underline (:foreground "#006800")))
+  64 65 (font-lock-face (:foreground "#006800"))
+  67 68 (font-lock-face (ansi-color-italic (:foreground "#006800")))
+  68 69 (font-lock-face (ansi-color-italic (:foreground "#006800")))
+  69 70 (font-lock-face (ansi-color-italic (:foreground "#006800")))
+  70 73 (font-lock-face (ansi-color-italic (:foreground "#006800")))
+  73 74 (font-lock-face (ansi-color-bold ansi-color-italic ansi-color-underline (:foreground "#006800"))))))))
 
 (provide 'difftastic.t)
 
 ;;; difftastic.t.el ends here
+
+
+(function arg-1 "arg-2") ;; arg-3

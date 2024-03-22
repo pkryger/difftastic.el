@@ -173,9 +173,9 @@ display buffer at bottom."
    'magit-diff-removed
    'magit-diff-added
    'magit-diff-file-heading
-   font-lock-comment-face
-   font-lock-string-face
-   font-lock-warning-face
+   'font-lock-comment-face
+   'font-lock-string-face
+   'font-lock-warning-face
    (aref ansi-color-normal-colors-vector 7))
   "Faces to use for colors on difftastic output (normal).
 
@@ -189,9 +189,9 @@ N.B. only foreground and background properties will be used."
    'magit-diff-removed
    'magit-diff-added
    'magit-diff-file-heading
-   font-lock-comment-face
-   font-lock-string-face
-   font-lock-warning-face
+   'font-lock-comment-face
+   'font-lock-string-face
+   'font-lock-warning-face
    (aref ansi-color-bright-colors-vector 7))
   "Faces to use for colors on difftastic output (bright).
 

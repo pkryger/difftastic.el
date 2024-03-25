@@ -45,7 +45,9 @@
             (difftastic--with-temp-advice 'treesit-ready-p
                 :filter-args (lambda (&rest args)
                                (list (car args) t))
-              (c++-ts-mode))
+              (let ((treesit-auto-install t))
+                (ignore treesit-auto-install)
+                (c++-ts-mode)))
           (c++-mode))
         (setq c++-buffer (current-buffer))
         (with-temp-buffer

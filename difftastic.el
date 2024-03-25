@@ -573,15 +573,16 @@ Utilise `difftastic--ansi-color-add-background-cache' to cache
   "Build a difftastic git command with REQUESTED-WIDTH.
 The DIFFTASTIC-ARGS is a list of extra arguments to pass to
 `difftastic-executable'."
-  (cons (format "GIT_EXTERNAL_DIFF=%s --width %s --background %s%s"
-                difftastic-executable
-                requested-width
-                (frame-parameter nil 'background-mode)
-                (if difftastic-args
-                    (mapconcat #'identity
-                               (cons "" difftastic-args)
-                               " ")
-                  ""))
+  (cons (format
+         "GIT_EXTERNAL_DIFF=%s --color always --width %s --background %s%s"
+         difftastic-executable
+         requested-width
+         (frame-parameter nil 'background-mode)
+         (if difftastic-args
+             (mapconcat #'identity
+                        (cons "" difftastic-args)
+                        " ")
+           ""))
         process-environment))
 
 (defun difftastic--git-with-difftastic (buffer command
@@ -889,12 +890,13 @@ and cdr is a buffer when it is a temporary file and nil otherwise.
 REQUESTED-WIDTH is passed to difftastic as \\='--width\\=' argument.
 LANG-OVERRIDE is passed to difftastic as \\='--override\\=' argument."
   `(,difftastic-executable
-       "--width" ,(number-to-string requested-width)
-       "--background" ,(format "%s" (frame-parameter nil 'background-mode))
-       ,@(when lang-override (list "--override"
-                                   (format "*:%s" lang-override)))
-       ,(car file-buf-A)
-       ,(car file-buf-B)))
+    "--color" "always"
+    "--width" ,(number-to-string requested-width)
+    "--background" ,(format "%s" (frame-parameter nil 'background-mode))
+    ,@(when lang-override (list "--override"
+                                (format "*:%s" lang-override)))
+    ,(car file-buf-A)
+    ,(car file-buf-B)))
 
 (defun difftastic--files-internal (buffer file-buf-A file-buf-B
                                           &optional lang-override)

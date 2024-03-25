@@ -196,7 +196,7 @@
 
 (ert-deftest difftastic--build-git-process-environment:without-difftastic-args ()
   (should (equal
-           (format "GIT_EXTERNAL_DIFF=%s --width 42 --background %s"
+           (format "GIT_EXTERNAL_DIFF=%s --color always --width 42 --background %s"
                    difftastic-executable
                    (frame-parameter nil 'background-mode))
            (car (difftastic--build-git-process-environment 42)))))
@@ -204,7 +204,7 @@
 (ert-deftest difftastic--build-git-process-environment:with-difftastic-args ()
   (should (equal
            (format
-            "GIT_EXTERNAL_DIFF=%s --width 42 --background %s --override *:C++"
+            "GIT_EXTERNAL_DIFF=%s --color always --width 42 --background %s --override *:C++"
             difftastic-executable
             (frame-parameter nil 'background-mode))
            (car
@@ -215,6 +215,7 @@
 (ert-deftest difftastic--build-files-command:without-lang-override ()
   (should (equal
            `(,difftastic-executable
+             "--color" "always"
              "--width" "42"
              "--background" ,(format "%s" (frame-parameter nil 'background-mode))
              "test-file-A" "test-file-B")
@@ -225,6 +226,7 @@
 (ert-deftest difftastic--build-files-command:with-lang-override ()
   (should (equal
            `(,difftastic-executable
+             "--color" "always"
              "--width" "42"
              "--background" ,(format "%s" (frame-parameter nil 'background-mode))
              "--override" "*:test-language"

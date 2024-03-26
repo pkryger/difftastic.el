@@ -670,17 +670,18 @@
          'test-process
          "[1m[33mdifftastic.el[39m[0m[2m --- 1/2 --- Emacs Lisp[0m")
         (should
-         (equal (buffer-string)
-                (concat
-                 (propertize
-                  "difftastic.el"
-                  'font-lock-face
-                  `(ansi-color-bold (:foreground
-                                     ,(face-foreground
-                                       (aref difftastic-normal-colors-vector 3)))))
-                 (propertize
-                  " --- 1/2 --- Emacs Lisp"
-                  'font-lock-face 'ansi-color-faint))))))))
+         (equal-including-properties
+          (buffer-string)
+          (concat
+           (propertize
+            "difftastic.el"
+            'font-lock-face
+            `(ansi-color-bold (:foreground
+                               ,(face-foreground
+                                 (aref difftastic-normal-colors-vector 3)))))
+           (propertize
+            " --- 1/2 --- Emacs Lisp"
+            'font-lock-face 'ansi-color-faint))))))))
 
 (ert-deftest difftastic--run-command-filter:chunk-ansi-colors-applied ()
   (with-temp-buffer
@@ -690,14 +691,16 @@
          'test-process
          "[1mdifftastic.el[0m[2m --- 2/2 --- Emacs Lisp[0m")
         (should
-         (equal (buffer-string)
-                (concat
-                 (propertize
-                  "difftastic.el"
-                  'font-lock-face 'ansi-color-bold)
-                 (propertize
-                  " --- 2/2 --- Emacs Lisp"
-                  'font-lock-face 'ansi-color-faint))))))))
+         (equal-including-properties
+          (buffer-string)
+          (concat
+           (propertize
+            "difftastic.el"
+            'font-lock-face 'ansi-color-bold)
+           (propertize
+            " --- 2/2 --- Emacs Lisp"
+            'font-lock-face 'ansi-color-faint))))))))
+
 
 (ert-deftest difftastic--run-command-filter:modified-wiht-highlight-ansi-colors-applied ()
   (with-temp-buffer

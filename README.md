@@ -15,7 +15,10 @@ The `difftastic` Emacs package is designed to integrate [`difftastic`](https://g
 - Rerun `difftastic` with <kbd>g</kbd> to use your window width and/or to force language change (when called with prefix).
 
 ## Installation
+### Installing from MELPA
+The easiest way to install and keep `difftastic` up-to-date is using Emacs’s built-in package manager. `difftastic` is available in the MELPA repository. Refer to https://melpa.org/#/getting-started for how to install a package from MELPA.
 
+### Installing from GitHub
 1. Clone this repository to a directory of your choice.
 2. Add the following lines to your Emacs configuration file (usually `~/.emacs` or `~/.emacs.d/init.el`):
 

@@ -32,7 +32,7 @@
 ;;
 ;; Configuration
 ;;
-;; To configure `difftastic` commands in `magit-diff` prefix, use the following
+;; To configure difftastic commands in `magit-diff' prefix, use the following
 ;; code snippet in your Emacs configuration:
 ;;
 ;; (require 'difftastic)

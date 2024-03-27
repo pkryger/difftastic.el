@@ -697,23 +697,58 @@
                     (object-intervals ,expected)))))))))
 
 (ert-deftest difftastic--run-command-filter:chunk-ansi-colors-applied ()
-  (with-temp-buffer
-    (eval
-     `(mocklet ((process-buffer => ,(current-buffer)))
-        (difftastic--run-command-filter
-         'test-process
-         "[1mdifftastic.el[0m[2m --- 2/2 --- Emacs Lisp[0m")
-        (should
-         (equal-including-properties
-          (buffer-string)
-          (concat
-           (propertize
-            "difftastic.el"
-            'font-lock-face 'ansi-color-bold)
-           (propertize
-            " --- 2/2 --- Emacs Lisp"
-            'font-lock-face 'ansi-color-faint))))))))
+  (let ((expected
+         (concat
+          (propertize
+           "difftastic.el"
+           'font-lock-face 'ansi-color-bold)
+          (propertize
+           " --- 2/2 --- Emacs Lisp"
+           'font-lock-face 'ansi-color-faint))))
+    (with-temp-buffer
+      (eval
+       `(mocklet ((process-buffer => ,(current-buffer)))
+          (difftastic--run-command-filter
+           'test-process
+           "[1mdifftastic.el[0m[2m --- 2/2 --- Emacs Lisp[0m")
+          (should
+           (equal-including-properties
+            (buffer-string)
+            ,expected)))))))
 
+(ert-deftest difftastic--run-command-filter:removed-ansi-colors-applied ()
+  (let* ((expected-fg
+          (if noninteractive
+              "unspecified-fg"
+            (face-foreground (aref difftastic-normal-colors-vector 1))))
+         (expected-bg
+          (if noninteractive
+              "unspecified-bg"
+            (face-background (aref difftastic-normal-colors-vector 1))))
+         (expected
+          (propertize
+           "removed"
+           'font-lock-face
+           `(:foreground ,expected-fg ,@(unless noninteractive
+                                          `(:background ,expected-bg))))))
+    (message "[%sinteractive] ((expected-fg %S) (expected-bg %S))"
+             (if noninteractive "non" "")
+             expected-fg
+             expected-bg)
+    (with-temp-buffer
+      (eval
+       `(mocklet ((process-buffer => ,(current-buffer)))
+          (difftastic--run-command-filter
+           'test-process
+           "[31mremoved[0m")
+          (if (version< "29" emacs-version) ;; since Emacs-29
+              (should
+               (equal-including-properties (buffer-string) ,expected))
+            ;; For some reason `equal-including-properties' fails on pre Emacs-29
+            (should (equal (buffer-string) ,expected))
+            (should
+             (equal (object-intervals (buffer-string))
+                    (object-intervals ,expected)))))))))
 
 "[31mremoved[0m"
 "[31;1mremoved bold[0m"

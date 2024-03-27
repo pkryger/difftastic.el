@@ -662,26 +662,38 @@
                          "TypeScript TSX" "VHDL" "XML" "YAML" "Zig")
                        (difftastic--get-languages)))))))
 
+;; When running in batch mode there are no colors.  See this discussion:
+;; https://lists.gnu.org/archive/html/help-gnu-emacs/2024-02/msg00095.html
+
 (ert-deftest difftastic--run-command-filter:file-ansi-colors-applied ()
-  (with-temp-buffer
-    (eval
-     `(mocklet ((process-buffer => ,(current-buffer)))
-        (difftastic--run-command-filter
-         'test-process
-         "[1m[33mdifftastic.el[39m[0m[2m --- 1/2 --- Emacs Lisp[0m")
-        (should
-         (equal-including-properties
-          (buffer-string)
-          (concat
-           (propertize
-            "difftastic.el"
-            'font-lock-face
-            `(ansi-color-bold (:foreground
-                               ,(face-foreground
-                                 (aref difftastic-normal-colors-vector 3)))))
-           (propertize
-            " --- 1/2 --- Emacs Lisp"
-            'font-lock-face 'ansi-color-faint))))))))
+  (let ((expected-fg
+         (if noninteractive
+             (when (version< "29" emacs-version) "unspecified-fg") ;; since Emacs-29
+           (face-foreground (aref difftastic-normal-colors-vector 3)))))
+    (message "[%sinteractive] ((expected-fg %S))"
+             (if noninteractive "non" "")
+             expected-fg)
+    (with-temp-buffer
+      (eval
+       `(mocklet ((process-buffer => ,(current-buffer)))
+          (difftastic--run-command-filter
+           'test-process
+           "[1m[33mdifftastic.el[39m[0m[2m --- 1/2 --- Emacs Lisp[0m")
+          (should
+           (equal
+            (get-text-property (point-min) 'font-lock-face)
+            (list 'ansi-color-bold (list :foreground ,expected-fg))))
+          (should
+           (equal-including-properties
+            (buffer-string)
+            (concat
+             (propertize
+              "difftastic.el"
+              'font-lock-face
+              (list 'ansi-color-bold (list :foreground ,expected-fg)))
+             (propertize
+              " --- 1/2 --- Emacs Lisp"
+              'font-lock-face 'ansi-color-faint)))))))))
 
 (ert-deftest difftastic--run-command-filter:chunk-ansi-colors-applied ()
   (with-temp-buffer
@@ -700,6 +712,37 @@
            (propertize
             " --- 2/2 --- Emacs Lisp"
             'font-lock-face 'ansi-color-faint))))))))
+
+
+"[31mremoved[0m"
+"[31;1mremoved bold[0m"
+"[31;3mremoved italic[0m"
+"[31;1;3mremoved bold italic[0m"
+
+"[32madded[0m"
+"[32;1madded bold[0m"
+"[32;3madded italic[0m"
+"[32;1;3madded bold italic[0m"
+
+"[31;4mremoved underline[0m"
+"[31;1;4mremoved bold underline[0m"
+"[31;3;4mremoved italic underline[0m"
+"[31;1;3;4mremoved bold italic underline[0m"
+
+"[32;4madded underline[0m"
+"[32;1;4madded bold underline[0m"
+"[32;3;4madded italic underline[0m"
+"[32;1;3;4madded bold italic underline[0m"
+
+"[34mcomment[0m"
+"[34;1mcomment bold[0m"
+"[34;3mcomment italic[0m"
+"[34;1;3mcomment bold italic[0m"
+
+"[35mstring[0m"
+"[35;1mstring bold[0m"
+"[35;3mstring italic[0m"
+"[35;1;3mstring bold italic[0m"
 
 
 (ert-deftest difftastic--run-command-filter:modified-wiht-highlight-ansi-colors-applied ()

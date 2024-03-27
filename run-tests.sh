@@ -76,7 +76,9 @@ if [[ ${mode} =~ ^(all|test)$ ]]; then
              --eval "$INIT_PACKAGE_EL" \
              --load difftastic.el \
              --load test/difftastic.t.el \
-             --eval "(let ((ert-batch-print-level 50)
+             --eval "(let ((print-level 50)
+                           (eval-expression-print-level 50)
+                           (ert-batch-print-level 50)
                            (ert-batch-print-length 5000)
                            (ert-batch-backtrace-line-length 5000)
                            (ert-batch-backtrace-right-margin 5000))

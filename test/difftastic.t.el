@@ -666,10 +666,18 @@
 ;; https://lists.gnu.org/archive/html/help-gnu-emacs/2024-02/msg00095.html
 
 (ert-deftest difftastic--run-command-filter:file-ansi-colors-applied ()
-  (let ((expected-fg
-         (if noninteractive
-             (when (version< "29" emacs-version) "unspecified-fg") ;; since Emacs-29
-           (face-foreground (aref difftastic-normal-colors-vector 3)))))
+  (let* ((expected-fg
+          (if noninteractive
+              "unspecified-fg"
+            (face-foreground (aref difftastic-normal-colors-vector 3))))
+         (expected
+          (concat
+           (propertize
+            "difftastic.el"
+            'font-lock-face `(ansi-color-bold (:foreground ,expected-fg)))
+           (propertize
+            " --- 1/2 --- Emacs Lisp"
+            'font-lock-face 'ansi-color-faint))))
     (message "[%sinteractive] ((expected-fg %S))"
              (if noninteractive "non" "")
              expected-fg)
@@ -679,21 +687,14 @@
           (difftastic--run-command-filter
            'test-process
            "[1m[33mdifftastic.el[39m[0m[2m --- 1/2 --- Emacs Lisp[0m")
-          (should
-           (equal
-            (get-text-property (point-min) 'font-lock-face)
-            (list 'ansi-color-bold (list :foreground ,expected-fg))))
-          (should
-           (equal-including-properties
-            (buffer-string)
-            (concat
-             (propertize
-              "difftastic.el"
-              'font-lock-face
-              (list 'ansi-color-bold (list :foreground ,expected-fg)))
-             (propertize
-              " --- 1/2 --- Emacs Lisp"
-              'font-lock-face 'ansi-color-faint)))))))))
+          (if (version< "29" emacs-version) ;; since Emacs-29
+              (should
+               (equal-including-properties (buffer-string) ,expected))
+            ;; For some reason `equal-including-properties' fails on pre Emacs-29
+            (should (equal (buffer-string) ,expected))
+            (should
+             (equal (object-intervals (buffer-string))
+                    (object-intervals ,expected)))))))))
 
 (ert-deftest difftastic--run-command-filter:chunk-ansi-colors-applied ()
   (with-temp-buffer

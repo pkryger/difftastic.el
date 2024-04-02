@@ -662,6 +662,628 @@
                          "TypeScript TSX" "VHDL" "XML" "YAML" "Zig")
                        (difftastic--get-languages)))))))
 
+;; When running in batch mode there are no colors.  See this discussion:
+;; https://lists.gnu.org/archive/html/help-gnu-emacs/2024-02/msg00095.html
+;; For this reason only a couple sanity tests are run in CI.
+
+(ert-deftest difftastic--run-command-filter:file-ansi-colors-applied ()
+  (let* ((expected-fg
+          (if noninteractive
+              "unspecified-fg"
+            (face-foreground (aref difftastic-normal-colors-vector 3))))
+         (expected
+          (concat
+           (propertize
+            "difftastic.el"
+            'font-lock-face `(ansi-color-bold (:foreground ,expected-fg)))
+           (propertize
+            " --- 1/2 --- Emacs Lisp"
+            'font-lock-face 'ansi-color-faint))))
+    (message "[%sinteractive] ((expected-fg %S))"
+             (if noninteractive "non" "")
+             expected-fg)
+    (with-temp-buffer
+      (eval
+       `(mocklet ((process-buffer => ,(current-buffer)))
+          (difftastic--run-command-filter
+           'test-process
+           "[1m[33mdifftastic.el[39m[0m[2m --- 1/2 --- Emacs Lisp[0m")
+          (if (version< "29" emacs-version) ;; since Emacs-29
+              (should
+               (equal-including-properties (buffer-string) ,expected))
+            ;; For some reason `equal-including-properties' fails pre Emacs-29
+            (should (equal (buffer-string) ,expected))
+            (should
+             (equal (object-intervals (buffer-string))
+                    (object-intervals ,expected)))))))))
+
+(ert-deftest difftastic--run-command-filter:chunk-ansi-colors-applied ()
+  (let ((expected
+         (concat
+          (propertize
+           "difftastic.el"
+           'font-lock-face 'ansi-color-bold)
+          (propertize
+           " --- 2/2 --- Emacs Lisp"
+           'font-lock-face 'ansi-color-faint))))
+    (with-temp-buffer
+      (eval
+       `(mocklet ((process-buffer => ,(current-buffer)))
+          (difftastic--run-command-filter
+           'test-process
+           "[1mdifftastic.el[0m[2m --- 2/2 --- Emacs Lisp[0m")
+          (should
+           (equal-including-properties
+            (buffer-string)
+            ,expected)))))))
+
+;; The following few tests are meant to check for default face color values
+;; such that it's easier to debug and update tests when these change upstream.
+
+(defconst difftastic-t-removed-fg (face-foreground 'magit-diff-removed))
+(defconst difftastic-t-removed-bg (face-background 'magit-diff-removed))
+(defconst difftastic-t-removed-highlight-fg
+  (face-foreground (alist-get 'magit-diff-removed difftastic-highlight-alist)))
+(defconst difftastic-t-removed-highlight-bg
+  (face-background (alist-get 'magit-diff-removed difftastic-highlight-alist)))
+(defconst difftastic-t-added-fg (face-foreground 'magit-diff-added))
+(defconst difftastic-t-added-bg (face-background 'magit-diff-added))
+(defconst difftastic-t-added-highlight-fg
+  (face-foreground (alist-get 'magit-diff-added difftastic-highlight-alist)))
+(defconst difftastic-t-added-highlight-bg
+  (face-background (alist-get 'magit-diff-added difftastic-highlight-alist)))
+(defconst difftastic-t-comment-fg (face-foreground 'font-lock-comment-face))
+(defconst difftastic-t-comment-bg (face-background 'font-lock-comment-face))
+(defconst difftastic-t-string-fg (face-foreground 'font-lock-string-face))
+(defconst difftastic-t-string-bg (face-background 'font-lock-string-face))
+
+(ert-deftest difftastic--run-command-filter:removed-ansi-colors-applied ()
+  :tags '(interactive)
+  (with-temp-buffer
+    (eval
+     '(mocklet ((process-buffer => (current-buffer)))
+        (difftastic--run-command-filter
+         'test-process
+         "[31mremoved[0m")
+        (should
+         (equal-including-properties
+          (buffer-string)
+          (propertize "removed"
+                      'font-lock-face
+                      `((:background ,difftastic-t-removed-bg)
+                        (:foreground ,difftastic-t-removed-fg)))))))))
+
+(ert-deftest difftastic--run-command-filter:removed-bold-ansi-colors-applied ()
+  :tags '(interactive)
+  (with-temp-buffer
+    (eval
+     '(mocklet ((process-buffer => (current-buffer)))
+        (difftastic--run-command-filter
+         'test-process
+         "[31;1mremoved[0m")
+        (should
+         (equal-including-properties
+          (buffer-string)
+          (propertize "removed"
+                      'font-lock-face
+                      `((:background ,difftastic-t-removed-bg)
+                        ansi-color-bold
+                        (:foreground ,difftastic-t-removed-fg)))))))))
+
+(ert-deftest difftastic--run-command-filter:removed-italic-ansi-colors-applied ()
+  :tags '(interactive)
+  (with-temp-buffer
+    (eval
+     '(mocklet ((process-buffer => (current-buffer)))
+        (difftastic--run-command-filter
+         'test-process
+         "[31;3mremoved[0m")
+        (should
+         (equal-including-properties
+          (buffer-string)
+          (propertize "removed"
+                      'font-lock-face
+                      `((:background ,difftastic-t-removed-bg)
+                        ansi-color-italic
+                        (:foreground ,difftastic-t-removed-fg)))))))))
+
+(ert-deftest difftastic--run-command-filter:removed-bold-italic-ansi-colors-applied ()
+  :tags '(interactive)
+  (with-temp-buffer
+    (eval
+     '(mocklet ((process-buffer => (current-buffer)))
+        (difftastic--run-command-filter
+         'test-process
+         "[31;1;3mremoved[0m")
+        (should
+         (equal-including-properties
+          (buffer-string)
+          (propertize "removed"
+                      'font-lock-face
+                      `((:background ,difftastic-t-removed-bg)
+                        ansi-color-bold
+                        ansi-color-italic
+                        (:foreground ,difftastic-t-removed-fg)))))))))
+
+(ert-deftest difftastic--run-command-filter:added-ansi-colors-applied ()
+  :tags '(interactive)
+  (with-temp-buffer
+    (eval
+     '(mocklet ((process-buffer => (current-buffer)))
+        (difftastic--run-command-filter
+         'test-process
+         "[32madded[0m")
+        (should
+         (equal-including-properties
+          (buffer-string)
+          (propertize "added"
+                      'font-lock-face
+                      `((:background ,difftastic-t-added-bg)
+                        (:foreground ,difftastic-t-added-fg)))))))))
+
+(ert-deftest difftastic--run-command-filter:added-bold-ansi-colors-applied ()
+  :tags '(interactive)
+  (with-temp-buffer
+    (eval
+     '(mocklet ((process-buffer => (current-buffer)))
+        (difftastic--run-command-filter
+         'test-process
+         "[32;1madded[0m")
+        (should
+         (equal-including-properties
+          (buffer-string)
+          (propertize "added"
+                      'font-lock-face
+                      `((:background ,difftastic-t-added-bg)
+                        ansi-color-bold
+                        (:foreground ,difftastic-t-added-fg)))))))))
+
+(ert-deftest difftastic--run-command-filter:added-italic-ansi-colors-applied ()
+  :tags '(interactive)
+  (with-temp-buffer
+    (eval
+     '(mocklet ((process-buffer => (current-buffer)))
+        (difftastic--run-command-filter
+         'test-process
+         "[32;3madded[0m")
+        (should
+         (equal-including-properties
+          (buffer-string)
+          (propertize "added"
+                      'font-lock-face
+                      `((:background ,difftastic-t-added-bg)
+                        ansi-color-italic
+                        (:foreground ,difftastic-t-added-fg)))))))))
+
+(ert-deftest difftastic--run-command-filter:added-bold-italic-ansi-colors-applied ()
+  :tags '(interactive)
+  (with-temp-buffer
+    (eval
+     '(mocklet ((process-buffer => (current-buffer)))
+        (difftastic--run-command-filter
+         'test-process
+         "[32;1;3madded[0m")
+        (should
+         (equal-including-properties
+          (buffer-string)
+          (propertize "added"
+                      'font-lock-face
+                      `((:background ,difftastic-t-added-bg)
+                        ansi-color-bold
+                        ansi-color-italic
+                        (:foreground ,difftastic-t-added-fg)))))))))
+
+(ert-deftest difftastic--run-command-filter:removed-highlight-ansi-colors-applied ()
+  :tags '(interactive)
+  (with-temp-buffer
+    (eval
+     '(mocklet ((process-buffer => (current-buffer)))
+        (difftastic--run-command-filter
+         'test-process
+         "[31;4mremoved[0m")
+        (should
+         (equal-including-properties
+          (buffer-string)
+          (propertize "removed"
+                      'font-lock-face
+                      `((:background ,difftastic-t-removed-highlight-bg)
+                        (:foreground ,difftastic-t-removed-highlight-fg)))))))))
+
+(ert-deftest difftastic--run-command-filter:removed-highlight-bold-ansi-colors-applied ()
+  :tags '(interactive)
+  (with-temp-buffer
+    (eval
+     '(mocklet ((process-buffer => (current-buffer)))
+        (difftastic--run-command-filter
+         'test-process
+         "[31;1;4mremoved[0m")
+        (should
+         (equal-including-properties
+          (buffer-string)
+          (propertize "removed"
+                      'font-lock-face
+                      `((:background ,difftastic-t-removed-highlight-bg)
+                        (:foreground ,difftastic-t-removed-highlight-fg)))))))))
+
+(ert-deftest difftastic--run-command-filter:removed-highlight-italic-ansi-colors-applied ()
+  :tags '(interactive)
+  (with-temp-buffer
+    (eval
+     '(mocklet ((process-buffer => (current-buffer)))
+        (difftastic--run-command-filter
+         'test-process
+         "[31;3;4mremoved[0m")
+        (should
+         (equal-including-properties
+          (buffer-string)
+          (propertize "removed"
+                      'font-lock-face
+                      `((:background ,difftastic-t-removed-highlight-bg)
+                        (:foreground ,difftastic-t-removed-highlight-fg)
+                        ansi-color-italic))))))))
+
+(ert-deftest difftastic--run-command-filter:removed-highlight-bold-italic-ansi-colors-applied ()
+  :tags '(interactive)
+  (with-temp-buffer
+    (eval
+     '(mocklet ((process-buffer => (current-buffer)))
+        (difftastic--run-command-filter
+         'test-process
+         "[31;1;3;4mremoved[0m")
+        (should
+         (equal-including-properties
+          (buffer-string)
+          (propertize "removed"
+                      'font-lock-face
+                      `((:background ,difftastic-t-removed-highlight-bg)
+                        (:foreground ,difftastic-t-removed-highlight-fg)
+                        ansi-color-italic))))))))
+
+(ert-deftest difftastic--run-command-filter:added-highlight-ansi-colors-applied ()
+  :tags '(interactive)
+  (with-temp-buffer
+    (eval
+     '(mocklet ((process-buffer => (current-buffer)))
+        (difftastic--run-command-filter
+         'test-process
+         "[32;4madded[0m")
+        (should
+         (equal-including-properties
+          (buffer-string)
+          (propertize "added"
+                      'font-lock-face
+                      `((:background ,difftastic-t-added-highlight-bg)
+                        (:foreground ,difftastic-t-added-highlight-fg)))))))))
+
+(ert-deftest difftastic--run-command-filter:added-highlight-bold-ansi-colors-applied ()
+  :tags '(interactive)
+  (with-temp-buffer
+    (eval
+     '(mocklet ((process-buffer => (current-buffer)))
+        (difftastic--run-command-filter
+         'test-process
+         "[32;1;4madded[0m")
+        (should
+         (equal-including-properties
+          (buffer-string)
+          (propertize "added"
+                      'font-lock-face
+                      `((:background ,difftastic-t-added-highlight-bg)
+                        (:foreground ,difftastic-t-added-highlight-fg)))))))))
+
+(ert-deftest difftastic--run-command-filter:added-highlight-italic-ansi-colors-applied ()
+  :tags '(interactive)
+  (with-temp-buffer
+    (eval
+     '(mocklet ((process-buffer => (current-buffer)))
+        (difftastic--run-command-filter
+         'test-process
+         "[32;3;4madded[0m")
+        (should
+         (equal-including-properties
+          (buffer-string)
+          (propertize "added"
+                      'font-lock-face
+                      `((:background ,difftastic-t-added-highlight-bg)
+                        (:foreground ,difftastic-t-added-highlight-fg)
+                        ansi-color-italic))))))))
+
+(ert-deftest difftastic--run-command-filter:added-highlight-bold-italic-ansi-colors-applied ()
+  :tags '(interactive)
+  (with-temp-buffer
+    (eval
+     '(mocklet ((process-buffer => (current-buffer)))
+        (difftastic--run-command-filter
+         'test-process
+         "[32;1;3;4madded[0m")
+        (should
+         (equal-including-properties
+          (buffer-string)
+          (propertize "added"
+                      'font-lock-face
+                      `((:background ,difftastic-t-added-highlight-bg)
+                        (:foreground ,difftastic-t-added-highlight-fg)
+                        ansi-color-italic))))))))
+
+(ert-deftest difftastic--run-command-filter:removed-no-highlight-ansi-colors-applied ()
+  :tags '(interactive)
+  (let (difftastic-highlight-alist)
+    (with-temp-buffer
+      (eval
+       '(mocklet ((process-buffer => (current-buffer)))
+          (difftastic--run-command-filter
+           'test-process
+           "[31;4mremoved[0m")
+          (should
+           (equal-including-properties
+            (buffer-string)
+            (propertize "removed"
+                        'font-lock-face
+                        `((:background ,difftastic-t-removed-bg)
+                          ansi-color-underline
+                          (:foreground ,difftastic-t-removed-fg))))))))))
+
+(ert-deftest difftastic--run-command-filter:removed-no-highlight-bold-ansi-colors-applied ()
+  :tags '(interactive)
+  (let (difftastic-highlight-alist)
+    (with-temp-buffer
+      (eval
+       '(mocklet ((process-buffer => (current-buffer)))
+          (difftastic--run-command-filter
+           'test-process
+           "[31;1;4mremoved[0m")
+          (should
+           (equal-including-properties
+            (buffer-string)
+            (propertize "removed"
+                        'font-lock-face
+                        `((:background ,difftastic-t-removed-bg)
+                          ansi-color-bold
+                          ansi-color-underline
+                          (:foreground ,difftastic-t-removed-fg))))))))))
+
+(ert-deftest difftastic--run-command-filter:removed-no-highlight-italic-ansi-colors-applied ()
+  :tags '(interactive)
+  (let (difftastic-highlight-alist)
+    (with-temp-buffer
+      (eval
+       '(mocklet ((process-buffer => (current-buffer)))
+          (difftastic--run-command-filter
+           'test-process
+           "[31;3;4mremoved[0m")
+          (should
+           (equal-including-properties
+            (buffer-string)
+            (propertize "removed"
+                        'font-lock-face
+                        `((:background ,difftastic-t-removed-bg)
+                          ansi-color-italic
+                          ansi-color-underline
+                          (:foreground ,difftastic-t-removed-fg))))))))))
+
+(ert-deftest difftastic--run-command-filter:removed-no-highlight-bold-italic-ansi-colors-applied ()
+  :tags '(interactive)
+  (let (difftastic-highlight-alist)
+    (with-temp-buffer
+      (eval
+       '(mocklet ((process-buffer => (current-buffer)))
+          (difftastic--run-command-filter
+           'test-process
+           "[31;1;3;4mremoved[0m")
+          (should
+           (equal-including-properties
+            (buffer-string)
+            (propertize "removed"
+                        'font-lock-face
+                        `((:background ,difftastic-t-removed-bg)
+                          ansi-color-bold
+                          ansi-color-italic
+                          ansi-color-underline
+                          (:foreground ,difftastic-t-removed-fg))))))))))
+
+(ert-deftest difftastic--run-command-filter:added-no-highlight-ansi-colors-applied ()
+  :tags '(interactive)
+  (let (difftastic-highlight-alist)
+    (with-temp-buffer
+      (eval
+       '(mocklet ((process-buffer => (current-buffer)))
+          (difftastic--run-command-filter
+           'test-process
+           "[32;4madded[0m")
+          (should
+           (equal-including-properties
+            (buffer-string)
+            (propertize "added"
+                        'font-lock-face
+                        `((:background ,difftastic-t-added-bg)
+                          ansi-color-underline
+                          (:foreground ,difftastic-t-added-fg))))))))))
+
+(ert-deftest difftastic--run-command-filter:added-no-highlight-bold-ansi-colors-applied ()
+  :tags '(interactive)
+  (let (difftastic-highlight-alist)
+    (with-temp-buffer
+      (eval
+       '(mocklet ((process-buffer => (current-buffer)))
+          (difftastic--run-command-filter
+           'test-process
+           "[32;1;4madded[0m")
+          (should
+           (equal-including-properties
+            (buffer-string)
+            (propertize "added"
+                        'font-lock-face
+                        `((:background ,difftastic-t-added-bg)
+                          ansi-color-bold
+                          ansi-color-underline
+                          (:foreground ,difftastic-t-added-fg))))))))))
+
+(ert-deftest difftastic--run-command-filter:added-no-highlight-italic-ansi-colors-applied ()
+  :tags '(interactive)
+  (let (difftastic-highlight-alist)
+    (with-temp-buffer
+      (eval
+       '(mocklet ((process-buffer => (current-buffer)))
+          (difftastic--run-command-filter
+           'test-process
+           "[32;3;4madded[0m")
+          (should
+           (equal-including-properties
+            (buffer-string)
+            (propertize "added"
+                        'font-lock-face
+                        `((:background ,difftastic-t-added-bg)
+                          ansi-color-italic
+                          ansi-color-underline
+                          (:foreground ,difftastic-t-added-fg))))))))))
+
+(ert-deftest difftastic--run-command-filter:added-no-highlight-bold-italic-ansi-colors-applied ()
+  :tags '(interactive)
+  (let (difftastic-highlight-alist)
+    (with-temp-buffer
+      (eval
+       '(mocklet ((process-buffer => (current-buffer)))
+          (difftastic--run-command-filter
+           'test-process
+           "[32;1;3;4madded[0m")
+          (should
+           (equal-including-properties
+            (buffer-string)
+            (propertize "added"
+                        'font-lock-face
+                        `((:background ,difftastic-t-added-bg)
+                          ansi-color-bold
+                          ansi-color-italic
+                          ansi-color-underline
+                          (:foreground ,difftastic-t-added-fg))))))))))
+
+(ert-deftest difftastic--run-command-filter:comment-ansi-colors-applied ()
+  :tags '(interactive)
+  (with-temp-buffer
+    (eval
+     '(mocklet ((process-buffer => (current-buffer)))
+        (difftastic--run-command-filter
+         'test-process
+         "[34mcomment[0m")
+        (should
+         (equal-including-properties
+          (buffer-string)
+          (propertize "comment"
+                      'font-lock-face
+                      `(:foreground ,difftastic-t-comment-fg))))))))
+
+(ert-deftest difftastic--run-command-filter:comment-bold-ansi-colors-applied ()
+  :tags '(interactive)
+  (with-temp-buffer
+    (eval
+     '(mocklet ((process-buffer => (current-buffer)))
+        (difftastic--run-command-filter
+         'test-process
+         "[34;1mcomment[0m")
+        (should
+         (equal-including-properties
+          (buffer-string)
+          (propertize "comment"
+                      'font-lock-face
+                      `(ansi-color-bold
+                        (:foreground ,difftastic-t-comment-fg)))))))))
+
+(ert-deftest difftastic--run-command-filter:comment-italic-ansi-colors-applied ()
+  :tags '(interactive)
+  (with-temp-buffer
+    (eval
+     '(mocklet ((process-buffer => (current-buffer)))
+        (difftastic--run-command-filter
+         'test-process
+         "[34;3mcomment[0m")
+        (should
+         (equal-including-properties
+          (buffer-string)
+          (propertize "comment"
+                      'font-lock-face
+                      `(ansi-color-italic
+                        (:foreground ,difftastic-t-comment-fg)))))))))
+
+(ert-deftest difftastic--run-command-filter:comment-bold-italic-ansi-colors-applied ()
+  :tags '(interactive)
+  (with-temp-buffer
+    (eval
+     '(mocklet ((process-buffer => (current-buffer)))
+        (difftastic--run-command-filter
+         'test-process
+         "[34;1;3mcomment[0m")
+        (should
+         (equal-including-properties
+          (buffer-string)
+          (propertize "comment"
+                      'font-lock-face
+                      `(ansi-color-bold
+                        ansi-color-italic
+                        (:foreground ,difftastic-t-comment-fg)))))))))
+
+(ert-deftest difftastic--run-command-filter:string-ansi-colors-applied ()
+  :tags '(interactive)
+  (with-temp-buffer
+    (eval
+     '(mocklet ((process-buffer => (current-buffer)))
+        (difftastic--run-command-filter
+         'test-process
+         "[35mstring[0m")
+        (should
+         (equal-including-properties
+          (buffer-string)
+          (propertize "string"
+                      'font-lock-face
+                      `(:foreground ,difftastic-t-string-fg))))))))
+
+(ert-deftest difftastic--run-command-filter:string-bold-ansi-colors-applied ()
+  :tags '(interactive)
+  (with-temp-buffer
+    (eval
+     '(mocklet ((process-buffer => (current-buffer)))
+        (difftastic--run-command-filter
+         'test-process
+         "[35;1mstring[0m")
+        (should
+         (equal-including-properties
+          (buffer-string)
+          (propertize "string"
+                      'font-lock-face
+                      `(ansi-color-bold
+                        (:foreground ,difftastic-t-string-fg)))))))))
+
+(ert-deftest difftastic--run-command-filter:string-italic-ansi-colors-applied ()
+  :tags '(interactive)
+  (with-temp-buffer
+    (eval
+     '(mocklet ((process-buffer => (current-buffer)))
+        (difftastic--run-command-filter
+         'test-process
+         "[35;3mstring[0m")
+        (should
+         (equal-including-properties
+          (buffer-string)
+          (propertize "string"
+                      'font-lock-face
+                      `(ansi-color-italic
+                        (:foreground ,difftastic-t-string-fg)))))))))
+
+(ert-deftest difftastic--run-command-filter:string-bold-italic-ansi-colors-applied ()
+  :tags '(interactive)
+  (with-temp-buffer
+    (eval
+     '(mocklet ((process-buffer => (current-buffer)))
+        (difftastic--run-command-filter
+         'test-process
+         "[35;1;3mstring[0m")
+        (should
+         (equal-including-properties
+          (buffer-string)
+          (propertize "string"
+                      'font-lock-face
+                      `(ansi-color-bold
+                        ansi-color-italic
+                        (:foreground ,difftastic-t-string-fg)))))))))
 
 (provide 'difftastic.t)
 

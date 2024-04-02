@@ -509,45 +509,50 @@ conses."
 N.B.  This is meant to filter-result of either
 `ansi-color--face-vec-face' or `ansi-color-get-face-1' by
 adding background to faces if they have a foreground set."
-  (if-let ((difftastic-face
-            (and (listp face)
-                 (cl-find-if
-                  (lambda (difftastic-face)
-                    (and (string=
-                          (face-foreground difftastic-face)
-                          (or
-                           (plist-get face :foreground)
-                           (plist-get
-                            (cl-find-if (lambda (elt)
-                                          (and (listp elt)
-                                               (plist-get elt :foreground)))
-                                        face)
-                            :foreground)))
-                         ;; ansi-color-* faces have the same
-                         ;; foreground and background - don't use them
-                         (not (string= (face-foreground difftastic-face)
-                                       (face-background difftastic-face)))
-                         (face-background difftastic-face)))
-                  (vconcat difftastic-normal-colors-vector
-                           difftastic-bright-colors-vector)))))
-      ;; difftastic uses underline to highlight some changes;
-      ;; it uses bold as well, but it's not as unambiguous as underline
-      (if-let ((highlight-face (and (cl-member 'ansi-color-underline face)
-                                    (alist-get difftastic-face
-                                               difftastic-highlight-alist))))
-          (append (cl-remove-if (lambda (elt)
-                                  (and (listp elt)
-                                       (plist-get elt :foreground)))
-                                (cl-remove 'ansi-color-underline
-                                           (cl-remove 'ansi-color-bold face)))
-                  (list :background
-                        (face-background highlight-face nil 'default))
-                  (list :foreground
-                        (face-foreground highlight-face nil 'default)))
-        (append face
-                (list :background
-                      (face-background difftastic-face nil 'default))))
-    face))
+  (when-let ((difftastic-face
+              (and (listp face)
+                   (cl-find-if
+                    (lambda (difftastic-face)
+                      (and (string=
+                            (face-foreground difftastic-face)
+                            (or
+                             (plist-get face :foreground)
+                             (car (alist-get :foreground face))))
+                           ;; ansi-color-* faces have the same
+                           ;; foreground and background - don't use them
+                           (not (string= (face-foreground difftastic-face)
+                                         (face-background difftastic-face)))
+                           (face-background difftastic-face)))
+                    (vconcat difftastic-normal-colors-vector
+                             difftastic-bright-colors-vector)))))
+    ;; difftastic uses underline to highlight some changes.
+    ;; It uses bold as well, but it's not as unambiguous as underline.
+    ;; Use underline to detect highlight, but remove both: bold and underline.
+    (if-let ((highlight-face (and (cl-member 'ansi-color-underline face)
+                                  (alist-get difftastic-face
+                                             difftastic-highlight-alist))))
+        (progn
+          (cl-remf face :foreground)
+          (setq face (cl-delete 'ansi-color-underline face))
+          (setq face (cl-delete 'ansi-color-bold face))
+          (setq face
+                (cl-delete-if (lambda (elt)
+                                (and (listp elt)
+                                     (plist-get elt :foreground)))
+                              face))
+          (push `(:foreground
+                  ,(face-foreground highlight-face nil 'default))
+                face)
+          (push `(:background
+                  ,(face-background highlight-face nil 'default))
+                face))
+      (when-let ((fg (plist-get face :foreground)))
+        (cl-remf face :foreground)
+        (push `(:foreground ,fg) face))
+      (push `(:background
+              ,(face-background difftastic-face nil 'default))
+            face)))
+  face)
 
 ;; In practice there are only dozens or so different faces used,
 ;; so we can cache them each time anew.

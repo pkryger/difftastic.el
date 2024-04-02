@@ -606,6 +606,33 @@ The DIFFTASTIC-ARGS is a list of extra arguments to pass to
                    (difftastic-args . ,difftastic-args))))
        (funcall difftastic-display-buffer-function buffer requested-width)))))
 
+(defun difftastic--run-command-filter (process string)
+  "A process filter for `difftastic--run-command'.
+It applies ANSI colors with `apply-ansi-colors' using difftastic
+custom colors vectors.  The PROCESS and STRING are filter
+arguments, like in `make-process''s filter."
+  (when-let ((buffer (and string
+                          (process-buffer process))))
+    (with-current-buffer buffer
+      (let ((inhibit-read-only t)
+            (ansi-color-normal-colors-vector
+             difftastic-normal-colors-vector)
+            (ansi-color-bright-colors-vector
+             difftastic-bright-colors-vector))
+        (ignore ansi-color-normal-colors-vector
+                ansi-color-bright-colors-vector)
+        (if (fboundp 'ansi-color--face-vec-face) ;; since Emacs-29
+            (difftastic--with-temp-advice
+                'ansi-color--face-vec-face
+                :around
+                #'difftastic--ansi-color-add-background-cached
+              (insert (ansi-color-apply string)))
+          (difftastic--with-temp-advice
+              'ansi-color-get-face-1
+              :filter-return
+              #'difftastic--ansi-color-add-background
+            (insert (ansi-color-apply string))))))))
+
 (defun difftastic--run-command (buffer command &optional action)
   "Run COMMAND, show its results in BUFFER, then execute ACTION.
 The ACTION is meant to display the BUFFER in some window and, optionally,
@@ -622,30 +649,7 @@ perform cleanup."
    :buffer buffer
    :command command
    :noquery t
-   :filter
-   ;; Apply ANSI color sequences as they come
-   (lambda (process string)
-     (when-let ((buffer (and string
-                             (process-buffer process))))
-       (with-current-buffer buffer
-         (let ((inhibit-read-only t)
-               (ansi-color-normal-colors-vector
-                difftastic-normal-colors-vector)
-               (ansi-color-bright-colors-vector
-                difftastic-bright-colors-vector))
-           (ignore ansi-color-normal-colors-vector
-                   ansi-color-bright-colors-vector)
-           (if (fboundp 'ansi-color--face-vec-face) ;; since Emacs-29
-               (difftastic--with-temp-advice
-                   'ansi-color--face-vec-face
-                   :around
-                   #'difftastic--ansi-color-add-background-cached
-                 (insert (ansi-color-apply string)))
-             (difftastic--with-temp-advice
-                 'ansi-color-get-face-1
-                 :filter-return
-                 #'difftastic--ansi-color-add-background
-               (insert (ansi-color-apply string))))))))
+   :filter #'difftastic--run-command-filter
    ;; Disable write access and call `action' when process is finished.
    :sentinel
    (lambda (proc _event)

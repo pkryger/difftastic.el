@@ -1360,5 +1360,47 @@
          (equal (object-intervals (buffer-string))
                 (object-intervals expected)))))))
 
+(ert-deftest difftastic-rerun-requested-window-width:basic ()
+  (eval
+   '(mocklet (((window-width) => 160)
+              ((fringe-columns *) => 2 :times 2))
+      (should (equal (difftastic-rerun-requested-window-width)
+                     156)))))
+
+(ert-deftest difftastic-requested-window-width:other-window ()
+  (eval
+   '(mocklet (((count-windows) => 2)
+              ((window-width) => 42)
+              ((fringe-columns *) => 2 :times 2))
+      (should (equal (difftastic-requested-window-width)
+                     38)))))
+
+(ert-deftest difftastic-requested-window-width:within-split-width-threshold ()
+  (let ((split-width-threshold 37))
+    (eval
+     '(mocklet (((count-windows) => 1)
+                ((window-width) => 42 :times 2)
+                ((fringe-columns *) => 2 :times 4))
+        (should (equal (difftastic-requested-window-width)
+                       17))))))
+
+(ert-deftest difftastic-requested-window-width:outside-split-width-threshold ()
+  (let ((split-width-threshold 38))
+    (eval
+     '(mocklet (((count-windows) => 1)
+                ((window-width) => 42 :times 2)
+                ((fringe-columns *) => 2 :times 4))
+        (should (equal (difftastic-requested-window-width)
+                       38))))))
+
+(ert-deftest difftastic-requested-window-width:nil-split-width-threshold ()
+  (let (split-width-threshold)
+    (eval
+     '(mocklet (((count-windows) => 1)
+                ((window-width) => 42)
+                ((fringe-columns *) => 2 :times 2))
+        (should (equal (difftastic-requested-window-width)
+                       38))))))
+
 ;;; difftastic.t.el ends here
 (provide 'difftastic.t)

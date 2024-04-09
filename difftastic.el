@@ -1038,7 +1038,6 @@ running difftastic."
 ;;;###autoload
 (defun difftastic-dired-diff (file &optional lang-override)
   "Compare file at point with FILE using difftastic.
-
 The behavior is the same as `dired-diff', except for the prefix argument, which
 makes the function prompt for LANG-OVERRIDE.  See \\='difft
 --list-languages\\=' for language list."

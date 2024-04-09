@@ -280,13 +280,17 @@
 
           (setq rerun-alist `((file-buf-test . ("test-file" . ,buffer)))
                 orig-rerun-alist (copy-tree rerun-alist))
-          (should-error
-           (setq file-buf
-                 (difftastic--rerun-file-buf
-                  "test"
-                  (alist-get 'file-buf-test rerun-alist)
-                  rerun-alist))
-           :type 'user-error)
+          (let ((data (cadr
+                       (should-error
+                        (setq file-buf
+                              (difftastic--rerun-file-buf
+                               "test"
+                               (alist-get 'file-buf-test rerun-alist)
+                               rerun-alist))
+                        :type 'user-error))))
+            (should
+             (equal data
+                    "Buffer test [#<killed buffer>] doesn’t exist anymore")))
 
           (should (equal orig-rerun-alist rerun-alist)))
 
@@ -531,8 +535,10 @@
   (mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
     (with-temp-buffer
       (difftastic-mode)
-      (should-error (difftastic-next-chunk)
-                    :type 'user-error))))
+      (let ((data (cadr
+                   (should-error (difftastic-next-chunk)
+                                 :type 'user-error))))
+        (should (equal data "No more chunks"))))))
 
 (ert-deftest difftastic-next-chunk:last-chunk-error-signaled ()
   (mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
@@ -541,8 +547,9 @@
 1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-")
       (difftastic-mode)
       (goto-char (point-min))
-      (should-error (difftastic-next-chunk)
-                    :type 'user-error)
+      (let ((data (cadr (should-error (difftastic-next-chunk)
+                                      :type 'user-error))))
+        (should (equal data "No more chunks")))
       (should (equal (point-min) (point))))))
 
 (ert-deftest difftastic-next-file:erts-scenarios ()
@@ -561,8 +568,9 @@
   (mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
     (with-temp-buffer
       (difftastic-mode)
-      (should-error (difftastic-next-file)
-                    :type 'user-error))))
+      (let ((data (cadr (should-error (difftastic-next-file)
+                                      :type 'user-error))))
+        (should (equal data "No more files"))))))
 
 (ert-deftest difftastic-next-file:last-chunk-error-signaled ()
   (mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
@@ -571,8 +579,9 @@
 1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-")
       (difftastic-mode)
       (goto-char (point-min))
-      (should-error (difftastic-next-file)
-                    :type 'user-error)
+      (let ((data (cadr (should-error (difftastic-next-file)
+                                      :type 'user-error))))
+        (should (equal data "No more files")))
       (should (equal (point-min) (point))))))
 
 (ert-deftest difftastic-previous-chunk:erts-scenarios ()
@@ -591,8 +600,9 @@
   (mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
     (with-temp-buffer
       (difftastic-mode)
-      (should-error (difftastic-previous-chunk)
-                    :type 'user-error))))
+      (let ((data (cadr (should-error (difftastic-previous-chunk)
+                                      :type 'user-error))))
+        (should (equal data "No more chunks"))))))
 
 (ert-deftest difftastic-previous-chunk:first-chunk-error-signaled ()
   (mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
@@ -601,8 +611,9 @@
 1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-")
       (difftastic-mode)
       (goto-char (point-min))
-      (should-error (difftastic-previous-chunk)
-                    :type 'user-error)
+      (let ((data (cadr (should-error (difftastic-previous-chunk)
+                                      :type 'user-error))))
+        (should (equal data "No more chunks")))
       (should (equal (point-min) (point))))))
 
 (ert-deftest difftastic-previous-file:erts-scenarios ()
@@ -621,8 +632,9 @@
   (mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
     (with-temp-buffer
       (difftastic-mode)
-      (should-error (difftastic-previous-file)
-                    :type 'user-error))))
+      (let ((data (cadr (should-error (difftastic-previous-file)
+                                      :type 'user-error))))
+        (should (equal data "No more files"))))))
 
 (ert-deftest difftastic-previous-file:first-file-error-signaled ()
   (mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
@@ -631,8 +643,9 @@
 1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-")
       (difftastic-mode)
       (goto-char (point-min))
-      (should-error (difftastic-previous-file)
-                    :type 'user-error)
+      (let ((data (cadr (should-error (difftastic-previous-file)
+                                      :type 'user-error))))
+        (should (equal data "No more files")))
       (should (equal (point-min) (point))))))
 
 (ert-deftest difftastic--get-languages:parse-output ()

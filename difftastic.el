@@ -126,7 +126,7 @@
   "Get a window width for a first difftastic call.
 It returns a number that will let difftastic to fit content
 into (in the following order):
- - other window if such exists,
+ - other window if it exists,
  - side by side by inspecting `split-width-threshold',
  - current window."
   (- (if (< 1 (count-windows))
@@ -143,7 +143,7 @@ into (in the following order):
      (fringe-columns 'rigth)))
 
 (defun difftastic-rerun-requested-window-width ()
-  "Get a window width for a rerun of difftastic call.
+  "Get a window width for a rerun of a difftastic call.
 It returns the current window width, to let difftastic fit content into it."
   (- (window-width)
      (fringe-columns 'left)

@@ -87,7 +87,7 @@ You can customize the appearance of `difftastic` output by adjusting the faces u
   (vector
    (aref ansi-color-normal-colors-vector 0) ; use black face from `ansi-color'
    (aref difftastic-normal-colors-vector 1) ; use face for removed marker from `difftastic'
-   (aref difftastic-normal-colors-vector 2) ; use face for added markder from `difftastic'
+   (aref difftastic-normal-colors-vector 2) ; use face for added marker from `difftastic'
    'my-section-face
    'my-comment-face
    'my-string-face

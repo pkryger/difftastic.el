@@ -1,4 +1,5 @@
-((nil . ((indent-tabs-mode . nil)
+((nil . ((ispell-local-dictionary . "american")
+         (indent-tabs-mode . nil)
          (fill-column . 79)
          (eval . (when (and (boundp 'projectile-project-types)
                             (alist-get 'pk/emacs-package projectile-project-types))

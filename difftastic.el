@@ -657,7 +657,7 @@ command."
 (defun difftastic--run-command (buffer command &optional action)
   "Run COMMAND, show its results in BUFFER, then execute ACTION.
 The ACTION is meant to display the BUFFER in some window and, optionally,
-perform cleanup."
+perform cleanup.  It returns a process created by `make-process'."
   ;; Clear the result buffer (we might regenerate a diff, e.g., for
   ;; the current changes in our working directory).
   (with-current-buffer buffer

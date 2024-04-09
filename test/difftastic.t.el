@@ -1323,6 +1323,42 @@
         (should-not (equal (point) (point-min)))
         (should (buffer-modified-p))))))
 
+(ert-deftest difftastic--run-command:basic ()
+  (let* ((expected-fg
+          (if noninteractive
+              "unspecified-fg"
+            (face-foreground (aref difftastic-normal-colors-vector 3))))
+         (expected
+          (concat
+           (propertize
+            "difftastic.el"
+            'font-lock-face `(ansi-color-bold (:foreground ,expected-fg)))
+           (propertize
+            " --- 1/2 --- Emacs Lisp"
+            'font-lock-face 'ansi-color-faint))))
+    (with-temp-buffer
+      (insert "test output")
+      (setq buffer-read-only t)
+      (eval
+       '(mocklet (((action)))
+          (let ((process
+                 (difftastic--run-command
+                  (current-buffer)
+                  '("echo" "-n"
+                    "\[1m[33mdifftastic.el[39m[0m[2m --- 1/2 --- Emacs Lisp[0m")
+                  #'action)))
+            (with-timeout (5
+                           (signal-process process 'SIGKILL)
+                           (ert-fail "timeout"))
+              (while (accept-process-output process))))))
+      (if (version< "29" emacs-version) ;; since Emacs-29
+          (should
+           (equal-including-properties (buffer-string) expected))
+        ;; For some reason `equal-including-properties' fails pre Emacs-29
+        (should (equal (buffer-string) expected))
+        (should
+         (equal (object-intervals (buffer-string))
+                (object-intervals expected)))))))
 
 ;;; difftastic.t.el ends here
 (provide 'difftastic.t)

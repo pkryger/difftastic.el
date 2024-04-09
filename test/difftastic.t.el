@@ -1402,5 +1402,18 @@
         (should (equal (difftastic-requested-window-width)
                        38))))))
 
+(ert-deftest difftastic-pop-to-buffer:actual-bigger-than-requested-at-bottom ()
+  (with-temp-buffer
+    (insert "0123456789")
+    (eval `(mocklet (((pop-to-buffer ,(current-buffer)
+                                     (list #'display-buffer-at-bottom))))
+             (difftastic-pop-to-buffer ,(current-buffer) 9)))))
+
+(ert-deftest difftastic-pop-to-buffer:actual-not-bigger-than-requested ()
+  (with-temp-buffer
+    (insert "0123456789")
+    (eval `(mocklet (((pop-to-buffer ,(current-buffer) (list nil))))
+             (difftastic-pop-to-buffer ,(current-buffer) 10)))))
+
 ;;; difftastic.t.el ends here
 (provide 'difftastic.t)

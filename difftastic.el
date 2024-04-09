@@ -604,11 +604,10 @@ The DIFFTASTIC-ARGS is a list of extra arguments to pass to
      buffer
      command
      (lambda ()
-       (with-current-buffer buffer
-           (setq difftastic--rerun-alist
-                 `((default-directory . ,default-directory)
-                   (git-command . ,command)
-                   (difftastic-args . ,difftastic-args))))
+       (setq difftastic--rerun-alist
+             `((default-directory . ,default-directory)
+               (git-command . ,command)
+               (difftastic-args . ,difftastic-args)))
        (funcall difftastic-display-buffer-function buffer requested-width)))))
 
 (defun difftastic--run-command-filter (process string)
@@ -638,6 +637,23 @@ arguments, like in `make-process''s filter."
               #'difftastic--ansi-color-add-background
             (insert (ansi-color-apply string))))))))
 
+(defun difftastic--run-command-sentinel (process action command)
+  "A sentinel for `difftastic--run-command'.
+When PROCESS\\=' status is `exit' and there's output in
+PROCESS\\=' buffer it calls the ACTION with current buffer set to
+the PROCESS\\=' buffer.  The COMMAND is the original PROCESS\\='
+command."
+  (when (eq (process-status process) 'exit)
+    (with-current-buffer (process-buffer process)
+      (difftastic-mode)
+      (set-buffer-modified-p nil)
+      (goto-char (point-min))
+      (if (eq (point-min) (point-max))
+          (message "Process '%s' returned no output"
+                   (mapconcat #'identity command " "))
+        (when action (funcall action))
+        (message nil)))))
+
 (defun difftastic--run-command (buffer command &optional action)
   "Run COMMAND, show its results in BUFFER, then execute ACTION.
 The ACTION is meant to display the BUFFER in some window and, optionally,
@@ -655,22 +671,9 @@ perform cleanup."
    :command command
    :noquery t
    :filter #'difftastic--run-command-filter
-   ;; Disable write access and call `action' when process is finished.
    :sentinel
-   (lambda (proc _event)
-     (let (output)
-       (when (eq (process-status proc) 'exit)
-         (with-current-buffer (process-buffer proc)
-           (difftastic-mode)
-           (set-buffer-modified-p nil)
-           (goto-char (point-min))
-           (setq output (not (eq (point-min) (point-max)))))
-         (if output
-             (progn
-               (when action (funcall action))
-               (message nil))
-           (message "Process %s returned no output"
-                    (mapconcat #'identity command " "))))))))
+   (lambda (process _event)
+     (difftastic--run-command-sentinel process action command))))
 
 (defvar difftastic--transform-git-to-difft
   '(("^-\\(?:U\\|-unified=\\)\\([0-9]+\\)$" . "--context \\1"))
@@ -923,12 +926,11 @@ argument."
                                       requested-width
                                       lang-override)
      (lambda ()
-       (with-current-buffer buffer
-         (setq difftastic--rerun-alist
-               `((default-directory . ,default-directory)
-                 (lang-override . ,lang-override)
-                 (file-buf-A . ,file-buf-A)
-                 (file-buf-B . ,file-buf-B))))
+       (setq difftastic--rerun-alist
+             `((default-directory . ,default-directory)
+               (lang-override . ,lang-override)
+               (file-buf-A . ,file-buf-A)
+               (file-buf-B . ,file-buf-B)))
        (funcall difftastic-display-buffer-function buffer requested-width)
        (difftastic--delete-temp-file-buf file-buf-A)
        (difftastic--delete-temp-file-buf file-buf-B)))))
@@ -1117,8 +1119,7 @@ the latter is set to nil the call is made to
              buffer
              command
              (lambda ()
-               (with-current-buffer buffer
-                 (setq difftastic--rerun-alist rerun-alist))
+               (setq difftastic--rerun-alist rerun-alist)
                (difftastic--delete-temp-file-buf file-buf-A)
                (difftastic--delete-temp-file-buf file-buf-B))))))
     (user-error "Nothing to rerun")))

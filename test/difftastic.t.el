@@ -1285,6 +1285,44 @@
                         ansi-color-italic
                         (:foreground ,difftastic-t-string-fg)))))))))
 
-(provide 'difftastic.t)
+(ert-deftest difftastic--run-command-sentinel:with-output-action-called ()
+  (with-temp-buffer
+    (insert "test output")
+    (eval
+     `(mocklet (((process-status 'process) => 'exit)
+                ((process-buffer 'process) => ,(current-buffer))
+                ((action))
+                ((message nil)))
+        (difftastic--run-command-sentinel 'process #'action nil)
+        (should (equal major-mode 'difftastic-mode))
+        (should (equal (point) (point-min)))
+        (should-not (buffer-modified-p))))))
+
+(ert-deftest difftastic--run-command-sentinel:without-output-action-not-called ()
+  (with-temp-buffer
+    (eval
+     `(mocklet (((process-status 'process) => 'exit)
+                ((process-buffer 'process) => ,(current-buffer))
+                (action not-called)
+                ((message "Process '%s' returned no output" "test command")))
+        (difftastic--run-command-sentinel 'process #'action '("test" "command"))
+        (should (equal major-mode 'difftastic-mode))
+        (should (equal (point) (point-min)))
+        (should-not (buffer-modified-p))))))
+
+(ert-deftest difftastic--run-command-sentinel:process-not-exit ()
+  (with-temp-buffer
+    (insert "test output")
+    (eval
+     '(mocklet (((process-status 'process) => 'not-exit)
+                (process-buffer not-called)
+                (action not-called)
+                (message not-called))
+        (difftastic--run-command-sentinel 'process #'action '("test" "command"))
+        (should-not (equal major-mode 'difftastic-mode))
+        (should-not (equal (point) (point-min)))
+        (should (buffer-modified-p))))))
+
 
 ;;; difftastic.t.el ends here
+(provide 'difftastic.t)

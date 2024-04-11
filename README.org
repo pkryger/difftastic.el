@@ -1,5 +1,6 @@
 #+STARTUP: showeverything
-#+OPTIONS: toc:nil author:nil
+#+STARTUP: literallinks
+#+OPTIONS: toc:nil num:nil author:nil
 * difftastic.el - Wrapper for difftastic
 :PROPERTIES:
 :CUSTOM_ID: difftastic.el---wrapper-for-difftastic
@@ -14,7 +15,7 @@
 The =difftastic= Emacs package is designed to integrate
 [[https://github.com/wilfred/difftastic][difftastic]] - a structural diff
 tool - into your Emacs workflow, enhancing your code review and comparison
-experience. This package automatically displays =difftastic='s output within
+experience.  This package automatically displays =difftastic='s output within
 Emacs using faces from your user theme, ensuring consistency with your overall
 coding environment.
 
@@ -22,7 +23,7 @@ coding environment.
 :PROPERTIES:
 :CUSTOM_ID: features
 :END:
-- Configure faces to your likening. By default =magit-diff-*= faces from your
+- Configure faces to your likening.  By default =magit-diff-*= faces from your
   user them are used for consistent visual experience.
 - Chunks and file navigation using ~n~ / ~N~ and ~p~ / ~P~ in generated diffs.
 - DWIM workflows from =magit=.
@@ -37,9 +38,9 @@ coding environment.
 :PROPERTIES:
 :CUSTOM_ID: installing-from-melpa
 :END:
-The easiest way to install and keep =difftastic= up-to-date is using Emacs's
-built-in package manager. =difftastic= is available in the MELPA
-repository. Refer to https://melpa.org/#/getting-started for how to install a
+The easiest way to install and keep =difftastic= up-to-date is using Emacs'
+built-in package manager.  =difftastic= is available in the MELPA
+repository.  Refer to https://melpa.org/#/getting-started for how to install a
 package from MELPA.
 
 *** Installing from GitHub
@@ -102,24 +103,24 @@ Commands are followed by their default keybindings in =difftastic-mode= (in
 parenthesis).
 
 - =difftastic-magit-diff= - show the result of =git diff ARGS -- FILES= with
-  =difftastic=. This is the main entry point for DWIM action, so it tries to
+  =difftastic=.  This is the main entry point for DWIM action, so it tries to
   guess revision or range.
 - =difftastic-magit-show= - show the result of =git show ARG= with
-  =difftastic=. It tries to guess =ARG=, and ask for it when can't. When called
-  with prefix argument it will ask for =ARG=.
-- =difftastic-files= - show the result of =difft FILE-A FILE-B=. When called
+  =difftastic=.  It tries to guess =ARG=, and ask for it when can't. When
+  called with prefix argument it will ask for =ARG=.
+- =difftastic-files= - show the result of =difft FILE-A FILE-B=.  When called
   with prefix argument it will ask for language to use, instead of relaying on
   =difftastic='s detection mechanism.
 - =difftastic-buffers= - show the result of =difft BUFFER-A BUFFER-B=.
-  Language is guessed based on buffers modes. When called with prefix argument
+  Language is guessed based on buffers modes.  When called with prefix argument
   it will ask for language to use.
 - =difftastic-dired-diff= - same as =dired-diff=, but with =difftastic-files=
   instead of the built-in =diff=.
-- =difftastic-rerun= (~g~) - rerun difftastic for the current buffer. It runs
+- =difftastic-rerun= (~g~) - rerun difftastic for the current buffer.  It runs
   difftastic again in the current buffer, but respects the window
-  configuration. It uses =difftastic-rerun-requested-window-width-function=
+  configuration.  It uses =difftastic-rerun-requested-window-width-function=
   which, by default, returns current window width (instead of
-  =difftastic-requested-window-width-function=). It will also reuse current
+  =difftastic-requested-window-width-function=).  It will also reuse current
   buffer and will not call =difftastic-display-buffer-function=.  When called
   with prefix argument it will ask for language to use.
 - =difftastic-next-chunk= (~n~), =difftastic-next-file= (~N~) - move point to a
@@ -138,7 +139,7 @@ parenthesis).
 :CUSTOM_ID: face-customization
 :END:
 You can customize the appearance of =difftastic= output by adjusting the faces
-used for highlighting. To customize a faces, use the following code snippet in
+used for highlighting.  To customize a faces, use the following code snippet in
 your configuration:
 
 #+begin_src emacs-lisp
@@ -172,24 +173,24 @@ your configuration:
 :CUSTOM_ID: window-management
 :END:
 The =difftastic= relies on the =difft= command line tool to produce an output
-that can be displayed in an Emacs buffer window. In short: it runs the =difft=,
-converts ANSI codes into user defined colors and displays it in window. The
-=difft= can be instructed with a hint to help it produce a content that can fit
-into user output, by specifying a requested width. However, the latter is not
-always respected.
+that can be displayed in an Emacs buffer window.  In short: it runs the
+=difft=, converts ANSI codes into user defined colors and displays it in
+window.  The =difft= can be instructed with a hint to help it produce a content
+that can fit into user output, by specifying a requested width.  However, the
+latter is not always respected.
 
 The =difftastic= provides a few variables to let you customize these aspects of
 interaction with =difft=:
 - =difftastic-requested-window-width-function= - this function is called for a
-  first (i.e., not a rerun) call to =difft=. It shall return the requested
-  width of the output. For example this can be a half of a current frame (or a
+  first (i.e., not a rerun) call to =difft=.  It shall return the requested
+  width of the output.  For example this can be a half of a current frame (or a
   window) if the output is meant to be presented side by side.
 - =difftastic-rerun-requested-window-width-function= - this function is called
-  for a rerun (i.e., not a first) call to =difft=. It shall return requested
-  window width of the output. For example this can be a current window width if
+  for a rerun (i.e., not a first) call to =difft=.  It shall return requested
+  window width of the output.  For example this can be a current window width if
   the output is meant to fill the whole window.
 - =difftastic-display-buffer-function= - this function is called after a first
-  call to =difft=. It is meant to select an appropriate Emacs mechanism to
+  call to =difft=.  It is meant to select an appropriate Emacs mechanism to
   display the =difft= output.
 
 ** Contributing
@@ -204,13 +205,99 @@ Contributions are welcome! Feel free to submit issues and pull requests on the
 :CUSTOM_ID: testing
 :END:
 When creating a pull request make sure all tests in
-[[file:test/difftastic.t.el]] are passing. When adding a new functionality,
+[[file:test/difftastic.t.el]] are passing.  When adding a new functionality,
 please strive to add tests for it as well.
 
 To run tests:
 - open the [[file:test/difftastic.t.el]]
 - type ~M-x eval-buffer <RET>~
 - type ~M-x ert <RET> t <RET>~
+
+** README.org and Commentary authoring and exporting               :noexport:
+The [[file:README.org]] file is a source of =Commentary= section in the
+[[file:difftastic.el]].  That is:
+- content of Commentary should be authored in the [[file:README.org]] file,
+- should some content in the [[file:README.org]] file be omitted from
+  Commentary section, it shall be tagged with =noexport= tag,
+- Commentary section can be generated and saved to [[file:difftastic.el]] using
+  the following snippets:
+
+One time setup:
+#+begin_src emacs-lisp :results none
+(defun difftastic-org-export-commentary-remove-top-level (backend)
+  "Remove top level headline from export.
+BACKEND is the export back-end being used, as a symbol."
+  (org-map-entries
+   (lambda ()
+     (when (looking-at "^* ")
+       (delete-region (point)
+                      (save-excursion (outline-next-heading) (point)))
+       (setq org-map-continue-from (point))))))
+
+(add-to-list 'org-export-before-parsing-functions
+             #'difftastic-org-export-commentary-remove-top-level)
+
+(defun difftastic-org-export-commentary-src-block (src-block _contents info)
+  "Transcode a SRC-BLOCK element from Org to Commentary.
+CONTENTS is nil.  INFO is a plist used as a communication channel."
+  (org-element-normalize-string
+   (org-export-format-code-default src-block info)))
+
+(defun difftastic-org-export-commentary-final-output (contents _backend _info)
+  "Transcode CONTENTS element from Org to Commentary."
+  (replace-regexp-in-string
+   "^;;\\'" ""
+   (replace-regexp-in-string
+    "^;; $" ";;"
+    (replace-regexp-in-string
+     "^" ";; "
+     contents))))
+
+
+(org-export-define-derived-backend 'difftastic-commentary 'ascii
+  :translate-alist '((src-block . difftastic-org-export-commentary-src-block))
+  :filters-alist '((:filter-final-output . difftastic-org-export-commentary-final-output)))
+#+end_src
+
+To quickly validate generated Commentary content - which may be usefull for
+developing exporting mechanism - you can use the following snippet:
+#+begin_src emacs-lisp :results none
+(let ((org-ascii-text-width 75)
+      (org-ascii-global-margin 0)
+      (org-ascii-inner-margin 0))
+    (org-export-to-buffer 'difftastic-commentary "*Org DIFFTASTIC-COMMENTARY Export*"
+  nil nil nil nil nil #'emacs-lisp-mode))
+#+end_src
+
+
+To generate the Commentary section and save it to [[file:difftastic.el]] file,
+you can use the following snippet:
+#+begin_src emacs-lisp :results none
+(let ((org-ascii-text-width 75)
+      (org-ascii-global-margin 0)
+      (org-ascii-inner-margin 0)
+      (org-export-show-temporary-export-buffer nil)
+      (export-buffer "*Org DIFFTASTIC-COMMENTARY Export*"))
+  (org-export-to-buffer 'difftastic-commentary export-buffer)
+  (with-current-buffer (find-file-noselect "difftastic.el")
+    (goto-char (point-min))
+    (let ((start (progn
+                   (re-search-forward "^;;; Commentary:$")
+                   (beginning-of-line 3)
+                   (point)))
+          (end (progn
+                 (re-search-forward "^;;; Code:$")
+                 (end-of-line 0)
+                 (point))))
+      (delete-region start end))
+    (insert (with-current-buffer export-buffer
+              (buffer-string)))
+    (save-buffer)))
+#+end_src
+
+Note that =emacs-lisp-checkdoc= doesn't run in =org-mode= buffer, so the
+generated content may have issues that are not highlighted while authoring.
+Please open the [[file:difftastic.el]] and check it for any new issues.
 
 ** Acknowledgments                                                 :noexport:
 :PROPERTIES:
@@ -240,8 +327,8 @@ Bernoulli.
 :CUSTOM_ID: diff-ansi
 :END:
 There's a [[https://codeberg.org/ideasman42/emacs-diff-ansi][diff-ansi]]
-package available. I haven't spent much time on it, but at a first glance it
-doesn't seem that it supports =difftastic= out of box. Perhaps it is possible
+package available.  I haven't spent much time on it, but at a first glance it
+doesn't seem that it supports =difftastic= out of box.  Perhaps it is possible
 to configure it to support =difftastic= as a custom tool.
 
 ** License                                                         :noexport:
@@ -255,5 +342,7 @@ This package is licensed under the
 
 Happy coding! If you encounter any issues or have suggestions for improvements,
 please don't hesitate to reach out on the
-[[https://github.com/pkryger/difftastic.el][GitHub repository]]. Your feedback
+[[https://github.com/pkryger/difftastic.el][GitHub repository]].  Your feedback
 is highly appreciated.
+
+# LocalWords: MELPA DWIM

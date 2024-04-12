@@ -4,6 +4,8 @@
 
 (require 'difftastic)
 (require 'el-mock)
+(require 'org)
+(require 'ox-ascii)
 
 (ert-deftest difftastic--copy-tree:basic ()
   (let* ((vec (make-vector 1 nil))
@@ -1427,6 +1429,51 @@
     (insert "0123456789")
     (eval `(mocklet (((pop-to-buffer ,(current-buffer) (list nil))))
              (difftastic-pop-to-buffer ,(current-buffer) 10)))))
+
+(ert-deftest difftastic.el-validate-commentary-in-sync-with-readme.org ()
+  :expected-result (if (version< "29" emacs-version) ;; since Emacs-29
+                       :passed
+                    :failed)
+  (let ((org-export-show-temporary-export-buffer nil)
+        (org-confirm-babel-evaluate nil)
+        (export-buffer "*Org DIFFTASTIC-COMMENTARY Export*")
+        (default-directory
+         (replace-regexp-in-string
+          "\n\\'" ""
+          (shell-command-to-string "git rev-parse --show-toplevel"))))
+    (with-current-buffer (find-file-noselect "README.org")
+      (org-babel-goto-named-src-block "export-commentary-setup")
+      (org-babel-execute-src-block)
+      (declare-function with-difftastic-org-export-commentary-defaults
+                        "README.org" (body))
+      (goto-char (point-min))
+      (with-difftastic-org-export-commentary-defaults
+       (org-export-to-buffer 'difftastic-commentary export-buffer)))
+
+    (with-temp-buffer
+      (insert (with-current-buffer (find-file-noselect "difftastic.el")
+                (goto-char (point-min))
+                (let ((start (progn
+                               (re-search-forward "^;;; Commentary:$")
+                               (beginning-of-line 3)
+                               (point)))
+                      (end (progn
+                             (re-search-forward "^;;; Code:$")
+                             (end-of-line 0)
+                             (point))))
+                  (buffer-substring-no-properties start end))))
+      (let ((commentary-buffer (current-buffer)))
+        (with-temp-buffer
+          (diff-no-select (get-buffer commentary-buffer)
+                          (get-buffer export-buffer)
+                          nil t (current-buffer))
+          (unless (string-match-p "\nDiff finished (no differences)\."
+                                  (buffer-string))
+            (message "%s" (buffer-string))
+            (ert-fail
+             "Generated Commentary in `difftastic.el' differs from the one generated from `README.org'")))))))
+
+;; LocalWords: README el
 
 ;;; difftastic.t.el ends here
 (provide 'difftastic.t)

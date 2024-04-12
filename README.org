@@ -223,6 +223,7 @@ The [[file:README.org]] file is a source of =Commentary= section in the
   the following snippets:
 
 One time setup:
+#+name: export-commentary-setup
 #+begin_src emacs-lisp :results none
 (defun difftastic-org-export-commentary-remove-top-level (backend)
   "Remove top level headline from export.
@@ -254,46 +255,48 @@ CONTENTS is nil.  INFO is a plist used as a communication channel."
      "^" ";; "
      contents))))
 
-
 (org-export-define-derived-backend 'difftastic-commentary 'ascii
   :translate-alist '((src-block . difftastic-org-export-commentary-src-block))
   :filters-alist '((:filter-final-output . difftastic-org-export-commentary-final-output)))
+
+(defmacro with-difftastic-org-export-commentary-defaults (body)
+  "Execute BODY with difftastic org export commentary defaults."
+  `(let ((org-ascii-text-width 75)
+         (org-ascii-global-margin 0)
+         (org-ascii-inner-margin 0))
+     ,body))
 #+end_src
 
 To quickly validate generated Commentary content - which may be usefull for
 developing exporting mechanism - you can use the following snippet:
 #+begin_src emacs-lisp :results none
-(let ((org-ascii-text-width 75)
-      (org-ascii-global-margin 0)
-      (org-ascii-inner-margin 0))
-    (org-export-to-buffer 'difftastic-commentary "*Org DIFFTASTIC-COMMENTARY Export*"
-  nil nil nil nil nil #'emacs-lisp-mode))
+(with-difftastic-org-export-commentary-defaults
+ (org-export-to-buffer 'difftastic-commentary "*Org DIFFTASTIC-COMMENTARY Export*"
+   nil nil nil nil nil #'emacs-lisp-mode))
 #+end_src
 
 
 To generate the Commentary section and save it to [[file:difftastic.el]] file,
 you can use the following snippet:
 #+begin_src emacs-lisp :results none
-(let ((org-ascii-text-width 75)
-      (org-ascii-global-margin 0)
-      (org-ascii-inner-margin 0)
-      (org-export-show-temporary-export-buffer nil)
-      (export-buffer "*Org DIFFTASTIC-COMMENTARY Export*"))
-  (org-export-to-buffer 'difftastic-commentary export-buffer)
-  (with-current-buffer (find-file-noselect "difftastic.el")
-    (goto-char (point-min))
-    (let ((start (progn
-                   (re-search-forward "^;;; Commentary:$")
-                   (beginning-of-line 3)
-                   (point)))
-          (end (progn
-                 (re-search-forward "^;;; Code:$")
-                 (end-of-line 0)
-                 (point))))
-      (delete-region start end))
-    (insert (with-current-buffer export-buffer
-              (buffer-string)))
-    (save-buffer)))
+(with-difftastic-org-export-commentary-defaults
+ (let ((org-export-show-temporary-export-buffer nil)
+       (export-buffer "*Org DIFFTASTIC-COMMENTARY Export*"))
+   (org-export-to-buffer 'difftastic-commentary export-buffer)
+   (with-current-buffer (find-file-noselect "difftastic.el")
+     (goto-char (point-min))
+     (let ((start (progn
+                    (re-search-forward "^;;; Commentary:$")
+                    (beginning-of-line 3)
+                    (point)))
+           (end (progn
+                  (re-search-forward "^;;; Code:$")
+                  (end-of-line 0)
+                  (point))))
+       (delete-region start end))
+     (insert (with-current-buffer export-buffer
+               (buffer-string)))
+     (save-buffer))))
 #+end_src
 
 Note that =emacs-lisp-checkdoc= doesn't run in =org-mode= buffer, so the

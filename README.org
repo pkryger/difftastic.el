@@ -229,7 +229,8 @@ One time setup:
 BACKEND is the export back-end being used, as a symbol."
   (org-map-entries
    (lambda ()
-     (when (looking-at "^* ")
+     (when (and (eq backend 'difftastic-commentary)
+                (looking-at "^* "))
        (delete-region (point)
                       (save-excursion (outline-next-heading) (point)))
        (setq org-map-continue-from (point))))))

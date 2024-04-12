@@ -1436,11 +1436,12 @@
                     :failed)
   (let ((org-export-show-temporary-export-buffer nil)
         (org-confirm-babel-evaluate nil)
-        (export-buffer "*Org DIFFTASTIC-COMMENTARY Export*")
+        (readme.org-buffer "*Org DIFFTASTIC-COMMENTARY Export*")
         (default-directory
-         (replace-regexp-in-string
-          "\n\\'" ""
-          (shell-command-to-string "git rev-parse --show-toplevel"))))
+         (file-name-as-directory
+          (replace-regexp-in-string
+           "\n\\'" ""
+           (shell-command-to-string "git rev-parse --show-toplevel")))))
     (with-temp-buffer
       (insert-file-contents "README.org")
       (goto-char (point-min))
@@ -1451,28 +1452,37 @@
                         "README.org" (body))
       (goto-char (point-min))
       (with-difftastic-org-export-commentary-defaults
-       (org-export-to-buffer 'difftastic-commentary export-buffer)))
+       (org-export-to-buffer 'difftastic-commentary readme.org-buffer)))
 
     (with-temp-buffer
-      (insert (with-temp-buffer
-                (insert-file-contents "difftastic.el")
-                (goto-char (point-min))
-                (let ((start (progn
-                               (re-search-forward "^;;; Commentary:$")
-                               (beginning-of-line 3)
-                               (point)))
-                      (end (progn
-                             (re-search-forward "^;;; Code:$")
-                             (end-of-line 0)
-                             (point))))
-                  (buffer-substring-no-properties start end))))
-      (let ((commentary-buffer (current-buffer)))
+      (insert-file-contents "difftastic.el")
+      (goto-char (point-min))
+      (re-search-forward "^;;; Commentary:$")
+      (beginning-of-line 3)
+      (delete-region (point-min) (point))
+      (re-search-forward "^;;; Code:$")
+      (end-of-line 0)
+      (delete-region (point) (point-max))
+      (let ((difftastic.el-buffer (current-buffer)))
+
         (with-temp-buffer
-          (diff-no-select (get-buffer commentary-buffer)
-                          (get-buffer export-buffer)
+          (diff-no-select (get-buffer difftastic.el-buffer)
+                          (get-buffer readme.org-buffer)
                           nil t (current-buffer))
           (unless (string-match-p "\nDiff finished (no differences)\."
                                   (buffer-string))
+            (goto-char (point-min))
+            (let ((tmp-difftastic.el
+                   (buffer-substring (re-search-forward "^diff -u ")
+                                     (- (re-search-forward " ") 1)))
+                  (tmp-readme.org
+                   (buffer-substring (point)
+                                     (line-end-position)))
+                  (inhibit-read-only t))
+              (goto-char (point-min))
+              (perform-replace tmp-difftastic.el "difftastic.el" nil nil nil)
+              (goto-char (point-min))
+              (perform-replace tmp-readme.org "<exported from README.org>" nil nil nil))
             (message "%s" (buffer-string))
             (ert-fail
              "Generated Commentary in `difftastic.el' differs from the one generated from `README.org'")))))))

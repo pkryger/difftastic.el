@@ -1441,7 +1441,10 @@
          (replace-regexp-in-string
           "\n\\'" ""
           (shell-command-to-string "git rev-parse --show-toplevel"))))
-    (with-current-buffer (find-file-noselect "README.org")
+    (with-temp-buffer
+      (insert-file-contents "README.org")
+      (goto-char (point-min))
+      (org-mode)
       (org-babel-goto-named-src-block "export-commentary-setup")
       (org-babel-execute-src-block)
       (declare-function with-difftastic-org-export-commentary-defaults
@@ -1451,7 +1454,8 @@
        (org-export-to-buffer 'difftastic-commentary export-buffer)))
 
     (with-temp-buffer
-      (insert (with-current-buffer (find-file-noselect "difftastic.el")
+      (insert (with-temp-buffer
+                (insert-file-contents "difftastic.el")
                 (goto-char (point-min))
                 (let ((start (progn
                                (re-search-forward "^;;; Commentary:$")

@@ -634,15 +634,16 @@ adding background to faces if they have a foreground set."
                    (cl-find-if
                     (lambda (difftastic-face)
                       (and (string=
-                            (face-foreground difftastic-face)
+                            (face-foreground difftastic-face nil t)
                             (or
                              (plist-get face :foreground)
                              (car (alist-get :foreground face))))
+                           (face-background difftastic-face nil t)
                            ;; ansi-color-* faces have the same
                            ;; foreground and background - don't use them
-                           (not (string= (face-foreground difftastic-face)
-                                         (face-background difftastic-face)))
-                           (face-background difftastic-face)))
+                           (not (string=
+                                 (face-foreground difftastic-face nil t)
+                                 (face-background difftastic-face nil t)))))
                     (vconcat difftastic-normal-colors-vector
                              difftastic-bright-colors-vector)))))
     ;; difftastic uses underline to highlight some changes.
@@ -661,16 +662,16 @@ adding background to faces if they have a foreground set."
                                      (plist-get elt :foreground)))
                               face))
           (push `(:foreground
-                  ,(face-foreground highlight-face nil 'default))
+                  ,(face-foreground highlight-face nil t))
                 face)
           (push `(:background
-                  ,(face-background highlight-face nil 'default))
+                  ,(face-background highlight-face nil t))
                 face))
       (when-let ((fg (plist-get face :foreground)))
         (cl-remf face :foreground)
         (push `(:foreground ,fg) face))
       (push `(:background
-              ,(face-background difftastic-face nil 'default))
+              ,(face-background difftastic-face nil t))
             face)))
   face)
 

@@ -685,7 +685,7 @@
   (let* ((expected-fg
           (if noninteractive
               "unspecified-fg"
-            (face-foreground (aref difftastic-normal-colors-vector 3))))
+            (face-foreground (aref difftastic-normal-colors-vector 3) nil t)))
          (expected
           (concat
            (propertize
@@ -735,22 +735,22 @@
 ;; The following few tests are meant to check for default face color values
 ;; such that it's easier to debug and update tests when these change upstream.
 
-(defconst difftastic-t-removed-fg (face-foreground 'magit-diff-removed))
-(defconst difftastic-t-removed-bg (face-background 'magit-diff-removed))
+(defconst difftastic-t-removed-fg (face-foreground 'magit-diff-removed nil t))
+(defconst difftastic-t-removed-bg (face-background 'magit-diff-removed nil t))
 (defconst difftastic-t-removed-highlight-fg
-  (face-foreground (alist-get 'magit-diff-removed difftastic-highlight-alist)))
+  (face-foreground (alist-get 'magit-diff-removed difftastic-highlight-alist) nil t))
 (defconst difftastic-t-removed-highlight-bg
-  (face-background (alist-get 'magit-diff-removed difftastic-highlight-alist)))
-(defconst difftastic-t-added-fg (face-foreground 'magit-diff-added))
-(defconst difftastic-t-added-bg (face-background 'magit-diff-added))
+  (face-background (alist-get 'magit-diff-removed difftastic-highlight-alist) nil t))
+(defconst difftastic-t-added-fg (face-foreground 'magit-diff-added nil t))
+(defconst difftastic-t-added-bg (face-background 'magit-diff-added nil t))
 (defconst difftastic-t-added-highlight-fg
-  (face-foreground (alist-get 'magit-diff-added difftastic-highlight-alist)))
+  (face-foreground (alist-get 'magit-diff-added difftastic-highlight-alist) nil t))
 (defconst difftastic-t-added-highlight-bg
-  (face-background (alist-get 'magit-diff-added difftastic-highlight-alist)))
-(defconst difftastic-t-comment-fg (face-foreground 'font-lock-comment-face))
-(defconst difftastic-t-comment-bg (face-background 'font-lock-comment-face))
-(defconst difftastic-t-string-fg (face-foreground 'font-lock-string-face))
-(defconst difftastic-t-string-bg (face-background 'font-lock-string-face))
+  (face-background (alist-get 'magit-diff-added difftastic-highlight-alist) nil t))
+(defconst difftastic-t-comment-fg (face-foreground 'font-lock-comment-face nil t))
+(defconst difftastic-t-comment-bg (face-background 'font-lock-comment-face nil t))
+(defconst difftastic-t-string-fg (face-foreground 'font-lock-string-face nil t))
+(defconst difftastic-t-string-bg (face-background 'font-lock-string-face nil t))
 
 (ert-deftest difftastic--run-command-filter:removed-ansi-colors-applied ()
   :tags '(interactive)
@@ -1342,7 +1342,7 @@
   (let* ((expected-fg
           (if noninteractive
               "unspecified-fg"
-            (face-foreground (aref difftastic-normal-colors-vector 3))))
+            (face-foreground (aref difftastic-normal-colors-vector 3) nil t)))
          (expected
           (concat
            (propertize

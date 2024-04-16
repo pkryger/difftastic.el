@@ -954,6 +954,44 @@
                         (:foreground ,difftastic-t-removed-highlight-fg)
                         ansi-color-italic))))))))
 
+(ert-deftest difftastic--run-command-filter:removed-highlight-no-strip-ansi-colors-applied ()
+  :tags '(interactive)
+  (let (difftastic-highlight-strip-face-properties)
+    (with-temp-buffer
+      (eval
+       '(mocklet ((process-buffer => (current-buffer)))
+          (difftastic--run-command-filter
+           'test-process
+           "[31;1;2;3;4mremoved[0m")
+          (should
+           (equal-including-properties
+            (buffer-string)
+            (propertize "removed"
+                        'font-lock-face
+                        `((:background ,difftastic-t-removed-highlight-bg)
+                          (:foreground ,difftastic-t-removed-highlight-fg)
+                          ansi-color-bold
+                          ansi-color-faint
+                          ansi-color-italic
+                          ansi-color-underline)))))))))
+
+(ert-deftest difftastic--run-command-filter:removed-highlight-strip-all-ansi-colors-applied ()
+  :tags '(interactive)
+  (let ((difftastic-highlight-strip-face-properties '(:bold :faint :italic :underline)))
+    (with-temp-buffer
+      (eval
+       '(mocklet ((process-buffer => (current-buffer)))
+          (difftastic--run-command-filter
+           'test-process
+           "[31;1;2;3;4mremoved[0m")
+          (should
+           (equal-including-properties
+            (buffer-string)
+            (propertize "removed"
+                        'font-lock-face
+                        `((:background ,difftastic-t-removed-highlight-bg)
+                          (:foreground ,difftastic-t-removed-highlight-fg))))))))))
+
 (ert-deftest difftastic--run-command-filter:added-highlight-ansi-colors-applied ()
   :tags '(interactive)
   (with-temp-buffer
@@ -1019,6 +1057,44 @@
                       `((:background ,difftastic-t-added-highlight-bg)
                         (:foreground ,difftastic-t-added-highlight-fg)
                         ansi-color-italic))))))))
+
+(ert-deftest difftastic--run-command-filter:added-highlight-no-strip-ansi-colors-applied ()
+  :tags '(interactive)
+  (let (difftastic-highlight-strip-face-properties)
+    (with-temp-buffer
+      (eval
+       '(mocklet ((process-buffer => (current-buffer)))
+          (difftastic--run-command-filter
+           'test-process
+           "[32;1;2;3;4madded[0m")
+          (should
+           (equal-including-properties
+            (buffer-string)
+            (propertize "added"
+                        'font-lock-face
+                        `((:background ,difftastic-t-added-highlight-bg)
+                          (:foreground ,difftastic-t-added-highlight-fg)
+                          ansi-color-bold
+                          ansi-color-faint
+                          ansi-color-italic
+                          ansi-color-underline)))))))))
+
+(ert-deftest difftastic--run-command-filter:added-highlight-strip-all-ansi-colors-applied ()
+  :tags '(interactive)
+  (let ((difftastic-highlight-strip-face-properties '(:bold :faint :italic :underline)))
+    (with-temp-buffer
+      (eval
+       '(mocklet ((process-buffer => (current-buffer)))
+          (difftastic--run-command-filter
+           'test-process
+           "[32;1;2;3;4madded[0m")
+          (should
+           (equal-including-properties
+            (buffer-string)
+            (propertize "added"
+                        'font-lock-face
+                        `((:background ,difftastic-t-added-highlight-bg)
+                          (:foreground ,difftastic-t-added-highlight-fg))))))))))
 
 (ert-deftest difftastic--run-command-filter:removed-no-highlight-ansi-colors-applied ()
   :tags '(interactive)

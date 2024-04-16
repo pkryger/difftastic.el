@@ -127,6 +127,10 @@ parenthesis).
   next logical chunk or a next file respectively.
 - =difftastic-previous-chunk= (~p~), =difftastic-previous-file= (~P~) - move point
   to a previous logical chunk or a previous file respectively.
+- =difftastic-toggle-chunk= (~TAB~ or ~C-i~) - toggle visibility of a chunk at
+  point.  The point has to be in a chunk header.  When called with a prefix all
+  file chunks from the header to the end of the file.  See also
+  =difftastic-hide-chunk= and =difftastic=show-chunk=.
 - =difftastic-git-diff-range= - transform =ARGS= for difftastic and show the
   result of =git diff ARGS REV-OR-RANGE -- FILES= with =difftastic=.
 

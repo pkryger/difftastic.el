@@ -597,15 +597,6 @@ of the file."
   "Show chunk at point.
 The point needs to be in chunk header."
   (interactive)
-  ;; @todo: fringe - from magit-diff
-  ;; (overlay-put
-  ;;  ov 'before-string
-  ;;  (propertize "fringe" 'display
-  ;;              (list 'left-fringe
-  ;;                    (if (oref section hidden)
-  ;;                        (car magit-section-visibility-indicator)
-  ;;                      (cdr magit-section-visibility-indicator))
-  ;;                    'fringe)))
   (when (difftastic--point-at-chunk-header-p)
     (let ((inhibit-read-only t)
           (file-chunk

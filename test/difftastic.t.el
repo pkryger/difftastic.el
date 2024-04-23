@@ -761,7 +761,7 @@ test/difftastic.t.el --- Emacs Lisp
             (should
              (ert-equal-including-properties (buffer-string) ,expected))))))))
 
-(ert-deftest difftastic-hide-chunk:file-header-file-hidden ()
+(ert-deftest difftastic-hide-chunk:file-header-with-file-file-hidden ()
   (let ((expected
          (concat (propertize "difftastic.el --- 1/2 --- Emacs Lisp"
                              'difftastic '(:hidden :file))
@@ -794,7 +794,7 @@ test/difftastic.t.el --- Emacs Lisp
                  (should
                   (ert-equal-including-properties (buffer-string) ,expected))))))))
 
-(ert-deftest difftastic-hide-chunk:chunk-header-rest-of-file-hidden ()
+(ert-deftest difftastic-hide-chunk:chunk-header-with-file-rest-of-file-hidden ()
   (let ((expected
          (concat "difftastic.el --- 1/3 --- Emacs Lisp
 1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
@@ -834,7 +834,7 @@ test/difftastic.t.el --- Emacs Lisp
                  (should
                   (ert-equal-including-properties (buffer-string) ,expected))))))))
 
-(ert-deftest difftastic-hide-chunk:with-chunk-hidden-file-hidden ()
+(ert-deftest difftastic-hide-chunk:with-file-with-chunk-hidden-file-hidden ()
   (let ((expected
          (concat (propertize "difftastic.el --- 1/2 --- Emacs Lisp"
                              'difftastic '(:hidden :file))

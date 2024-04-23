@@ -526,12 +526,30 @@ When FILE-CHUNK is t the line beginning position is only found
 when match data indicates this is the chunk number 1.  This
 function can be called only after a successfull searching for a
 regexp from `difftastic--chunk-regexp'."
-  (if file-chunk
-      (when (let ((chunk-no (match-string 1)))
-              (or (not chunk-no)
-                  (string-equal "1" chunk-no)))
-        (line-beginning-position))
-    (line-beginning-position)))
+  (when-let ((chunk-bol (if file-chunk
+                            (when (let ((chunk-no (match-string 1)))
+                                    (or (not chunk-no)
+                                        (string-equal "1" chunk-no)))
+                              (line-beginning-position))
+                          (line-beginning-position))))
+    (unless (or (difftastic--point-at-added-removed-p)
+                (get-text-property chunk-bol 'invisible))
+      chunk-bol)))
+
+(defun difftastic--point-at-added-removed-p ()
+  "Return whether a point is in added or removed line."
+  (save-excursion
+    (goto-char (line-beginning-position))
+    (save-match-data
+      (when (looking-at (rx bol
+                            (or (1+ ".")
+                                (1+ digit)
+                                (seq (group (1+ ".")) " " (group (1+ digit))))
+                            " " (1+ any)))
+        (or (when-let ((m1 (match-string 1))
+                       (m2 (match-string 2)))
+              (eq (length m1) (length m2)))
+            t)))))
 
 (defun difftastic--next-chunk (&optional file-chunk)
   "Find line beginning position of next chunk.
@@ -543,8 +561,7 @@ for.  Return nil when no chunk is found."
       (cl-block searching-next-chunk
         (while (re-search-forward chunk-regexp nil t)
           (when-let ((chunk-bol
-                      (difftastic--chunk-bol file-chunk))
-                     ((not (get-text-property chunk-bol 'invisible))))
+                      (difftastic--chunk-bol file-chunk)))
             (cl-return-from searching-next-chunk chunk-bol)))))))
 
 (defun difftastic--prev-chunk (&optional file-chunk)
@@ -559,8 +576,7 @@ for.  Return nil when no chunk is found."
         (cl-block searching-prev-chunk
           (while (re-search-backward chunk-regexp nil t)
             (when-let ((chunk-bol
-                        (difftastic--chunk-bol file-chunk))
-                       ((not (get-text-property chunk-bol 'invisible))))
+                        (difftastic--chunk-bol file-chunk)))
               (cl-return-from searching-prev-chunk chunk-bol))))))))
 
 (defun difftastic--point-at-chunk-header-p (&optional file-chunk)
@@ -569,7 +585,8 @@ When FILE-CHUNK is non nil the header has to be a file header."
   (when (not (eq (line-beginning-position) (line-end-position)))
     (save-excursion
       (goto-char (line-beginning-position))
-      (looking-at-p (difftastic--chunk-regexp file-chunk)))))
+      (and (looking-at-p (difftastic--chunk-regexp file-chunk))
+           (not (difftastic--point-at-added-removed-p))))))
 
 (defun difftastic-hide-chunk (&optional file-chunk)
   "Hide chunk at point.

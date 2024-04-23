@@ -527,6 +527,43 @@
                   (should
                    (string-match-p (difftastic--chunk-regexp nil) header))))))))))
 
+(ert-deftest difftastic--point-at-added-removed-p:chunk-header ()
+  (dolist (chunk-header '("difftastic.el --- Emacs Lisp"
+                          "difftastic.el --- 1/2 --- Emacs Lisp"
+                          "./difftastic.el --- Emacs Lisp"
+                          "../difftastic.el --- Emacs Lisp"
+                          "../difftastic.el --- Emacs Lisp"
+                          "1difftastic.el --- Emacs Lisp"
+                          "12difftastic.el --- Emacs Lisp"
+                          "1/difftastic.el --- Emacs Lisp"
+                          "12/difftastic.el --- Emacs Lisp"
+                          "a . difftastic.el --- Emacs Lisp"
+                          "1a .. difftastic.el --- Emacs Lisp"))
+    (with-temp-buffer
+      (insert chunk-header)
+      (message chunk-header)
+      (should-not (difftastic--point-at-added-removed-p)))))
+
+(ert-deftest difftastic--point-at-added-removed-p:added-removed ()
+  (dolist (addded-removed '(". difftastic.el --- Emacs Lisp"
+                            ". a difftastic.el --- Emacs Lisp"
+                            ". 1 difftastic.el --- Emacs Lisp"
+                            ". 12 difftastic.el --- Emacs Lisp"
+                            ".. 1a difftastic.el --- Emacs Lisp"
+                            ".. 12 difftastic.el --- Emacs Lisp"
+                            ".. 1a difftastic.el --- Emacs Lisp"
+                            ".. 123 difftastic.el --- Emacs Lisp"
+                            "... 123 difftastic.el --- Emacs Lisp"
+                            "12 difftastic.el --- Emacs Lisp"
+                            "12 . difftastic.el --- Emacs Lisp"
+                            "12 .. difftastic.el --- Emacs Lisp"
+                            "123 .. difftastic.el --- Emacs Lisp"
+                            "123 ... difftastic.el --- Emacs Lisp"))
+    (with-temp-buffer
+      (insert addded-removed)
+      (message addded-removed)
+      (should (difftastic--point-at-added-removed-p)))))
+
 (ert-deftest difftastic-next-chunk:erts-scenarios ()
   (when (fboundp 'ert-test-erts-file) ;; since Emacs-29
     (mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))

@@ -541,15 +541,10 @@ regexp from `difftastic--chunk-regexp'."
   (save-excursion
     (goto-char (line-beginning-position))
     (save-match-data
-      (when (looking-at (rx bol
+      (looking-at (rx bol
                             (or (1+ ".")
-                                (1+ digit)
-                                (seq (group (1+ ".")) " " (group (1+ digit))))
-                            " " (1+ any)))
-        (or (when-let ((m1 (match-string 1))
-                       (m2 (match-string 2)))
-              (eq (length m1) (length m2)))
-            t)))))
+                                (1+ digit))
+                            " " (1+ any))))))
 
 (defun difftastic--next-chunk (&optional file-chunk)
   "Find line beginning position of next chunk.

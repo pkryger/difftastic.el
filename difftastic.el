@@ -593,7 +593,7 @@ When FILE-CHUNK is non nil the header has to be a file header."
 The point needs to be in chunk header.  When called with
 FILE-CHUNK prefix hide all file chunks from the header to the end
 of the file."
-  (interactive "P")
+  (interactive "P" difftastic-mode)
   (when (difftastic--point-at-chunk-header-p file-chunk)
     (let ((inhibit-read-only t))
       (add-text-properties
@@ -613,7 +613,7 @@ of the file."
 (defun difftastic-show-chunk ()
   "Show chunk at point.
 The point needs to be in chunk header."
-  (interactive)
+  (interactive nil difftastic-mode)
   (when (difftastic--point-at-chunk-header-p)
     (let ((inhibit-read-only t)
           (file-chunk
@@ -638,7 +638,7 @@ The point needs to be in chunk header."
 The point needs to be in chunk header.  When called with
 FILE-CHUNK prefix hide all file chunks from the header to the end
 of the file."
-  (interactive "P")
+  (interactive "P" difftastic-mode)
   (when (difftastic--point-at-chunk-header-p file-chunk)
     (if (member :hidden
                 (get-text-property (line-beginning-position) 'difftastic))

@@ -7,7 +7,7 @@
 :END:
 [[https://melpa.org/#/difftastic][https://melpa.org/packages/difftastic-badge.svg]]
 [[https://github.com/pkryger/difftastic.el/actions/workflows/test.yml][https://github.com/pkryger/difftastic.el/actions/workflows/test.yml/badge.svg]]
-https://coveralls.io/repos/github/pkryger/difftastic.el/badge.svg
+[[https://coveralls.io/github/pkryger/difftastic.el?branch=main][https://coveralls.io/repos/github/pkryger/difftastic.el/badge.svg?branch=main]]
 
 ** Description
 :PROPERTIES:

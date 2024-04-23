@@ -569,7 +569,7 @@ When FILE-CHUNK is non nil the header has to be a file header."
   (when (not (eq (line-beginning-position) (line-end-position)))
     (save-excursion
       (goto-char (line-beginning-position))
-      (looking-at (difftastic--chunk-regexp file-chunk)))))
+      (looking-at-p (difftastic--chunk-regexp file-chunk)))))
 
 (defun difftastic-hide-chunk (&optional file-chunk)
   "Hide chunk at point.

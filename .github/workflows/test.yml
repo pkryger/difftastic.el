@@ -30,11 +30,38 @@ jobs:
       with:
         version: ${{ matrix.emacs_version }}
     - uses: actions/checkout@v4
-    - name: package init
-      run: './run-tests.sh package-init'
-    - name: byte compile
-      run: './run-tests.sh byte-compile'
-    - name: package lint
-      run: './run-tests.sh package-lint'
-    - name: test
-      run: './run-tests.sh test'
+    - uses: actions/cache@v4
+      id: cache-cask-packages
+      with:
+        path: .cask
+        key: cache-cask-packages-000
+    - uses: cask/setup-cask@master
+      if: steps.cache-cask-executable.outputs.cache-hit != 'true'
+      with:
+        version: snapshot
+
+    - name: Install dependencies
+      run: 'cask install'
+    - name: Byte compile
+      run: 'make compile'
+    - name: Lint package
+      run: 'make lint'
+    - name: Run tests
+      run: 'make test'
+
+    - name: Coveralls parallel
+      uses: coverallsapp/github-action@v2
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        flag-name: ${{ join(matrix.*, '-emacs-') }}
+        parallel: true
+
+  finish:
+    needs: ci-tests
+    runs-on: ubuntu-latest
+    steps:
+    - name: Coveralls finished
+      uses: coverallsapp/github-action@v2
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        parallel-finished: true

@@ -1300,9 +1300,9 @@ In order to determine requested width for difftastic a call to
 the latter is set to nil the call is made to
 `difftastic-requested-window-width-function'."
   (interactive (list
-                (or (when current-prefix-arg
-                      (completing-read "Language: "
-                                       (difftastic--get-languages) nil t))))
+                (when current-prefix-arg
+                  (completing-read "Language: "
+                                   (difftastic--get-languages) nil t)))
                difftastic-mode)
   (if-let (((eq major-mode 'difftastic-mode))
            (rerun-alist (copy-tree difftastic--rerun-alist)))

@@ -380,7 +380,7 @@ the selected window is considered for restoring."
   ;; checkdoc-params: (symbol how function)
   "Execute BODY with advice temporarily enabled.
 See `advice-add' for explanation of SYMBOL, HOW, and FUNCTION arguments."
-  (declare (indent 3))
+  (declare (indent 3) (debug t))
   `(let ((fn-advice-var ,function))
      (unwind-protect
          (progn
@@ -1160,7 +1160,7 @@ argument."
   "Exectue the forms in BODY with each symbol in FILE-BUFS list `let'-bound to nil.
 If any form in BODY signals an error each element in FILE-BUFS will be passed
 to `difftastic--delete-temp-file-buf'."
-  (declare (indent 1) (debug t))
+  (declare (indent 1) (debug ((&rest symbolp) body)))
   `(let ,file-bufs
      (condition-case err
          (progn ,@body)

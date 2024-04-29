@@ -1127,7 +1127,7 @@ LANG-OVERRIDE is passed to difftastic as \\='--override\\=' argument."
     "--width" ,(number-to-string requested-width)
     "--background" ,(format "%s" (frame-parameter nil 'background-mode))
     ,@(when lang-override (list "--override"
-                                (format "*:%s" lang-override)))
+                                (format "*:'%s'" lang-override)))
     ,(car file-buf-A)
     ,(car file-buf-B)))
 
@@ -1326,7 +1326,7 @@ the latter is set to nil the call is made to
                        (append .difftastic-args
                                (when lang-override
                                  (list "--override"
-                                       (format "*:%s" lang-override)))))
+                                       (format "*:'%s'" lang-override)))))
                     process-environment))
                  (command (or .git-command
                               (difftastic--build-files-command

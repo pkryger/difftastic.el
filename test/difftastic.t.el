@@ -769,6 +769,35 @@ test/difftastic.t.el --- Emacs Lisp
             (should
              (ert-equal-including-properties (buffer-string) ,expected))))))))
 
+(ert-deftest difftastic-hide-chunk:last-chunk-hidden ()
+  (let ((expected
+         (concat
+          "difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+"
+          (propertize "difftastic.el --- 2/2 --- Emacs Lisp"
+                      'difftastic '(:hidden :chunk))
+          (propertize "
+24 ;;; Commentary:"
+                      'invisible 'difftastic))))
+    (eval
+     `(mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
+        (with-temp-buffer
+          (insert "difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:")
+          (difftastic-mode)
+          (goto-char 121)
+          (difftastic-hide-chunk)
+          (if (version< "29" emacs-version) ;; since Emacs-29
+              (should
+               (equal-including-properties (buffer-string) ,expected))
+            (should
+             (ert-equal-including-properties (buffer-string) ,expected))))))))
+
 (ert-deftest difftastic-hide-chunk:file-chunk-hidden ()
   (let ((expected
          (concat
@@ -828,6 +857,32 @@ difftastic.el --- 2/2 --- Emacs Lisp
 
 test/difftastic.t.el --- Emacs Lisp
 1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-")
+               (difftastic-mode)
+               (goto-char (point-min))
+               (difftastic-hide-chunk t)
+               (if (version< "29" emacs-version) ;; since Emacs-29
+                   (should
+                    (equal-including-properties (buffer-string) ,expected))
+                 (should
+                  (ert-equal-including-properties (buffer-string) ,expected))))))))
+
+(ert-deftest difftastic-hide-chunk:last-file-header-with-file-file-hidden ()
+  (let ((expected
+         (concat (propertize "difftastic.el --- 1/2 --- Emacs Lisp"
+                             'difftastic '(:hidden :file))
+                 (propertize "
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:"
+                             'invisible 'difftastic))))
+    (eval `(mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
+             (with-temp-buffer
+               (insert "difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:")
                (difftastic-mode)
                (goto-char (point-min))
                (difftastic-hide-chunk t)
@@ -951,6 +1006,30 @@ test/difftastic.t.el --- Emacs Lisp
           (difftastic-show-chunk)
           (should (equal-including-properties (buffer-string) ,expected)))))))
 
+(ert-deftest difftastic-show-chunk:last-chunk-header-chunk-shown ()
+  (let ((expected "difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:"))
+    (eval
+     `(mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
+        (with-temp-buffer
+          (insert "difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+"
+                  (propertize "difftastic.el --- 2/2 --- Emacs Lisp"
+                              'difftastic '(:hidden :chunk))
+                  (propertize
+                   "
+24 ;;; Commentary:"
+                   'invisible 'difftastic))
+          (difftastic-mode)
+          (goto-char 121)
+          (difftastic-show-chunk)
+          (should (equal-including-properties (buffer-string) ,expected)))))))
+
 (ert-deftest difftastic-show-chunk:file-header-chunk-shown ()
   (let ((expected
          (concat "difftastic.el --- 1/2 --- Emacs Lisp
@@ -1021,6 +1100,28 @@ difftastic.el --- 2/2 --- Emacs Lisp
 
 test/difftastic.t.el --- Emacs Lisp
 1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-")
+          (difftastic-mode)
+          (goto-char (point-min))
+          (difftastic-show-chunk)
+          (should (equal-including-properties (buffer-string) ,expected)))))))
+
+(ert-deftest difftastic-show-chunk:last-file-header-file-shown ()
+  (let ((expected "difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:"))
+    (eval
+     `(mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
+        (with-temp-buffer
+          (insert (propertize "difftastic.el --- 1/2 --- Emacs Lisp"
+                              'difftastic '(:hidden :file))
+                  (propertize "
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:"
+                              'invisible 'difftastic))
           (difftastic-mode)
           (goto-char (point-min))
           (difftastic-show-chunk)

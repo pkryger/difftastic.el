@@ -13,7 +13,7 @@ compile: cask
 	cask emacs -batch -L . -L test \
 	  --eval "(setq byte-compile-error-on-warn t)" \
 	  -f batch-byte-compile $$(cask files) test/difftastic.t.el; \
-	  (ret=$$? ; cask clean-elc && exit $$ret)
+	  (ret=$$? ; cask clean-elc ; rm -f test/*.elc && exit $$ret)
 
 .PHONY: lint
 lint: cask

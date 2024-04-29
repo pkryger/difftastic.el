@@ -541,28 +541,33 @@
                           "1a .. difftastic.el --- Emacs Lisp"))
     (with-temp-buffer
       (insert chunk-header)
-      (message chunk-header)
-      (should-not (difftastic--point-at-added-removed-p)))))
+      (should-not
+       (let ((added-removed (difftastic--point-at-added-removed-p)))
+         (when added-removed
+           (message "failed chunk-header: %s" chunk-header))
+         added-removed)))))
 
 (ert-deftest difftastic--point-at-added-removed-p:added-removed ()
-  (dolist (addded-removed '(". difftastic.el --- Emacs Lisp"
-                            ". a difftastic.el --- Emacs Lisp"
-                            ". 1 difftastic.el --- Emacs Lisp"
-                            ". 12 difftastic.el --- Emacs Lisp"
-                            ".. 1a difftastic.el --- Emacs Lisp"
-                            ".. 12 difftastic.el --- Emacs Lisp"
-                            ".. 1a difftastic.el --- Emacs Lisp"
-                            ".. 123 difftastic.el --- Emacs Lisp"
-                            "... 123 difftastic.el --- Emacs Lisp"
-                            "12 difftastic.el --- Emacs Lisp"
-                            "12 . difftastic.el --- Emacs Lisp"
-                            "12 .. difftastic.el --- Emacs Lisp"
-                            "123 .. difftastic.el --- Emacs Lisp"
-                            "123 ... difftastic.el --- Emacs Lisp"))
+  (dolist (added-removed '(". difftastic.el --- Emacs Lisp"
+                           ". a difftastic.el --- Emacs Lisp"
+                           ". 1 difftastic.el --- Emacs Lisp"
+                           ". 12 difftastic.el --- Emacs Lisp"
+                           ".. 1a difftastic.el --- Emacs Lisp"
+                           ".. 12 difftastic.el --- Emacs Lisp"
+                           ".. 1a difftastic.el --- Emacs Lisp"
+                           ".. 123 difftastic.el --- Emacs Lisp"
+                           "... 123 difftastic.el --- Emacs Lisp"
+                           "12 difftastic.el --- Emacs Lisp"
+                           "12 . difftastic.el --- Emacs Lisp"
+                           "12 .. difftastic.el --- Emacs Lisp"
+                           "123 .. difftastic.el --- Emacs Lisp"
+                           "123 ... difftastic.el --- Emacs Lisp"))
     (with-temp-buffer
-      (insert addded-removed)
-      (message addded-removed)
-      (should (difftastic--point-at-added-removed-p)))))
+      (insert added-removed)
+      (should (let ((added-removed (difftastic--point-at-added-removed-p)))
+         (unless added-removed
+           (message "failed added-removed: %s" added-removed))
+         added-removed)))))
 
 (ert-deftest difftastic-next-chunk:erts-scenarios ()
   (when (fboundp 'ert-test-erts-file) ;; since Emacs-29

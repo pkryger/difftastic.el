@@ -2272,6 +2272,214 @@ test/difftastic.t.el --- Emacs Lisp
     (eval `(mocklet (((pop-to-buffer ,(current-buffer) (list nil))))
              (difftastic-pop-to-buffer ,(current-buffer) 10)))))
 
+(ert-deftest difftastic-rerun:not-difftastic-mode-error-signaled ()
+  (with-temp-buffer
+    (let ((data (cadr (should-error (difftastic-rerun)
+                                    :type 'user-error))))
+      (should (equal data "Nothing to rerun")))))
+
+
+(ert-deftest difftastic-rerun:no-rerun-alist-mode-error-signaled ()
+  (with-temp-buffer
+    (difftastic-mode)
+    (setq difftastic--rerun-alist nil)
+    (let ((data (cadr (should-error (difftastic-rerun)
+                                    :type 'user-error))))
+      (should (equal data "Nothing to rerun")))))
+
+(ert-deftest difftastic-rerun:git-command-rerun-requested-width ()
+  (let ((rerun-alist '((default-directory . "test-default-directory")
+                       (git-command . "test-command")
+                       (difftastic-args . ("test-difftastic-args"))))
+        (difftastic-rerun-requested-window-width-function
+         (lambda ()
+           "test-difftastic-width"))
+        (run-command-call-count 0))
+    (with-temp-buffer
+      (difftastic-mode)
+      (setq difftastic--rerun-alist rerun-alist)
+      (mocklet (((difftastic--build-git-process-environment
+                  "test-difftastic-width" '("test-difftastic-args"))
+                 => "test-process-environment"))
+        (eval
+         `(difftastic--with-temp-advice
+              'difftastic--run-command
+              :override
+              (lambda (buffer command sentinel)
+                (should (equal default-directory "test-default-directory"))
+                (should (equal process-environment "test-process-environment"))
+                (should (equal buffer ,(current-buffer)))
+                (should (equal command "test-command"))
+                (should (functionp sentinel))
+                (funcall sentinel)
+                ,(cl-incf run-command-call-count))
+            (difftastic-rerun))))
+      (should (eq run-command-call-count 1))
+      (should-not (eq difftastic--rerun-alist rerun-alist))
+      (should (equal difftastic--rerun-alist rerun-alist)))))
+
+(ert-deftest difftastic-rerun:git-command-requested-width ()
+  (let ((rerun-alist '((default-directory . "test-default-directory")
+                       (git-command . "test-command")
+                       (difftastic-args . ("test-difftastic-args"))))
+        (difftastic-rerun-requested-window-width-function nil)
+        (difftastic-requested-window-width-function
+         (lambda ()
+           "test-difftastic-width"))
+        (run-command-call-count 0))
+    (with-temp-buffer
+      (difftastic-mode)
+      (setq difftastic--rerun-alist rerun-alist)
+      (mocklet (((difftastic--build-git-process-environment
+                  "test-difftastic-width" '("test-difftastic-args"))
+                 => "test-process-environment"))
+        (eval
+         `(difftastic--with-temp-advice
+              'difftastic--run-command
+              :override
+              (lambda (buffer command sentinel)
+                (should (equal default-directory "test-default-directory"))
+                (should (equal process-environment "test-process-environment"))
+                (should (equal buffer ,(current-buffer)))
+                (should (equal command "test-command"))
+                (should (functionp sentinel))
+                (funcall sentinel)
+                ,(cl-incf run-command-call-count))
+            (difftastic-rerun))))
+      (should (eq run-command-call-count 1))
+      (should-not (eq difftastic--rerun-alist rerun-alist))
+      (should (equal difftastic--rerun-alist rerun-alist)))))
+
+(ert-deftest difftastic-rerun:git-command-with-lang-override ()
+  (let ((rerun-alist '((default-directory . "test-default-directory")
+                       (git-command . "test-command")
+                       (difftastic-args . ("test-difftastic-args"))))
+        (difftastic-rerun-requested-window-width-function
+         (lambda ()
+           "test-difftastic-width"))
+        (run-command-call-count 0))
+    (with-temp-buffer
+      (difftastic-mode)
+      (setq difftastic--rerun-alist rerun-alist)
+      (mocklet (((difftastic--build-git-process-environment
+                  "test-difftastic-width" '("test-difftastic-args"
+                                            "--override"
+                                            "*:'test-lang-override'"))
+                 => "test-process-environment"))
+        (eval
+         `(difftastic--with-temp-advice
+              'difftastic--run-command
+              :override
+              (lambda (buffer command sentinel)
+                (should (equal default-directory "test-default-directory"))
+                (should (equal process-environment "test-process-environment"))
+                (should (equal buffer ,(current-buffer)))
+                (should (equal command "test-command"))
+                (should (functionp sentinel))
+                (funcall sentinel)
+                ,(cl-incf run-command-call-count))
+            (difftastic-rerun "test-lang-override"))))
+      (should (eq run-command-call-count 1))
+      (should-not (eq difftastic--rerun-alist rerun-alist))
+      (should (equal difftastic--rerun-alist rerun-alist)))))
+
+(ert-deftest difftastic-rerun:files-command-rerun-requested-width ()
+  (let ((rerun-alist '((default-directory . "test-default-directory")
+                       (lang-override . "test-lang-override")
+                       (file-buf-A . ("test-file-buf-A" . nil))
+                       (file-buf-B . ("test-file-buf-B" . nil))))
+        (difftastic-rerun-requested-window-width-function
+         (lambda ()
+           "test-difftastic-width"))
+        (run-command-call-count 0))
+    (with-temp-buffer
+      (difftastic-mode)
+      (setq difftastic--rerun-alist rerun-alist)
+      (mocklet (((difftastic--build-files-command
+                  '("test-file-buf-A" . nil) '("test-file-buf-B". nil)
+                  "test-difftastic-width" "test-lang-override")
+                 => "test-command"))
+        (eval
+         `(difftastic--with-temp-advice
+              'difftastic--run-command
+              :override
+              (lambda (buffer command sentinel)
+                (should (equal default-directory "test-default-directory"))
+                (should (equal buffer ,(current-buffer)))
+                (should (equal command "test-command"))
+                (should (functionp sentinel))
+                (funcall sentinel)
+                ,(cl-incf run-command-call-count))
+            (difftastic-rerun))))
+      (should (eq run-command-call-count 1))
+      (should-not (eq difftastic--rerun-alist rerun-alist))
+      (should (equal difftastic--rerun-alist rerun-alist)))))
+
+(ert-deftest difftastic-rerun:files-command-requested-width ()
+  (let ((rerun-alist '((default-directory . "test-default-directory")
+                       (lang-override . "test-lang-override")
+                       (file-buf-A . ("test-file-buf-A" . nil))
+                       (file-buf-B . ("test-file-buf-B" . nil))))
+        (difftastic-rerun-requested-window-width-function nil)
+        (difftastic-requested-window-width-function
+         (lambda ()
+           "test-difftastic-width"))
+        (run-command-call-count 0))
+    (with-temp-buffer
+      (difftastic-mode)
+      (setq difftastic--rerun-alist rerun-alist)
+      (mocklet (((difftastic--build-files-command
+                  '("test-file-buf-A" . nil) '("test-file-buf-B". nil)
+                  "test-difftastic-width" "test-lang-override")
+                 => "test-command"))
+        (eval
+         `(difftastic--with-temp-advice
+              'difftastic--run-command
+              :override
+              (lambda (buffer command sentinel)
+                (should (equal default-directory "test-default-directory"))
+                (should (equal buffer ,(current-buffer)))
+                (should (equal command "test-command"))
+                (should (functionp sentinel))
+                (funcall sentinel)
+                ,(cl-incf run-command-call-count))
+            (difftastic-rerun))))
+      (should (eq run-command-call-count 1))
+      (should-not (eq difftastic--rerun-alist rerun-alist))
+      (should (equal difftastic--rerun-alist rerun-alist)))))
+
+(ert-deftest difftastic-rerun:files-command-with-lang-override ()
+  (let ((rerun-alist '((default-directory . "test-default-directory")
+                       (lang-override . "lang-override")
+                       (file-buf-A . ("test-file-buf-A" . nil))
+                       (file-buf-B . ("test-file-buf-B" . nil))))
+        (difftastic-rerun-requested-window-width-function
+         (lambda ()
+           "test-difftastic-width"))
+        (run-command-call-count 0))
+    (with-temp-buffer
+      (difftastic-mode)
+      (setq difftastic--rerun-alist rerun-alist)
+      (mocklet (((difftastic--build-files-command
+                  '("test-file-buf-A" . nil) '("test-file-buf-B". nil)
+                  "test-difftastic-width" "test-lang-override")
+                 => "test-command"))
+        (eval
+         `(difftastic--with-temp-advice
+              'difftastic--run-command
+              :override
+              (lambda (buffer command sentinel)
+                (should (equal default-directory "test-default-directory"))
+                (should (equal buffer ,(current-buffer)))
+                (should (equal command "test-command"))
+                (should (functionp sentinel))
+                (funcall sentinel)
+                ,(cl-incf run-command-call-count))
+            (difftastic-rerun "test-lang-override"))))
+      (should (eq run-command-call-count 1))
+      (should-not (eq difftastic--rerun-alist rerun-alist))
+      (should (equal difftastic--rerun-alist rerun-alist)))))
+
 (ert-deftest difftastic.el-validate-commentary-in-sync-with-readme.org ()
   :expected-result (if (version< "29" emacs-version) ;; since Emacs-29
                        :passed

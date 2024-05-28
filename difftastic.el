@@ -1287,23 +1287,9 @@ temporary file or nil otherwise."
         (user-error "Buffer %s [%s] doesn't exist anymore" prefix buffer))
     file-buf))
 
-;;;###autoload
-(defun difftastic-rerun (&optional lang-override)
-  "Rerun difftastic in the current buffer.
-Optionally, provide a LANG-OVERRIDE to override language used.
-See \\='difft --list-languages\\=' for language list.  When
-function is called with a prefix arg then ask for language before
-running difftastic.
-
-In order to determine requested width for difftastic a call to
-`difftastic-rerun-requested-window-width-function' is made.  When
-the latter is set to nil the call is made to
-`difftastic-requested-window-width-function'."
-  (interactive (list
-                (when current-prefix-arg
-                  (completing-read "Language: "
-                                   (difftastic--get-languages) nil t)))
-               difftastic-mode)
+(defun difftastic--rerun (lang-override)
+  "Implementation for `difftastic-rerun'.
+See the original function documentation for LANG-OVERRIDE."
   (if-let (((eq major-mode 'difftastic-mode))
            (rerun-alist (copy-tree difftastic--rerun-alist)))
       (difftastic--with-file-bufs (file-buf-A file-buf-B)
@@ -1343,6 +1329,25 @@ the latter is set to nil the call is made to
                (difftastic--delete-temp-file-buf file-buf-A)
                (difftastic--delete-temp-file-buf file-buf-B))))))
     (user-error "Nothing to rerun")))
+
+;;;###autoload
+(defun difftastic-rerun (&optional lang-override)
+  "Rerun difftastic in the current buffer.
+Optionally, provide a LANG-OVERRIDE to override language used.
+See \\='difft --list-languages\\=' for language list.  When
+function is called with a prefix arg then ask for language before
+running difftastic.
+
+In order to determine requested width for difftastic a call to
+`difftastic-rerun-requested-window-width-function' is made.  When
+the latter is set to nil the call is made to
+`difftastic-requested-window-width-function'."
+  (interactive (list
+                (when current-prefix-arg
+                  (completing-read "Language: "
+                                   (difftastic--get-languages) nil t)))
+               difftastic-mode)
+  (difftastic--rerun lang-override))
 
 (provide 'difftastic)
 ;;; difftastic.el ends here

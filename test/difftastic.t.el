@@ -2530,15 +2530,15 @@ test/difftastic.t.el --- Emacs Lisp
               '("git" "--no-pager" "show" "--ext-diff" "test-rev"))))
     (difftastic--magit-show "test-rev")))
 
-(ert-deftest difftastic-git-diff-range:no-args ()
+(ert-deftest difftastic--git-diff-range:no-args ()
   (mocklet (((get-buffer-create "*difftastic git diff*") => "test-buffer")
             ((difftastic--git-with-difftastic
               "test-buffer"
               '("git" "--no-pager" "diff" "--ext-diff")
               nil)))
-    (difftastic-git-diff-range)))
+    (difftastic--git-diff-range nil nil nil)))
 
-(ert-deftest difftastic-git-diff-range:with-args ()
+(ert-deftest difftastic--git-diff-range:with-args ()
   (mocklet (((get-buffer-create
               "*difftastic git diff --ignore-submodules=all test-rev-or-range -- test-path*")
              => "test-buffer")
@@ -2547,7 +2547,7 @@ test/difftastic.t.el --- Emacs Lisp
               '("git" "--no-pager" "diff" "--ext-diff" "--ignore-submodules=all"
                 "test-rev-or-range" "--" "test-path")
               '("--context 42"))))
-    (difftastic-git-diff-range "test-rev-or-range"
+    (difftastic--git-diff-range "test-rev-or-range"
                                '("--ignore-submodules=all" "-U42")
                                '("test-path"))))
 

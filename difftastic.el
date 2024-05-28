@@ -946,15 +946,9 @@ to difftastic."
               (replace-match (cdr regexp-replacement) t nil arg)))))
        args)))))
 
-;;;###autoload
-(defun difftastic-git-diff-range (&optional rev-or-range args files)
-  "Show difference between two commits using difftastic.
-The meaning of REV-OR-RANGE, ARGS, and FILES is like in
-`magit-diff-range', but ARGS are adjusted for difftastic with
-`difftastic--transform-diff-arguments'."
-  (interactive (cons (magit-diff-read-range-or-commit "Diff for range"
-                                                      nil current-prefix-arg)
-                     (magit-diff-arguments)))
+(defun difftastic--git-diff-range (rev-or-range args files)
+  "Implementation for `difftastic-git-diff-range'.
+See the original function documentation for REV-OR-RANGE, ARGS, and FILES."
   (pcase-let* ((`(,git-args ,difftastic-args)
                 (difftastic--transform-diff-arguments args))
                (buffer-name
@@ -976,6 +970,17 @@ The meaning of REV-OR-RANGE, ARGS, and FILES is like in
        ,@(when rev-or-range (list rev-or-range))
        ,@(when files (cons "--" files)))
      difftastic-args)))
+
+;;;###autoload
+(defun difftastic-git-diff-range (&optional rev-or-range args files)
+  "Show difference between two commits using difftastic.
+The meaning of REV-OR-RANGE, ARGS, and FILES is like in
+`magit-diff-range', but ARGS are adjusted for difftastic with
+`difftastic--transform-diff-arguments'."
+  (interactive (cons (magit-diff-read-range-or-commit "Diff for range"
+                                                      nil current-prefix-arg)
+                     (magit-diff-arguments)))
+  (difftastic--git-diff-range rev-or-range args files))
 
 ;;;###autoload
 (defun difftastic-magit-diff (&optional args files)

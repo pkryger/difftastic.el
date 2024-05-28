@@ -2541,6 +2541,35 @@ test/difftastic.t.el --- Emacs Lisp
               '("git" "--no-pager" "show" "--ext-diff" "test-rev"))))
     (difftastic--magit-show "test-rev")))
 
+(ert-deftest difftastic-magit-show:no-prefix-no-thing-no-branch ()
+  (mocklet (((magit-thing-at-point 'git-revision t))
+            ((magit-branch-or-commit-at-point))
+            ((magit-read-branch-or-commit "Revision") => "test-rev")
+            ((difftastic--magit-show "test-rev")))
+    (call-interactively #'difftastic-magit-show)))
+
+(ert-deftest difftastic-magit-show:no-prefix-no-thing ()
+  (mocklet (((magit-thing-at-point 'git-revision t))
+            ((magit-branch-or-commit-at-point) => "test-rev")
+            (magit-read-branch-or-commit not-called)
+            ((difftastic--magit-show "test-rev")))
+    (call-interactively #'difftastic-magit-show)))
+
+(ert-deftest difftastic-magit-show:no-prefix ()
+  (mocklet (((magit-thing-at-point 'git-revision t) => "test-rev")
+            (magit-branch-or-commit-at-point not-called)
+            (magit-read-branch-or-commit not-called)
+            ((difftastic--magit-show "test-rev")))
+    (call-interactively #'difftastic-magit-show)))
+
+(ert-deftest difftastic-magit-show:with-prefix ()
+  (mocklet ((magit-thing-at-point not-called)
+            (magit-branch-or-commit-at-point not-called)
+            ((magit-read-branch-or-commit "Revision") => "test-rev")
+            ((difftastic--magit-show "test-rev")))
+    (let ((current-prefix-arg 4))
+      (call-interactively #'difftastic-magit-show))))
+
 (ert-deftest difftastic--git-diff-range:no-args ()
   (mocklet (((get-buffer-create "*difftastic git diff*") => "test-buffer")
             ((difftastic--git-with-difftastic

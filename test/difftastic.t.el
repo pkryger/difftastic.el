@@ -2480,6 +2480,17 @@ test/difftastic.t.el --- Emacs Lisp
       (should-not (eq difftastic--rerun-alist rerun-alist))
       (should (equal difftastic--rerun-alist rerun-alist)))))
 
+(ert-deftest difftastic-rerun:no-prefix ()
+  (mocklet (((difftastic--rerun nil)))
+    (call-interactively #'difftastic-rerun)))
+
+(ert-deftest difftastic-rerun:with-prefix ()
+  (mocklet (((completing-read "Language: " "test-languages" nil t))
+            ((difftastic--get-languages) => "test-languages")
+            ((difftastic--rerun nil)))
+    (let ((current-prefix-arg 4))
+      (call-interactively #'difftastic-rerun))))
+
 (ert-deftest difftastic--git-with-difftastic:basic ()
   (let ((rerun-alist '((default-directory . "test-default-directory")
                        (git-command . "test-command")

@@ -1040,7 +1040,7 @@ When REV couldn't be guessed or called with prefix arg ask for REV."
           ;; Otherwise, query the user.
           (magit-read-branch-or-commit "Revision"))))
   (if (not rev)
-      (error "No revision specified")
+      (user-error "No revision specified")
     (difftastic--git-with-difftastic
      (get-buffer-create (concat "*difftastic git show " rev "*"))
      (list "git" "--no-pager" "show" "--ext-diff" rev))))

@@ -2480,6 +2480,43 @@ test/difftastic.t.el --- Emacs Lisp
       (should-not (eq difftastic--rerun-alist rerun-alist))
       (should (equal difftastic--rerun-alist rerun-alist)))))
 
+(ert-deftest difftastic--git-with-difftastic:basic ()
+  (let ((rerun-alist '((default-directory . "test-default-directory")
+                       (git-command . "test-command")
+                       (difftastic-args . "test-difftastic-args")))
+        (default-directory "test-default-directory")
+        (difftastic-requested-window-width-function
+         (lambda ()
+           "test-difftastic-width"))
+        (run-command-call-count 0)
+        (display-buffer-call-count 0))
+    (with-temp-buffer
+      (eval
+       `(mocklet (((difftastic--build-git-process-environment
+                    "test-difftastic-width" "test-difftastic-args")
+                   => "test-process-environment"))
+          (let ((difftastic-display-buffer-function
+                 (lambda (buffer requested-width)
+                   (should (equal buffer ,(current-buffer)))
+                   (should (equal requested-width "test-difftastic-width"))
+                   ,(cl-incf display-buffer-call-count))))
+            (difftastic--with-temp-advice
+              'difftastic--run-command
+              :override
+              (lambda (buffer command sentinel)
+                (should (equal process-environment "test-process-environment"))
+                (should (equal buffer ,(current-buffer)))
+                (should (equal command "test-command"))
+                (should (functionp sentinel))
+                (funcall sentinel)
+                ,(cl-incf run-command-call-count))
+              (difftastic--git-with-difftastic ,(current-buffer)
+                                               "test-command"
+                                               "test-difftastic-args")))))
+    (should (eq run-command-call-count 1))
+    (should (eq display-buffer-call-count 1))
+    (should (equal difftastic--rerun-alist rerun-alist)))))
+
 (ert-deftest difftastic.el-validate-commentary-in-sync-with-readme.org ()
   :expected-result (if (version< "29" emacs-version) ;; since Emacs-29
                        :passed

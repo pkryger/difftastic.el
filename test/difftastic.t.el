@@ -2517,18 +2517,18 @@ test/difftastic.t.el --- Emacs Lisp
     (should (eq display-buffer-call-count 1))
     (should (equal difftastic--rerun-alist rerun-alist)))))
 
-(ert-deftest difftastic-magit-show:nil-error-signaled ()
-  (let ((data (cadr (should-error (difftastic-magit-show nil)
+(ert-deftest difftastic--magit-show:nil-error-signaled ()
+  (let ((data (cadr (should-error (difftastic--magit-show nil)
                                   :type 'user-error))))
         (should (equal data "No revision specified"))))
 
-(ert-deftest difftastic-magit-show:basic ()
+(ert-deftest difftastic--magit-show:basic ()
   (mocklet (((get-buffer-create "*difftastic git show test-rev*")
              => "test-buffer")
             ((difftastic--git-with-difftastic
               "test-buffer"
               '("git" "--no-pager" "show" "--ext-diff" "test-rev"))))
-    (difftastic-magit-show "test-rev")))
+    (difftastic--magit-show "test-rev")))
 
 (ert-deftest difftastic.el-validate-commentary-in-sync-with-readme.org ()
   :expected-result (if (version< "29" emacs-version) ;; since Emacs-29

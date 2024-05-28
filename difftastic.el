@@ -1026,6 +1026,15 @@ The meaning of REV-OR-RANGE, ARGS, and FILES is like in
         (_
          (call-interactively #'difftastic-git-diff-range)))))))
 
+(defun difftastic--magit-show (rev)
+  "Implementation for `difftastic-magit-show'.
+See the original function documentation for REV."
+  (if (not rev)
+      (user-error "No revision specified")
+    (difftastic--git-with-difftastic
+     (get-buffer-create (concat "*difftastic git show " rev "*"))
+     (list "git" "--no-pager" "show" "--ext-diff" rev))))
+
 ;;;###autoload
 (defun difftastic-magit-show (rev)
   "Show the result of \\='git show REV\\=' with difftastic.
@@ -1039,11 +1048,7 @@ When REV couldn't be guessed or called with prefix arg ask for REV."
                    (magit-branch-or-commit-at-point)))
           ;; Otherwise, query the user.
           (magit-read-branch-or-commit "Revision"))))
-  (if (not rev)
-      (user-error "No revision specified")
-    (difftastic--git-with-difftastic
-     (get-buffer-create (concat "*difftastic git show " rev "*"))
-     (list "git" "--no-pager" "show" "--ext-diff" rev))))
+  (difftastic--magit-show rev))
 
 (defun difftastic--make-temp-file (prefix buffer)
   "Make a temporary file for BUFFER content with PREFIX included in file name."

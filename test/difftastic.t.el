@@ -2591,6 +2591,13 @@ test/difftastic.t.el --- Emacs Lisp
                                '("--ignore-submodules=all" "-U42")
                                '("test-path"))))
 
+(ert-deftest difftastic-git-diff-range:basic ()
+  (let ((current-prefix-arg 4))
+    (mocklet (((magit-diff-read-range-or-commit "Diff for range" nil 4) => "test-rev-or-range")
+              ((magit-diff-arguments) => '("test-args" "test-files"))
+              ((difftastic--git-diff-range "test-rev-or-range" "test-args" "test-files")))
+      (call-interactively #'difftastic-git-diff-range))))
+
 (ert-deftest difftastic.el-validate-commentary-in-sync-with-readme.org ()
   :expected-result (if (version< "29" emacs-version) ;; since Emacs-29
                        :passed

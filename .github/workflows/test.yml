@@ -9,6 +9,8 @@ on:
     paths-ignore:
     - '**.md'
     - '.gitignore'
+  schedule:
+    - cron:  '42 7 * * SUN,MON,WED,FRI,SAT'
 
 jobs:
   ci-tests:

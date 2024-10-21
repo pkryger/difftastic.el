@@ -18,7 +18,6 @@ compile: cask
 .PHONY: lint
 lint: cask
 	cask emacs -batch -L . \
-	  --eval '(setq package-lint-batch-fail-on-warnings nil)' \
 	  --load package-lint \
 	  --funcall package-lint-batch-and-exit difftastic.el
 

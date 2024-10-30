@@ -307,225 +307,225 @@
 
 (ert-deftest difftastic--chunk-regexp:file-chunk-extracted ()
   (mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
-      (dolist (file '("difftastic.el"
-                      "test/difftastic.t.el"
-                      "/foo/bar"
-                      "with space"))
-        (dolist (chunk '(nil
-                         "1/2"
-                         "2/2"
-                         "3/30"
-                         "40/40"))
-          (dolist (language '("Emacs Lisp"
-                              "C++"
-                              "Java"))
-            (dolist (suffix
-                     '(nil
-                       "(1 %s parse error, exceeded DFT_PARSE_ERROR_LIMIT)"
-                       "(2 %s parse errors, exceeded DFT_PARSE_ERROR_LIMIT)"
-                       "(30 %s parse errors, exceeded DFT_PARSE_ERROR_LIMIT)"
-                       "(exceeded DFT_GRAPH_LIMIT)"
-                       "(1 B exceeded DFT_BYTE_LIMIT)"
-                       "(2 KiB exceeded DFT_BYTE_LIMIT)"
-                       "(3.00 KiB exceeded DFT_BYTE_LIMIT)"
-                       "(4.44 MiB exceeded DFT_BYTE_LIMIT)"
-                       "(50.00 GiB exceeded DFT_BYTE_LIMIT)"
-                       "(66.66 TiB exceeded DFT_BYTE_LIMIT)"))
+    (dolist (file '("difftastic.el"
+                    "test/difftastic.t.el"
+                    "/foo/bar"
+                    "with space"))
+      (dolist (chunk '(nil
+                       "1/2"
+                       "2/2"
+                       "3/30"
+                       "40/40"))
+        (dolist (language '("Emacs Lisp"
+                            "C++"
+                            "Java"))
+          (dolist (suffix
+                   '(nil
+                     "(1 %s parse error, exceeded DFT_PARSE_ERROR_LIMIT)"
+                     "(2 %s parse errors, exceeded DFT_PARSE_ERROR_LIMIT)"
+                     "(30 %s parse errors, exceeded DFT_PARSE_ERROR_LIMIT)"
+                     "(exceeded DFT_GRAPH_LIMIT)"
+                     "(1 B exceeded DFT_BYTE_LIMIT)"
+                     "(2 KiB exceeded DFT_BYTE_LIMIT)"
+                     "(3.00 KiB exceeded DFT_BYTE_LIMIT)"
+                     "(4.44 MiB exceeded DFT_BYTE_LIMIT)"
+                     "(50.00 GiB exceeded DFT_BYTE_LIMIT)"
+                     "(66.66 TiB exceeded DFT_BYTE_LIMIT)"))
 
-              (let ((header (format "%s%s--- %s%s"
-                                    file
-                                    (if chunk (format " --- %s " chunk) " ")
-                                    (if suffix "Text" language)
-                                    (if suffix
-                                        (format " %s"  (format suffix language))
-                                      ""))))
-                (with-temp-buffer
-                  (difftastic-mode)
-                  (should-not difftastic--chunk-regexp-chunk)
-                  (should-not difftastic--chunk-regexp-file)
-                  (should (string-match (difftastic--chunk-regexp t) header))
-                  (cond
-                   ((not chunk)
-                    (should-not (match-string 1 header)))
-                   ((string= "1/2" chunk)
-                    (should (string-equal "1" (match-string 1 header))))
-                   ((string= "2/2" chunk)
-                    (should (string-equal "2" (match-string 1 header))))
-                   ((string= "3/30" chunk)
-                    (should (string-equal "3" (match-string 1 header))))
-                   ((string= "40/40" chunk)
-                    (should (string-equal "40" (match-string 1 header)))))
-                  (should-not difftastic--chunk-regexp-chunk)
-                  (should difftastic--chunk-regexp-file)))))))))
+            (let ((header (format "%s%s--- %s%s"
+                                  file
+                                  (if chunk (format " --- %s " chunk) " ")
+                                  (if suffix "Text" language)
+                                  (if suffix
+                                      (format " %s"  (format suffix language))
+                                    ""))))
+              (with-temp-buffer
+                (difftastic-mode)
+                (should-not difftastic--chunk-regexp-chunk)
+                (should-not difftastic--chunk-regexp-file)
+                (should (string-match (difftastic--chunk-regexp t) header))
+                (cond
+                 ((not chunk)
+                  (should-not (match-string 1 header)))
+                 ((string= "1/2" chunk)
+                  (should (string-equal "1" (match-string 1 header))))
+                 ((string= "2/2" chunk)
+                  (should (string-equal "2" (match-string 1 header))))
+                 ((string= "3/30" chunk)
+                  (should (string-equal "3" (match-string 1 header))))
+                 ((string= "40/40" chunk)
+                  (should (string-equal "40" (match-string 1 header)))))
+                (should-not difftastic--chunk-regexp-chunk)
+                (should difftastic--chunk-regexp-file)))))))))
 
 (ert-deftest difftastic--chunk-regexp:no-file-chunk ()
   (mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
-      (dolist (file '("difftastic.el"
-                      "test/difftastic.t.el"
-                      "/foo/bar"
-                      "with space"))
-        (dolist (chunk '(nil
-                         "1/2"
-                         "2/2"
-                         "3/30"
-                         "40/40"))
-          (dolist (language '("Emacs Lisp"
-                              "C++"
-                              "Java"))
-            (dolist (suffix
-                     '(nil
-                       "(1 %s parse error, exceeded DFT_PARSE_ERROR_LIMIT)"
-                       "(2 %s parse errors, exceeded DFT_PARSE_ERROR_LIMIT)"
-                       "(30 %s parse errors, exceeded DFT_PARSE_ERROR_LIMIT)"
-                       "(exceeded DFT_GRAPH_LIMIT)"
-                       "(1 B exceeded DFT_BYTE_LIMIT)"
-                       "(2 KiB exceeded DFT_BYTE_LIMIT)"
-                       "(3.00 KiB exceeded DFT_BYTE_LIMIT)"
-                       "(4.44 MiB exceeded DFT_BYTE_LIMIT)"
-                       "(50.00 GiB exceeded DFT_BYTE_LIMIT)"
-                       "(66.66 TiB exceeded DFT_BYTE_LIMIT)"))
+    (dolist (file '("difftastic.el"
+                    "test/difftastic.t.el"
+                    "/foo/bar"
+                    "with space"))
+      (dolist (chunk '(nil
+                       "1/2"
+                       "2/2"
+                       "3/30"
+                       "40/40"))
+        (dolist (language '("Emacs Lisp"
+                            "C++"
+                            "Java"))
+          (dolist (suffix
+                   '(nil
+                     "(1 %s parse error, exceeded DFT_PARSE_ERROR_LIMIT)"
+                     "(2 %s parse errors, exceeded DFT_PARSE_ERROR_LIMIT)"
+                     "(30 %s parse errors, exceeded DFT_PARSE_ERROR_LIMIT)"
+                     "(exceeded DFT_GRAPH_LIMIT)"
+                     "(1 B exceeded DFT_BYTE_LIMIT)"
+                     "(2 KiB exceeded DFT_BYTE_LIMIT)"
+                     "(3.00 KiB exceeded DFT_BYTE_LIMIT)"
+                     "(4.44 MiB exceeded DFT_BYTE_LIMIT)"
+                     "(50.00 GiB exceeded DFT_BYTE_LIMIT)"
+                     "(66.66 TiB exceeded DFT_BYTE_LIMIT)"))
 
-              (let ((header (format "%s%s--- %s%s"
-                                    file
-                                    (if chunk (format " --- %s " chunk) " ")
-                                    (if suffix "Text" language)
-                                    (if suffix
-                                        (format " %s"  (format suffix language))
-                                      ""))))
-                (with-temp-buffer
-                  (difftastic-mode)
-                  (should-not difftastic--chunk-regexp-chunk)
-                  (should-not difftastic--chunk-regexp-file)
-                  (should (string-match (difftastic--chunk-regexp nil) header))
-                  (should-not (match-string 1 header))
-                  (should difftastic--chunk-regexp-chunk)
-                  (should-not difftastic--chunk-regexp-file)))))))))
+            (let ((header (format "%s%s--- %s%s"
+                                  file
+                                  (if chunk (format " --- %s " chunk) " ")
+                                  (if suffix "Text" language)
+                                  (if suffix
+                                      (format " %s"  (format suffix language))
+                                    ""))))
+              (with-temp-buffer
+                (difftastic-mode)
+                (should-not difftastic--chunk-regexp-chunk)
+                (should-not difftastic--chunk-regexp-file)
+                (should (string-match (difftastic--chunk-regexp nil) header))
+                (should-not (match-string 1 header))
+                (should difftastic--chunk-regexp-chunk)
+                (should-not difftastic--chunk-regexp-file)))))))))
 
 (ert-deftest difftastic--chunk-regexp:wrong-suffix-not-matched ()
   (mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
-      (dolist (file '("difftastic.el"
-                      "test/difftastic.t.el"
-                      "/foo/bar"
-                      "with space"))
-        (dolist (chunk '(nil
-                         "1/2"
-                         "2/2"
-                         "3/30"
-                         "40/40"))
-          (dolist (language '("Emacs Lisp"
-                              "C++"
-                              "Java"))
-            (dolist (suffix
-                     '(;;@todo "(1 %s parse errors, exceeded DFT_PARSE_ERROR_LIMIT)"
-                       "(x %s parse error, exceeded DFT_PARSE_ERROR_LIMIT)"
-                       "(x %s parse errors, exceeded DFT_PARSE_ERROR_LIMIT)"
-                       "(1.5 %s parse error, exceeded DFT_PARSE_ERROR_LIMIT)"
-                       "(1.5 %s parse errors, exceeded DFT_PARSE_ERROR_LIMIT)"
-                       "(1x %s parse error, exceeded DFT_PARSE_ERROR_LIMIT)"
-                       "(1x %s parse errors, exceeded DFT_PARSE_ERROR_LIMIT)"
-                       "(1 Text parse error, exceeded DFT_PARSE_ERROR_LIMIT)"
-                       "(3 Text parse errors, exceeded DFT_PARSE_ERROR_LIMIT)"
-                       "1 %s parse error, exceeded DFT_PARSE_ERROR_LIMIT"
-                       "3 %s parse errors, exceeded DFT_PARSE_ERROR_LIMIT"
-                       "exceeded DFT_GRAPH_LIMIT"
-                       "1 B exceeded DFT_BYTE_LIMIT"
-                       "(1.00 B exceeded DFT_BYTE_LIMIT)"
-                       "(1.0 B exceeded DFT_BYTE_LIMIT)"
-                       "(2.0 KiB exceeded DFT_BYTE_LIMIT)"
-                       "(2.1 KiB exceeded DFT_BYTE_LIMIT)"
-                       "(2 XiB exceeded DFT_BYTE_LIMIT)"
-                       "(2.10 XiB exceeded DFT_BYTE_LIMIT)"
-                       "(3.0x KiB exceeded DFT_BYTE_LIMIT)"
-                       "(x.44 MiB exceeded DFT_BYTE_LIMIT)"
-                       "(50.001 GiB exceeded DFT_BYTE_LIMIT)"))
+    (dolist (file '("difftastic.el"
+                    "test/difftastic.t.el"
+                    "/foo/bar"
+                    "with space"))
+      (dolist (chunk '(nil
+                       "1/2"
+                       "2/2"
+                       "3/30"
+                       "40/40"))
+        (dolist (language '("Emacs Lisp"
+                            "C++"
+                            "Java"))
+          (dolist (suffix
+                   '(;;@todo "(1 %s parse errors, exceeded DFT_PARSE_ERROR_LIMIT)"
+                     "(x %s parse error, exceeded DFT_PARSE_ERROR_LIMIT)"
+                     "(x %s parse errors, exceeded DFT_PARSE_ERROR_LIMIT)"
+                     "(1.5 %s parse error, exceeded DFT_PARSE_ERROR_LIMIT)"
+                     "(1.5 %s parse errors, exceeded DFT_PARSE_ERROR_LIMIT)"
+                     "(1x %s parse error, exceeded DFT_PARSE_ERROR_LIMIT)"
+                     "(1x %s parse errors, exceeded DFT_PARSE_ERROR_LIMIT)"
+                     "(1 Text parse error, exceeded DFT_PARSE_ERROR_LIMIT)"
+                     "(3 Text parse errors, exceeded DFT_PARSE_ERROR_LIMIT)"
+                     "1 %s parse error, exceeded DFT_PARSE_ERROR_LIMIT"
+                     "3 %s parse errors, exceeded DFT_PARSE_ERROR_LIMIT"
+                     "exceeded DFT_GRAPH_LIMIT"
+                     "1 B exceeded DFT_BYTE_LIMIT"
+                     "(1.00 B exceeded DFT_BYTE_LIMIT)"
+                     "(1.0 B exceeded DFT_BYTE_LIMIT)"
+                     "(2.0 KiB exceeded DFT_BYTE_LIMIT)"
+                     "(2.1 KiB exceeded DFT_BYTE_LIMIT)"
+                     "(2 XiB exceeded DFT_BYTE_LIMIT)"
+                     "(2.10 XiB exceeded DFT_BYTE_LIMIT)"
+                     "(3.0x KiB exceeded DFT_BYTE_LIMIT)"
+                     "(x.44 MiB exceeded DFT_BYTE_LIMIT)"
+                     "(50.001 GiB exceeded DFT_BYTE_LIMIT)"))
 
-              (let ((header (format "%s%s--- %s%s"
-                                    file
-                                    (if chunk (format " --- %s " chunk) " ")
-                                    (if suffix "Text" language)
-                                    (if suffix
-                                        (format " %s"  (format suffix language))
-                                      ""))))
-                (with-temp-buffer
-                  (difftastic-mode)
-                  (should-not
-                   (string-match-p (difftastic--chunk-regexp t) header))
-                  (should-not
-                   (string-match-p (difftastic--chunk-regexp nil) header))))))))))
+            (let ((header (format "%s%s--- %s%s"
+                                  file
+                                  (if chunk (format " --- %s " chunk) " ")
+                                  (if suffix "Text" language)
+                                  (if suffix
+                                      (format " %s"  (format suffix language))
+                                    ""))))
+              (with-temp-buffer
+                (difftastic-mode)
+                (should-not
+                 (string-match-p (difftastic--chunk-regexp t) header))
+                (should-not
+                 (string-match-p (difftastic--chunk-regexp nil) header))))))))))
 
 (ert-deftest difftastic--chunk-regexp:unknown-language-not-matched ()
   (mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
-      (dolist (file '("difftastic.el"
-                      "test/difftastic.t.el"
-                      "/foo/bar"
-                      "with space"))
-        (dolist (chunk '(nil
-                         "1/2"
-                         "2/2"
-                         "3/30"
-                         "40/40"))
-          (dolist (language '("foo"
-                              "Not A Language"))
-            (dolist (suffix
-                     '(nil
-                       "(1 %s parse error, exceeded DFT_PARSE_ERROR_LIMIT)"
-                       "(2 %s parse errors, exceeded DFT_PARSE_ERROR_LIMIT)"
-                       "(30 %s parse errors, exceeded DFT_PARSE_ERROR_LIMIT)"))
+    (dolist (file '("difftastic.el"
+                    "test/difftastic.t.el"
+                    "/foo/bar"
+                    "with space"))
+      (dolist (chunk '(nil
+                       "1/2"
+                       "2/2"
+                       "3/30"
+                       "40/40"))
+        (dolist (language '("foo"
+                            "Not A Language"))
+          (dolist (suffix
+                   '(nil
+                     "(1 %s parse error, exceeded DFT_PARSE_ERROR_LIMIT)"
+                     "(2 %s parse errors, exceeded DFT_PARSE_ERROR_LIMIT)"
+                     "(30 %s parse errors, exceeded DFT_PARSE_ERROR_LIMIT)"))
 
-              (let ((header (format "%s%s--- %s%s"
-                                    file
-                                    (if chunk (format " --- %s " chunk) " ")
-                                    (if suffix "Text" language)
-                                    (if suffix
-                                        (format " %s"  (format suffix language))
-                                      ""))))
-                (with-temp-buffer
-                  (difftastic-mode)
-                  (should-not
-                   (string-match-p (difftastic--chunk-regexp t) header))
-                  (should-not
-                   (string-match-p (difftastic--chunk-regexp nil) header))))))))))
+            (let ((header (format "%s%s--- %s%s"
+                                  file
+                                  (if chunk (format " --- %s " chunk) " ")
+                                  (if suffix "Text" language)
+                                  (if suffix
+                                      (format " %s"  (format suffix language))
+                                    ""))))
+              (with-temp-buffer
+                (difftastic-mode)
+                (should-not
+                 (string-match-p (difftastic--chunk-regexp t) header))
+                (should-not
+                 (string-match-p (difftastic--chunk-regexp nil) header))))))))))
 
 (ert-deftest difftastic--chunk-regexp:wrong-chunk-not-extracted()
   (mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
-      (dolist (file '("difftastic.el"
-                      "test/difftastic.t.el"
-                      "/foo/bar"
-                      "with space"))
-        (dolist (chunk '("x/2"
-                         "2/x"
-                         "3x/3"
-                         "4/4x"
-                         "foo"))
-          (dolist (language '("Emacs Lisp"
-                              "C++"
-                              "Java"))
-            (dolist (suffix
-                     '(nil
-                       "(1 %s parse error, exceeded DFT_PARSE_ERROR_LIMIT)"
-                       "(2 %s parse errors, exceeded DFT_PARSE_ERROR_LIMIT)"
-                       "(30 %s parse errors, exceeded DFT_PARSE_ERROR_LIMIT)"
-                       "(exceeded DFT_GRAPH_LIMIT)"
-                       "(1 B exceeded DFT_BYTE_LIMIT)"
-                       "(2 KiB exceeded DFT_BYTE_LIMIT)"
-                       "(3.00 KiB exceeded DFT_BYTE_LIMIT)"
-                       "(4.44 MiB exceeded DFT_BYTE_LIMIT)"
-                       "(50.00 GiB exceeded DFT_BYTE_LIMIT)"
-                       "(66.66 TiB exceeded DFT_BYTE_LIMIT)"))
+    (dolist (file '("difftastic.el"
+                    "test/difftastic.t.el"
+                    "/foo/bar"
+                    "with space"))
+      (dolist (chunk '("x/2"
+                       "2/x"
+                       "3x/3"
+                       "4/4x"
+                       "foo"))
+        (dolist (language '("Emacs Lisp"
+                            "C++"
+                            "Java"))
+          (dolist (suffix
+                   '(nil
+                     "(1 %s parse error, exceeded DFT_PARSE_ERROR_LIMIT)"
+                     "(2 %s parse errors, exceeded DFT_PARSE_ERROR_LIMIT)"
+                     "(30 %s parse errors, exceeded DFT_PARSE_ERROR_LIMIT)"
+                     "(exceeded DFT_GRAPH_LIMIT)"
+                     "(1 B exceeded DFT_BYTE_LIMIT)"
+                     "(2 KiB exceeded DFT_BYTE_LIMIT)"
+                     "(3.00 KiB exceeded DFT_BYTE_LIMIT)"
+                     "(4.44 MiB exceeded DFT_BYTE_LIMIT)"
+                     "(50.00 GiB exceeded DFT_BYTE_LIMIT)"
+                     "(66.66 TiB exceeded DFT_BYTE_LIMIT)"))
 
-              (let ((header (format "%s%s--- %s%s"
-                                    file
-                                    (if chunk (format " --- %s " chunk) " ")
-                                    (if suffix "Text" language)
-                                    (if suffix
-                                        (format " %s"  (format suffix language))
-                                      ""))))
-                (with-temp-buffer
-                  (difftastic-mode)
-                  (should (string-match (difftastic--chunk-regexp t) header))
-                  (should-not (match-string 1 header))
-                  (should
-                   (string-match-p (difftastic--chunk-regexp nil) header))))))))))
+            (let ((header (format "%s%s--- %s%s"
+                                  file
+                                  (if chunk (format " --- %s " chunk) " ")
+                                  (if suffix "Text" language)
+                                  (if suffix
+                                      (format " %s"  (format suffix language))
+                                    ""))))
+              (with-temp-buffer
+                (difftastic-mode)
+                (should (string-match (difftastic--chunk-regexp t) header))
+                (should-not (match-string 1 header))
+                (should
+                 (string-match-p (difftastic--chunk-regexp nil) header))))))))))
 
 (ert-deftest difftastic--point-at-added-removed-p:chunk-header ()
   (dolist (chunk-header '("difftastic.el --- Emacs Lisp"
@@ -565,9 +565,9 @@
     (with-temp-buffer
       (insert added-removed)
       (should (let ((added-removed (difftastic--point-at-added-removed-p)))
-         (unless added-removed
-           (message "failed added-removed: %s" added-removed))
-         added-removed)))))
+                (unless added-removed
+                  (message "failed added-removed: %s" added-removed))
+                added-removed)))))
 
 (ert-deftest difftastic-next-chunk:erts-scenarios ()
   (when (fboundp 'ert-test-erts-file) ;; since Emacs-29
@@ -2512,26 +2512,26 @@ test/difftastic.t.el --- Emacs Lisp
                    (should (equal requested-width "test-difftastic-width"))
                    ,(cl-incf display-buffer-call-count))))
             (difftastic--with-temp-advice
-              'difftastic--run-command
-              :override
-              (lambda (buffer command sentinel)
-                (should (equal process-environment "test-process-environment"))
-                (should (equal buffer ,(current-buffer)))
-                (should (equal command "test-command"))
-                (should (functionp sentinel))
-                (funcall sentinel)
-                ,(cl-incf run-command-call-count))
+                'difftastic--run-command
+                :override
+                (lambda (buffer command sentinel)
+                  (should (equal process-environment "test-process-environment"))
+                  (should (equal buffer ,(current-buffer)))
+                  (should (equal command "test-command"))
+                  (should (functionp sentinel))
+                  (funcall sentinel)
+                  ,(cl-incf run-command-call-count))
               (difftastic--git-with-difftastic ,(current-buffer)
                                                "test-command"
                                                "test-difftastic-args")))))
-    (should (eq run-command-call-count 1))
-    (should (eq display-buffer-call-count 1))
-    (should (equal difftastic--rerun-alist rerun-alist)))))
+      (should (eq run-command-call-count 1))
+      (should (eq display-buffer-call-count 1))
+      (should (equal difftastic--rerun-alist rerun-alist)))))
 
 (ert-deftest difftastic--magit-show:nil-error-signaled ()
   (let ((data (cadr (should-error (difftastic--magit-show nil)
                                   :type 'user-error))))
-        (should (equal data "No revision specified"))))
+    (should (equal data "No revision specified"))))
 
 (ert-deftest difftastic--magit-show:basic ()
   (mocklet (((get-buffer-create "*difftastic git show test-rev*")
@@ -2588,8 +2588,8 @@ test/difftastic.t.el --- Emacs Lisp
                 "test-rev-or-range" "--" "test-path")
               '("--context 42"))))
     (difftastic--git-diff-range "test-rev-or-range"
-                               '("--ignore-submodules=all" "-U42")
-                               '("test-path"))))
+                                '("--ignore-submodules=all" "-U42")
+                                '("test-path"))))
 
 (ert-deftest difftastic-git-diff-range:basic ()
   (let ((current-prefix-arg 4))
@@ -2601,7 +2601,7 @@ test/difftastic.t.el --- Emacs Lisp
 (ert-deftest difftastic.el-validate-commentary-in-sync-with-readme.org ()
   :expected-result (if (version< "29" emacs-version) ;; since Emacs-29
                        :passed
-                    :failed)
+                     :failed)
   (let ((org-export-show-temporary-export-buffer nil)
         (org-confirm-babel-evaluate nil)
         (readme.org-buffer "*Org DIFFTASTIC-COMMENTARY Export*")

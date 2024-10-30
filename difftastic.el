@@ -418,60 +418,60 @@ See `advice-add' for explanation of SYMBOL, HOW, and FUNCTION arguments."
 
 (compat-call ;; since Emacs-29
  defvar-keymap difftastic-mode-map
-  :doc "Keymap for `difftastic-mode'."
-  "n"     #'difftastic-next-chunk
-  "N"     #'difftastic-next-file
-  "p"     #'difftastic-previous-chunk
-  "P"     #'difftastic-previous-file
-  "g"     #'difftastic-rerun
-  "TAB"   #'difftastic-toggle-chunk
-  ;; some keys from `view-mode'
-  "C"     #'difftastic-quit-all
-  "c"     #'difftastic-leave
-  "Q"     #'difftastic-quit-all
-  "e"     #'difftastic-leave
-  "q"     #'difftastic-quit
-  ;; "?"  #'View-search-regexp-backward ; Less does this.
-  "\\"    #'View-search-regexp-backward
-  "/"     #'View-search-regexp-forward
-  "r"     #'isearch-backward
-  "s"     #'isearch-forward
-  "m"     #'point-to-register
-  "'"     #'register-to-point
-  "x"     #'exchange-point-and-mark
-  "@"     #'View-back-to-mark
-  "."     #'set-mark-command
-  "%"     #'View-goto-percent
-  "G"     #'View-goto-line
-  "="     #'what-line
-  "F"     #'View-revert-buffer-scroll-page-forward
-  "y"     #'View-scroll-line-backward
-  "C-j"   #'View-scroll-line-forward
-  "RET"   #'View-scroll-line-forward
-  "u"     #'View-scroll-half-page-backward
-  "d"     #'View-scroll-half-page-forward
-  "z"     #'View-scroll-page-forward-set-page-size
-  "w"     #'View-scroll-page-backward-set-page-size
-  "DEL"   #'View-scroll-page-backward
-  "SPC"   #'View-scroll-page-forward
-  "S-SPC" #'View-scroll-page-backward
-  "o"     #'View-scroll-to-buffer-end
-  ">"     #'end-of-buffer
-  "<"     #'beginning-of-buffer
-  "-"     #'negative-argument
-  "9"     #'digit-argument
-  "8"     #'digit-argument
-  "7"     #'digit-argument
-  "6"     #'digit-argument
-  "5"     #'digit-argument
-  "4"     #'digit-argument
-  "3"     #'digit-argument
-  "2"     #'digit-argument
-  "1"     #'digit-argument
-  "0"     #'digit-argument
-  "H"     #'describe-mode
-  "?"     #'describe-mode	; Maybe do as less instead? See above.
-  "h"     #'describe-mode)
+ :doc "Keymap for `difftastic-mode'."
+ "n"     #'difftastic-next-chunk
+ "N"     #'difftastic-next-file
+ "p"     #'difftastic-previous-chunk
+ "P"     #'difftastic-previous-file
+ "g"     #'difftastic-rerun
+ "TAB"   #'difftastic-toggle-chunk
+ ;; some keys from `view-mode'
+ "C"     #'difftastic-quit-all
+ "c"     #'difftastic-leave
+ "Q"     #'difftastic-quit-all
+ "e"     #'difftastic-leave
+ "q"     #'difftastic-quit
+ ;; "?"  #'View-search-regexp-backward ; Less does this.
+ "\\"    #'View-search-regexp-backward
+ "/"     #'View-search-regexp-forward
+ "r"     #'isearch-backward
+ "s"     #'isearch-forward
+ "m"     #'point-to-register
+ "'"     #'register-to-point
+ "x"     #'exchange-point-and-mark
+ "@"     #'View-back-to-mark
+ "."     #'set-mark-command
+ "%"     #'View-goto-percent
+ "G"     #'View-goto-line
+ "="     #'what-line
+ "F"     #'View-revert-buffer-scroll-page-forward
+ "y"     #'View-scroll-line-backward
+ "C-j"   #'View-scroll-line-forward
+ "RET"   #'View-scroll-line-forward
+ "u"     #'View-scroll-half-page-backward
+ "d"     #'View-scroll-half-page-forward
+ "z"     #'View-scroll-page-forward-set-page-size
+ "w"     #'View-scroll-page-backward-set-page-size
+ "DEL"   #'View-scroll-page-backward
+ "SPC"   #'View-scroll-page-forward
+ "S-SPC" #'View-scroll-page-backward
+ "o"     #'View-scroll-to-buffer-end
+ ">"     #'end-of-buffer
+ "<"     #'beginning-of-buffer
+ "-"     #'negative-argument
+ "9"     #'digit-argument
+ "8"     #'digit-argument
+ "7"     #'digit-argument
+ "6"     #'digit-argument
+ "5"     #'digit-argument
+ "4"     #'digit-argument
+ "3"     #'digit-argument
+ "2"     #'digit-argument
+ "1"     #'digit-argument
+ "0"     #'digit-argument
+ "H"     #'describe-mode
+ "?"     #'describe-mode	; Maybe do as less instead? See above.
+ "h"     #'describe-mode)
 
 (define-derived-mode difftastic-mode fundamental-mode "difftastic"
   "Major mode to display output of difftastic.
@@ -542,9 +542,9 @@ regexp from `difftastic--chunk-regexp'."
     (goto-char (line-beginning-position))
     (save-match-data
       (looking-at (rx bol
-                            (or (1+ ".")
-                                (1+ digit))
-                            " " (1+ any))))))
+                      (or (1+ ".")
+                          (1+ digit))
+                      " " (1+ any))))))
 
 (defun difftastic--next-chunk (&optional file-chunk)
   "Find line beginning position of next chunk.
@@ -1126,7 +1126,7 @@ when it is a temporary or nil otherwise."
                 languages)))
 
 (defun difftastic--build-files-command (file-buf-A file-buf-B requested-width
-                                                    &optional lang-override)
+                                                   &optional lang-override)
   "Build a difftastic command to compare files from FILE-BUF-A and FILE-BUF-B.
 The FILE-BUF-A and FILE-BUF-B are conses where car is the file
 and cdr is a buffer when it is a temporary file and nil otherwise.

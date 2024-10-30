@@ -3,9 +3,9 @@
 ;;; Code:
 
 (load-file (file-name-concat
-            "." (when-let ((basename (file-name-nondirectory
-                                      (directory-file-name default-directory)))
-                           ((not (equal basename "test"))))
+            "." (when-let* ((basename (file-name-nondirectory
+                                       (directory-file-name default-directory)))
+                            ((not (equal basename "test"))))
                   "test")
             "undercover-init.el"))
 (require 'difftastic)

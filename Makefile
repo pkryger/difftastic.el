@@ -26,9 +26,12 @@ test: cask compile
 	cask emacs -batch \
 	  --load test/difftastic.t.el \
 	  --eval "(let ((print-level 50) \
-	                (eval-expression-print-level 50)\
+	                (eval-expression-print-level 50) \
+                    (eval-expression-print-length 1000) \
+                    (edebug-print-level 50) \
+                    (edebug-print-length 1000) \
 	                (ert-batch-print-level 50) \
-	                (ert-batch-print-length 5000) \
-	                (ert-batch-backtrace-line-length 5000) \
-	                (ert-batch-backtrace-right-margin 5000)) \
+	                (ert-batch-print-length 1000) \
+	                (ert-batch-backtrace-line-length 1000) \
+	                (ert-batch-backtrace-right-margin 1000)) \
 	            (ert-run-tests-batch-and-exit '(not (tag interactive))))"

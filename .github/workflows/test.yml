@@ -16,6 +16,9 @@ on:
 jobs:
   ci-tests:
     runs-on: ${{ matrix.os }}
+    env:
+      EMACS_TEST_VERBOSE: true
+      EMACS_TEST_JUNIT_REPORT: true
     strategy:
       matrix:
         os:
@@ -62,6 +65,12 @@ jobs:
       run: 'make lint'
     - name: Run tests
       run: 'make test'
+
+    - name: Publish test report
+      uses: mikepenz/action-junit-report@v5
+      if: success() || failure() # always run even if the previous step fails
+      with:
+        report_paths: '/test/*.t.xml'
 
     - name: Coveralls parallel
       uses: coverallsapp/github-action@v2

@@ -84,12 +84,12 @@
 ;;   '(transient-append-suffix 'magit-diff '(-1 -1)
 ;;      [("D" "Difftastic diff (dwim)" difftastic-magit-diff)
 ;;       ("S" "Difftastic show" difftastic-magit-show)]))
-;; (add-hook 'magit-blame-read-only-mode-hook
-;;           (lambda ()
-;;             (keymap-set magit-blame-read-only-mode-map
-;;                         "D" #'difftastic-magit-show)
-;;             (keymap-set magit-blame-read-only-mode-map
-;;                         "S" #'difftastic-magit-show)))
+;; (eval-after-load 'magit-blame
+;;           '(progn
+;;              (keymap-set magit-blame-read-only-mode-map
+;;                          "D" #'difftastic-magit-show)
+;;              (keymap-set magit-blame-read-only-mode-map
+;;                          "S" #'difftastic-magit-show)))
 ;;
 ;; Or, if you use `use-package':
 ;;

@@ -280,7 +280,22 @@ developing exporting mechanism - you can use the following snippet:
 #+begin_src emacs-lisp :results none
 (with-difftastic-org-export-commentary-defaults
  (org-export-to-buffer 'difftastic-commentary "*Org DIFFTASTIC-COMMENTARY Export*"
-   nil nil nil nil nil #'emacs-lisp-mode))
+   nil nil nil nil nil
+   (lambda ()
+     (insert ";;; package --- difftastic.el -*- lexical-binding: t -*-
+
+;;; Commentary:
+
+")
+     (goto-char (point-max))
+     (insert "
+
+;;; Code:
+(provide 'difftastic)
+
+;;; difftastic.el ends here
+")
+     (emacs-lisp-mode))))
 #+end_src
 
 

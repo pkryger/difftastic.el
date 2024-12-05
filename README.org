@@ -227,10 +227,13 @@ The [[file:README.org]] file is a source of =Commentary= section in the
 - content of Commentary should be authored in the [[file:README.org]] file,
 - should some content in the [[file:README.org]] file be omitted from
   Commentary section, it shall be tagged with =noexport= tag,
-- Commentary section can be generated and saved to [[file:difftastic.el]] using
-  the following snippets:
+- Commentary section can be generated, verified, and saved to
+  [[file:difftastic.el]] using snippets in the following subsections.
 
-One time setup:
+*** One time set up
+Just run the following snippet. It will define a new export backend used to
+export contents of this file to [[file:difftastic.el]].
+
 #+name: export-commentary-setup
 #+begin_src emacs-lisp :results none
 (defun difftastic-org-export-commentary-remove-top-level (backend)
@@ -275,32 +278,72 @@ CONTENTS is nil.  INFO is a plist used as a communication channel."
      ,body))
 #+end_src
 
+*** Validate generated Commentary content
 To quickly validate generated Commentary content - which may be usefull for
-developing exporting mechanism - you can use the following snippet:
+developing exporting mechanism, or to iterate over different documentation
+formats - you can use the following snippet. When =flycheck= is available it
+will create a custom checker and run it in the generated buffer. However, the
+=checkdoc= doesn't run in =org-mode= buffer, so the generated content may have
+issues that are not highlighted while authoring.  Please open the
+[[file:difftastic.el]] and check it for any new issues.
+
 #+begin_src emacs-lisp :results none
 (with-difftastic-org-export-commentary-defaults
  (org-export-to-buffer 'difftastic-commentary "*Org DIFFTASTIC-COMMENTARY Export*"
    nil nil nil nil nil
    (lambda ()
-     (insert ";;; package --- difftastic.el -*- lexical-binding: t -*-
+     (emacs-lisp-mode)
+     (when (require 'flycheck nil t)
+       (flycheck-define-checker emacs-difftastic-commentary-checkdoc
+         "An Emacs Lisp style checker using CheckDoc.
 
-;;; Commentary:
-
-")
-     (goto-char (point-max))
-     (insert "
-
-;;; Code:
-(provide 'difftastic)
-
-;;; difftastic.el ends here
-")
-     (emacs-lisp-mode))))
+Adjusted for commentary checks, boosting all diagnostics to errors
+and filtering header and footer ones.
+The checker runs `checkdoc-current-buffer'."
+         :command ("emacs" (eval flycheck-emacs-args)
+                   "--eval" (eval (flycheck-sexp-to-string
+                                   (flycheck-emacs-lisp-checkdoc-variables-form)))
+                   "--eval" (eval flycheck-emacs-lisp-checkdoc-form)
+                   "--" source)
+         :error-patterns
+         ((error line-start (file-name) ":" line ": " (message) line-end))
+         :error-filter
+         (lambda (errors)
+           (cl-remove-if
+            (lambda (err)
+              (string-match
+               (rx (or "The first line should be of the form: \";;; package --- Summary\""
+                       "You should have a summary line (\";;; .* --- .*\")"
+                       "You should have a section marked \";;; Commentary:\""
+                       "You should have a section marked \";;; Code:\""
+                       (seq "The footer should be: (provide '"
+                            (one-or-more alnum)
+                            ")\\n;;; "
+                            (one-or-more alnum) " ends here")))
+               (flycheck-error-message err)))
+            errors))
+         :modes (emacs-lisp-mode)
+         :enabled flycheck--emacs-lisp-checkdoc-enabled-p)
+       (add-to-list 'flycheck-disabled-checkers 'emacs-lisp-checkdoc)
+       (setf (car (flycheck-checker-get
+                   'emacs-difftastic-commentary-checkdoc 'command))
+             flycheck-this-emacs-executable)
+       ;; Do not clobber user configuration
+       (make-local-variable 'flycheck-checkers)
+       (add-to-list 'flycheck-checkers 'emacs-difftastic-commentary-checkdoc)
+       (flycheck-mode)))))
 #+end_src
 
 
+*** Save generated Commentary content
 To generate the Commentary section and save it to [[file:difftastic.el]] file,
-you can use the following snippet:
+you can use the following snippet. This step should be performed each time this
+file changes, such that the Commentary content remains up to date.
+
+Note that =checkdoc= doesn't run in =org-mode= buffer, so the generated content
+may have issues that are not highlighted while authoring.  Please open the
+[[file:difftastic.el]] and check it for any new issues.
+
 #+begin_src emacs-lisp :results none
 (with-difftastic-org-export-commentary-defaults
  (let ((org-export-show-temporary-export-buffer nil)
@@ -321,10 +364,6 @@ you can use the following snippet:
                (buffer-string)))
      (save-buffer))))
 #+end_src
-
-Note that =emacs-lisp-checkdoc= doesn't run in =org-mode= buffer, so the
-generated content may have issues that are not highlighted while authoring.
-Please open the [[file:difftastic.el]] and check it for any new issues.
 
 ** Acknowledgments                                                 :noexport:
 :PROPERTIES:

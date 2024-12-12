@@ -55,30 +55,80 @@ package from MELPA.
 #+begin_src emacs-lisp
 (add-to-list 'load-path "/path/to/difftastic.el")
 (require 'difftastic)
+(require 'difftastic-bindings)
 #+end_src
+
+Note, that this method does not generate autoloads.  As a consequence it will
+cause the whole package and it's dependencies (including =magit=) to be loaded
+at startup.  If you want to avoid this, ensure autoloads are generated and
+loaded on Emacs startup.  See [[#configuration][Configuration]] below for a
+list of a few package managers that can generate autoloads when package is
+installed.
 
 ** Configuration
 :PROPERTIES:
 :CUSTOM_ID: configuration
 :END:
+This section assumes you have the autoloads generated and loaded at Emacs
+startup.  If you have installed =difftastic= using built-in =package= or
+=use-package= then you should be all set.  If you want to use a cloned
+repository =package-vc= or =use-package= with =:vc= keyword (perhaps combined
+with =:load-path=) will do.  Or any other package manger that handles autoloads
+generation, for example (in alphabetical order),
+[[https://github.com/emacscollective/borg][Borg]],
+[[https://github.com/progfolio/elpaca][Elpaca]],
+[[https://github.com/quelpa/quelpa][Quelpa]], or
+[[https://github.com/radian-software/straight.el][straight.el]].
+
 To configure =difftastic= commands in =magit-diff= prefix, use the following
 code snippet in your Emacs configuration:
 
 #+begin_src emacs-lisp
-(require 'difftastic)
+(difftastic-bindings-mode)
+#+end_src
 
-;; Add commands to a `magit-difftastic'
-(with-eval-after-load 'magit-diff
-    (when-let* ((suffix [("D" "Difftastic diff (dwim)" difftastic-magit-diff)
-                         ("S" "Difftastic show" difftastic-magit-show)])
-                ((not (equal (transient-parse-suffix 'magit-diff suffix)
-                             (transient-get-suffix 'magit-diff '(-1 -1))))))
+Or, if you use =use-package=:
+
+#+begin_src emacs-lisp
+(use-package difftastic-bindings
+  :ensure difftastic
+  :defer t
+  :config (difftastic-bindings-mode))
+#+end_src
+
+This will bind ~D~ to =difftastic-magit-diff= and ~S~ to
+=difftastic-magit-show= in =magit-diff= and =magit-blame= transient prefixes as
+well as in =magit-blame-read-only-map=.  Please refer to =difftastic-bindings=
+documentation to see how to change default bindings.
+
+*** Manual Key Bindings Configuration
+:PROPERTIES:
+:CUSTOM_ID: manual_key_Bindings_configuration
+:END:
+
+If you don't want to use mechanism delivered by =difftastic-bindings-mode= you
+can write your own configuration.  As a starting point the following snippets
+demonstrate how to achieve roughly the same effect as
+=difftastic-bindings-mode=:
+
+#+begin_src emacs-lisp
+(require 'difftastic)
+(require 'transient)
+
+(let ((suffix [("D" "Difftastic diff (dwim)" difftastic-magit-diff)
+               ("S" "Difftastic show" difftastic-magit-show)]))
+  (with-eval-after-load 'magit-diff
+    (unless (equal (transient-parse-suffix 'magit-diff suffix)
+                   (transient-get-suffix 'magit-diff '(-1 -1)))
       (transient-append-suffix 'magit-diff '(-1 -1) suffix)))
-(with-eval-after-load 'magit-blame
-  (keymap-set magit-blame-read-only-mode-map
-              "D" #'difftastic-magit-show)
-  (keymap-set magit-blame-read-only-mode-map
-              "S" #'difftastic-magit-show))
+  (with-eval-after-load 'magit-blame
+    (unless (equal (transient-parse-suffix 'magit-blame suffix)
+                   (transient-get-suffix 'magit-blame '(-1)))
+      (transient-append-suffix 'magit-blame '(-1) suffix))
+    (keymap-set magit-blame-read-only-mode-map
+                "D" #'difftastic-magit-show)
+    (keymap-set magit-blame-read-only-mode-map
+                "S" #'difftastic-magit-show)))
 #+end_src
 
 Or, if you use =use-package=:
@@ -87,21 +137,28 @@ Or, if you use =use-package=:
 (use-package difftastic
   :defer t
   :init
-  (use-package transient
+  (use-package transient               ; to silence compiler warnings
     :autoload (transient-get-suffix
                transient-parse-suffix))
-  (use-package magit-blame
-    :defer t :ensure magit
-    :bind
-    (:map magit-blame-read-only-mode-map
-     ("D" . #'difftastic-magit-diff)
-     ("S" . #'difftastic-magit-show)))
-  (with-eval-after-load 'magit-diff
-    (when-let* ((suffix [("D" "Difftastic diff (dwim)" difftastic-magit-diff)
-                         ("S" "Difftastic show" difftastic-magit-show)])
-                ((not (equal (transient-parse-suffix 'magit-diff suffix)
-                             (transient-get-suffix 'magit-diff '(-1 -1))))))
-      (transient-append-suffix 'magit-diff '(-1 -1) suffix))))
+
+  (let ((suffix [("D" "Difftastic diff (dwim)" difftastic-magit-diff)
+                 ("S" "Difftastic show" difftastic-magit-show)]))
+    (use-package magit-blame
+      :defer t :ensure magit
+      :bind
+      (:map magit-blame-read-only-mode-map
+            ("D" . #'difftastic-magit-diff)
+            ("S" . #'difftastic-magit-show))
+      :config
+      (unless (equal (transient-parse-suffix 'magit-blame suffix)
+                     (transient-get-suffix 'magit-blame '(-1)))
+        (transient-append-suffix 'magit-blame '(-1) suffix)))
+    (use-package magit-diff
+      :defer t :ensure magit
+      :config
+      (unless (equal (transient-parse-suffix 'magit-diff suffix)
+                     (transient-get-suffix 'magit-diff '(-1 -1)))
+        (transient-append-suffix 'magit-diff '(-1 -1) suffix)))))
 #+end_src
 
 ** Usage

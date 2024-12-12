@@ -19,7 +19,10 @@ compile: cask
 lint: cask
 	cask emacs -batch -L . \
 	  --load package-lint \
-	  --funcall package-lint-batch-and-exit difftastic.el
+      --eval '(setq package-lint-main-file "difftastic.el")' \
+	  --funcall package-lint-batch-and-exit \
+        difftastic.el \
+        difftastic-bindings.el
 
 .PHONY: test
 test: cask compile

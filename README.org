@@ -44,64 +44,158 @@ built-in package manager.  =difftastic= is available in the MELPA
 repository.  Refer to https://melpa.org/#/getting-started for how to install a
 package from MELPA.
 
+Please see [[#configuration][Configuration]] section for example configuration.
+
+You can use any of the package managers that supports installation from MELPA.
+It can be one of (but not limited to): one of the built-in =package=,
+=use-package=, or any other package manger that handles autoloads generation,
+for example (in alphabetical order)
+[[https://github.com/emacscollective/borg][Borg]],
+[[https://github.com/progfolio/elpaca][Elpaca]],
+[[https://github.com/quelpa/quelpa][Quelpa]], or
+[[https://github.com/radian-software/straight.el][straight.el]].
+
+
 *** Installing from GitHub
 :PROPERTIES:
 :CUSTOM_ID: installing-from-github
 :END:
-1. Clone this repository to a directory of your choice.
-2. Add the following lines to your Emacs configuration file (usually =~/.emacs=
-   or =~/.emacs.d/init.el=):
+The preferred method is to use built-in =use-package=.  Add the following to
+your Emacs configuration file (usually =~/.emacs= or =~/.emacs.d/init.el=):
 
-#+begin_src emacs-lisp
-(add-to-list 'load-path "/path/to/difftastic.el")
-(require 'difftastic)
+#+begin_src emacs-lisp :results value silent
+(use-package difftastic
+  :defer t
+  :vc (:url "https://github.com/pkryger/difftastic.el.git"
+       :rev :newest)))
 #+end_src
+
+Alternatively, you can do a manual checkout and install it from there, for
+example:
+
+1. Clone this repository to a directory of your choice, for example
+   =~/src/difftastic=.
+2. Add the following lines to your Emacs configuration file:
+
+#+begin_src emacs-lisp :results value silent
+(use-package difftastic
+  :defer t
+  :vc t
+  :load-path "~/src/difftastic")
+#+end_src
+
+Yet another option is to use any of the package managers that supports
+installation from GitHub or a an existing checkout.  That could be
+=package-vc=, or any of package managers listed in
+[[#installing-from-melpa][Installing from MELPA]].
+
+**** Manual installation
+Note, that this method does not generate autoloads.  As a consequence it will
+cause the whole package and it's dependencies (including =magit=) to be loaded
+at startup.  If you want to avoid this, ensure autoloads set up on Emacs
+startup.  See [[#installing-from-melpa][Installing from MELPA]] a few package
+managers that can generate autoloads when package is installed.
+
+1. Clone this repository to a directory of your choice, for example
+   =~/src/difftastic=.
+2. Add the following line to your Emacs configuration file:
+
+ #+begin_src emacs-lisp :results value silent
+(add-to-list 'load-path "~/src/difftastic")
+(require 'difftastic)
+(require 'difftastic-bindings)
+ #+end_src
 
 ** Configuration
 :PROPERTIES:
 :CUSTOM_ID: configuration
 :END:
-To configure =difftastic= commands in =magit-diff= prefix, use the following
-code snippet in your Emacs configuration:
+This section assumes you have =difftastic='s autoloads set up at Emacs startup.
+If you have installed =difftastic= using built-in =package= or =use-package=
+then you should be all set.
 
-#+begin_src emacs-lisp
-(require 'difftastic)
+To configure =difftastic= commands in relevant =magit= prefixes and keymaps,
+use the following code snippet in your Emacs configuration:
 
-;; Add commands to a `magit-difftastic'
-(with-eval-after-load 'magit-diff
-    (when-let* ((suffix [("D" "Difftastic diff (dwim)" difftastic-magit-diff)
-                         ("S" "Difftastic show" difftastic-magit-show)])
-                ((not (equal (transient-parse-suffix 'magit-diff suffix)
-                             (transient-get-suffix 'magit-diff '(-1 -1))))))
-      (transient-append-suffix 'magit-diff '(-1 -1) suffix)))
-(with-eval-after-load 'magit-blame
-  (keymap-set magit-blame-read-only-mode-map
-              "D" #'difftastic-magit-show)
-  (keymap-set magit-blame-read-only-mode-map
-              "S" #'difftastic-magit-show))
+#+begin_src emacs-lisp :results value silent
+(difftastic-bindings-mode)
 #+end_src
 
 Or, if you use =use-package=:
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :results value silent
+(use-package difftastic-bindings
+  :ensure difftastic ;; or nil if you prefer manual installation
+  :config (difftastic-bindings-mode))
+#+end_src
+
+This will bind ~D~ to =difftastic-magit-diff= and ~S~ to
+=difftastic-magit-show= in =magit-diff= and =magit-blame= transient prefixes as
+well as in =magit-blame-read-only-map=.  Please refer to =difftastic-bindings=
+documentation to see how to change default bindings.
+
+The =difftastic-bindings=mode= was designed to have minimal dependencies and be
+reasonably fast to load, while providing a mechanism to bind =difftastic=
+commands, such that they are available in relevant contexts.
+
+*** Manual Key Bindings Configuration
+:PROPERTIES:
+:CUSTOM_ID: manual_key_Bindings_configuration
+:END:
+
+If you don't want to use mechanism delivered by =difftastic-bindings-mode= you
+can write your own configuration.  As a starting point the following snippets
+demonstrate how to achieve roughly the same effect as
+=difftastic-bindings-mode=:
+
+#+begin_src emacs-lisp :results value silent
+(require 'difftastic)
+(require 'transient)
+
+(let ((suffix [("D" "Difftastic diff (dwim)" difftastic-magit-diff)
+               ("S" "Difftastic show" difftastic-magit-show)]))
+  (with-eval-after-load 'magit-diff
+    (unless (equal (transient-parse-suffix 'magit-diff suffix)
+                   (transient-get-suffix 'magit-diff '(-1 -1)))
+      (transient-append-suffix 'magit-diff '(-1 -1) suffix)))
+  (with-eval-after-load 'magit-blame
+    (unless (equal (transient-parse-suffix 'magit-blame suffix)
+                   (transient-get-suffix 'magit-blame '(-1)))
+      (transient-append-suffix 'magit-blame '(-1) suffix))
+    (keymap-set magit-blame-read-only-mode-map
+                "D" #'difftastic-magit-show)
+    (keymap-set magit-blame-read-only-mode-map
+                "S" #'difftastic-magit-show)))
+#+end_src
+
+Or, if you use =use-package=:
+
+#+begin_src emacs-lisp :results value silent
 (use-package difftastic
   :defer t
   :init
-  (use-package transient
+  (use-package transient               ; to silence compiler warnings
     :autoload (transient-get-suffix
                transient-parse-suffix))
-  (use-package magit-blame
-    :defer t :ensure magit
-    :bind
-    (:map magit-blame-read-only-mode-map
-     ("D" . #'difftastic-magit-diff)
-     ("S" . #'difftastic-magit-show)))
-  (with-eval-after-load 'magit-diff
-    (when-let* ((suffix [("D" "Difftastic diff (dwim)" difftastic-magit-diff)
-                         ("S" "Difftastic show" difftastic-magit-show)])
-                ((not (equal (transient-parse-suffix 'magit-diff suffix)
-                             (transient-get-suffix 'magit-diff '(-1 -1))))))
-      (transient-append-suffix 'magit-diff '(-1 -1) suffix))))
+
+  (let ((suffix [("D" "Difftastic diff (dwim)" difftastic-magit-diff)
+                 ("S" "Difftastic show" difftastic-magit-show)]))
+    (use-package magit-blame
+      :defer t :ensure magit
+      :bind
+      (:map magit-blame-read-only-mode-map
+            ("D" . #'difftastic-magit-diff)
+            ("S" . #'difftastic-magit-show))
+      :config
+      (unless (equal (transient-parse-suffix 'magit-blame suffix)
+                     (transient-get-suffix 'magit-blame '(-1)))
+        (transient-append-suffix 'magit-blame '(-1) suffix)))
+    (use-package magit-diff
+      :defer t :ensure magit
+      :config
+      (unless (equal (transient-parse-suffix 'magit-diff suffix)
+                     (transient-get-suffix 'magit-diff '(-1 -1)))
+        (transient-append-suffix 'magit-diff '(-1 -1) suffix)))))
 #+end_src
 
 ** Usage
@@ -135,8 +229,8 @@ parenthesis).
   with prefix argument it will ask for language to use.
 - =difftastic-next-chunk= (~n~), =difftastic-next-file= (~N~) - move point to a
   next logical chunk or a next file respectively.
-- =difftastic-previous-chunk= (~p~), =difftastic-previous-file= (~P~) - move point
-  to a previous logical chunk or a previous file respectively.
+- =difftastic-previous-chunk= (~p~), =difftastic-previous-file= (~P~) - move
+  point to a previous logical chunk or a previous file respectively.
 - =difftastic-toggle-chunk= (~TAB~ or ~C-i~) - toggle visibility of a chunk at
   point.  The point has to be in a chunk header.  When called with a prefix all
   file chunks from the header to the end of the file.  See also
@@ -156,7 +250,7 @@ You can customize the appearance of =difftastic= output by adjusting the faces
 used for highlighting.  To customize a faces, use the following code snippet in
 your configuration:
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :results value silent
 ;; Customize faces used to display difftastic output.
 (setq difftastic-normal-colors-vector
   (vector
@@ -274,7 +368,8 @@ CONTENTS is nil.  INFO is a plist used as a communication channel."
 
 (org-export-define-derived-backend 'difftastic-commentary 'ascii
   :translate-alist '((src-block . difftastic-org-export-commentary-src-block))
-  :filters-alist '((:filter-final-output . difftastic-org-export-commentary-final-output)))
+  :filters-alist
+  '((:filter-final-output . difftastic-org-export-commentary-final-output)))
 
 (defmacro with-difftastic-org-export-commentary-defaults (body)
   "Execute BODY with difftastic org export commentary defaults."

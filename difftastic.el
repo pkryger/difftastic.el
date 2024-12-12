@@ -5,7 +5,7 @@
 ;; Author: Przemyslaw Kryger <pkryger@gmail.com>
 ;; Keywords: tools diff
 ;; Homepage: https://github.com/pkryger/difftastic.el
-;; Package-Requires: ((emacs "28.1") (compat "29.1.4.2") (magit "4.0.0"))
+;; Package-Requires: ((emacs "28.1") (compat "29.1.4.2") (magit "4.0.0") (transient "0.4.0"))
 ;; Version: 0.0.0
 
 ;; This program is free software; you can redistribute it and/or modify
@@ -59,59 +59,159 @@
 ;; repository.  Refer to <https://melpa.org/#/getting-started> for how to
 ;; install a package from MELPA.
 ;;
+;; Please see [Configuration] section for example configuration.
+;;
+;; You can use any of the package managers that supports installation from
+;; MELPA.  It can be one of (but not limited to): one of the built-in
+;; `package', `use-package', or any other package manger that handles
+;; autoloads generation, for example (in alphabetical order) [Borg], [Elpaca],
+;; [Quelpa], or [straight.el].
+;;
+;;
+;; [Configuration] See section Configuration
+;;
+;; [Borg] <https://github.com/emacscollective/borg>
+;;
+;; [Elpaca] <https://github.com/progfolio/elpaca>
+;;
+;; [Quelpa] <https://github.com/quelpa/quelpa>
+;;
+;; [straight.el] <https://github.com/radian-software/straight.el>
+;;
 ;;
 ;; Installing from GitHub
 ;; ~~~~~~~~~~~~~~~~~~~~~~
 ;;
-;; 1. Clone this repository to a directory of your choice.
-;; 2. Add the following lines to your Emacs configuration file (usually
-;;    `~/.emacs' or `~/.emacs.d/init.el'):
+;; The preferred method is to use built-in `use-package'.  Add the following
+;; to your Emacs configuration file (usually `~/.emacs' or
+;; `~/.emacs.d/init.el'):
 ;;
-;; (add-to-list 'load-path "/path/to/difftastic.el")
-;; (require 'difftastic)
+;; (use-package difftastic
+;;   :defer t
+;;   :vc (:url "https://github.com/pkryger/difftastic.el.git"
+;;        :rev :newest)))
+;;
+;; Alternatively, you can do a manual checkout and install it from there, for
+;; example:
+;;
+;; 1. Clone this repository to a directory of your choice, for example
+;;    `~/src/difftastic'.
+;; 2. Add the following lines to your Emacs configuration file:
+;;
+;; (use-package difftastic
+;;   :defer t
+;;   :vc t
+;;   :load-path "~/src/difftastic")
+;;
+;; Yet another option is to use any of the package managers that supports
+;; installation from GitHub or a an existing checkout.  That could be
+;; `package-vc', or any of package managers listed in [Installing from MELPA].
+;;
+;;
+;; [Installing from MELPA] See section Installing from MELPA
+;;
+;; Manual installation
+;; -------------------
+;;
+;; Note, that this method does not generate autoloads.  As a consequence it
+;; will cause the whole package and it's dependencies (including `magit') to
+;; be loaded at startup.  If you want to avoid this, ensure autoloads set up
+;; on Emacs startup.  See [Installing from MELPA] a few package managers that
+;; can generate autoloads when package is installed.
+;;
+;; 1. Clone this repository to a directory of your choice, for example
+;;    `~/src/difftastic'.
+;; 2. Add the following line to your Emacs configuration file:
+;;
+;;    (add-to-list 'load-path "~/src/difftastic")
+;;    (require 'difftastic)
+;;    (require 'difftastic-bindings)
+;;
+;;
+;; [Installing from MELPA] See section Installing from MELPA
 ;;
 ;;
 ;; Configuration
 ;; =============
 ;;
-;; To configure `difftastic' commands in `magit-diff' prefix, use the
-;; following code snippet in your Emacs configuration:
+;; This section assumes you have `difftastic''s autoloads set up at Emacs
+;; startup.  If you have installed `difftastic' using built-in `package' or
+;; `use-package' then you should be all set.
+;;
+;; To configure `difftastic' commands in relevant `magit' prefixes and
+;; keymaps, use the following code snippet in your Emacs configuration:
+;;
+;; (difftastic-bindings-mode)
+;;
+;; Or, if you use `use-package':
+;;
+;; (use-package difftastic-bindings
+;;   :ensure difftastic ;; or nil if you prefer manual installation
+;;   :config (difftastic-bindings-mode))
+;;
+;; This will bind `D' to `difftastic-magit-diff' and `S' to
+;; `difftastic-magit-show' in `magit-diff' and `magit-blame' transient
+;; prefixes as well as in `magit-blame-read-only-map'.  Please refer to
+;; `difftastic-bindings' documentation to see how to change default bindings.
+;;
+;; The `difftastic-bindings=mode' was designed to have minimal dependencies
+;; and be reasonably fast to load, while providing a mechanism to bind
+;; `difftastic' commands, such that they are available in relevant contexts.
+;;
+;;
+;; Manual Key Bindings Configuration
+;; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+;;
+;; If you don't want to use mechanism delivered by `difftastic-bindings-mode'
+;; you can write your own configuration.  As a starting point the following
+;; snippets demonstrate how to achieve roughly the same effect as
+;; `difftastic-bindings-mode':
 ;;
 ;; (require 'difftastic)
+;; (require 'transient)
 ;;
-;; ;; Add commands to a `magit-difftastic'
-;; (with-eval-after-load 'magit-diff
-;;     (when-let* ((suffix [("D" "Difftastic diff (dwim)" difftastic-magit-diff)
-;;                          ("S" "Difftastic show" difftastic-magit-show)])
-;;                 ((not (equal (transient-parse-suffix 'magit-diff suffix)
-;;                              (transient-get-suffix 'magit-diff '(-1 -1))))))
+;; (let ((suffix [("D" "Difftastic diff (dwim)" difftastic-magit-diff)
+;;                ("S" "Difftastic show" difftastic-magit-show)]))
+;;   (with-eval-after-load 'magit-diff
+;;     (unless (equal (transient-parse-suffix 'magit-diff suffix)
+;;                    (transient-get-suffix 'magit-diff '(-1 -1)))
 ;;       (transient-append-suffix 'magit-diff '(-1 -1) suffix)))
-;; (with-eval-after-load 'magit-blame
-;;   (keymap-set magit-blame-read-only-mode-map
-;;               "D" #'difftastic-magit-show)
-;;   (keymap-set magit-blame-read-only-mode-map
-;;               "S" #'difftastic-magit-show))
+;;   (with-eval-after-load 'magit-blame
+;;     (unless (equal (transient-parse-suffix 'magit-blame suffix)
+;;                    (transient-get-suffix 'magit-blame '(-1)))
+;;       (transient-append-suffix 'magit-blame '(-1) suffix))
+;;     (keymap-set magit-blame-read-only-mode-map
+;;                 "D" #'difftastic-magit-show)
+;;     (keymap-set magit-blame-read-only-mode-map
+;;                 "S" #'difftastic-magit-show)))
 ;;
 ;; Or, if you use `use-package':
 ;;
 ;; (use-package difftastic
 ;;   :defer t
 ;;   :init
-;;   (use-package transient
+;;   (use-package transient               ; to silence compiler warnings
 ;;     :autoload (transient-get-suffix
 ;;                transient-parse-suffix))
-;;   (use-package magit-blame
-;;     :defer t :ensure magit
-;;     :bind
-;;     (:map magit-blame-read-only-mode-map
-;;      ("D" . #'difftastic-magit-diff)
-;;      ("S" . #'difftastic-magit-show)))
-;;   (with-eval-after-load 'magit-diff
-;;     (when-let* ((suffix [("D" "Difftastic diff (dwim)" difftastic-magit-diff)
-;;                          ("S" "Difftastic show" difftastic-magit-show)])
-;;                 ((not (equal (transient-parse-suffix 'magit-diff suffix)
-;;                              (transient-get-suffix 'magit-diff '(-1 -1))))))
-;;       (transient-append-suffix 'magit-diff '(-1 -1) suffix))))
+;;
+;;   (let ((suffix [("D" "Difftastic diff (dwim)" difftastic-magit-diff)
+;;                  ("S" "Difftastic show" difftastic-magit-show)]))
+;;     (use-package magit-blame
+;;       :defer t :ensure magit
+;;       :bind
+;;       (:map magit-blame-read-only-mode-map
+;;             ("D" . #'difftastic-magit-diff)
+;;             ("S" . #'difftastic-magit-show))
+;;       :config
+;;       (unless (equal (transient-parse-suffix 'magit-blame suffix)
+;;                      (transient-get-suffix 'magit-blame '(-1)))
+;;         (transient-append-suffix 'magit-blame '(-1) suffix)))
+;;     (use-package magit-diff
+;;       :defer t :ensure magit
+;;       :config
+;;       (unless (equal (transient-parse-suffix 'magit-diff suffix)
+;;                      (transient-get-suffix 'magit-diff '(-1 -1)))
+;;         (transient-append-suffix 'magit-diff '(-1 -1) suffix)))))
 ;;
 ;;
 ;; Usage
@@ -253,6 +353,7 @@
 
 (defgroup difftastic nil
   "Integration with difftastic."
+  :link '(emacs-commentary-link "difftastic")
   :group 'tools)
 
 (defun difftastic-requested-window-width ()

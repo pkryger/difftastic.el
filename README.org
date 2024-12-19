@@ -134,6 +134,11 @@ This will bind ~D~ to =difftastic-magit-diff= and ~S~ to
 well as in =magit-blame-read-only-map=.  Please refer to =difftastic-bindings=
 documentation to see how to change default bindings.
 
+You can adjust what bindings you want to have configured by changing values of
+=difftastic-bindings-alist=, =difftastic-bindings-prefixes=, and
+=difftastic-bindings-keymaps=. You need to turn the =difftastic-bindings-mode=
+off and on again to apply the changes.
+
 The =difftastic-bindings=mode= was designed to have minimal dependencies and be
 reasonably fast to load, while providing a mechanism to bind =difftastic=
 commands, such that they are available in relevant contexts.

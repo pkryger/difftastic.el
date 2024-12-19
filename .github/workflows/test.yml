@@ -59,10 +59,12 @@ jobs:
 
     - name: Install dependencies
       run: 'cask install'
-    - name: Byte compile
-      run: 'make compile'
-    - name: Lint package
+    - name: Byte compation
+      run: 'make bytecompile'
+    - name: 'Lint: package-lint'
       run: 'make lint'
+    - name: 'Lint: relint'
+      run: 'make relint'
     - name: Run tests
       run: 'make test'
 

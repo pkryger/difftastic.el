@@ -2205,7 +2205,7 @@ test/difftastic.t.el --- Emacs Lisp
                  (difftastic--run-command
                   (current-buffer)
                   '("echo" "-n"
-                    "\[1m[33mdifftastic.el[39m[0m[2m --- 1/2 --- Emacs Lisp[0m")
+                    "[1m[33mdifftastic.el[39m[0m[2m --- 1/2 --- Emacs Lisp[0m")
                   #'action)))
             (with-timeout (5
                            (signal-process process 'SIGKILL)
@@ -2637,7 +2637,7 @@ test/difftastic.t.el --- Emacs Lisp
           (diff-no-select (get-buffer difftastic.el-buffer)
                           (get-buffer readme.org-buffer)
                           nil t (current-buffer))
-          (unless (string-match-p "\nDiff finished (no differences)\."
+          (unless (string-match-p "\nDiff finished (no differences)\\."
                                   (buffer-string))
             (goto-char (point-min))
             (let ((tmp-difftastic.el

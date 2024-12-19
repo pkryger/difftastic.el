@@ -1,6 +1,8 @@
 export EMACS ?= $(shell command -v emacs 2>/dev/null)
 CASK_DIR := $(shell cask package-directory)
 
+test_files = test/difftastic.t.el test/difftastic-bindings.t.el
+
 $(CASK_DIR): Cask
 	cask install
 	@touch $(CASK_DIR)
@@ -8,13 +10,11 @@ $(CASK_DIR): Cask
 .PHONY: cask
 cask: $(CASK_DIR)
 
-.PHONY: compile
-compile: cask
+.PHONY: bytecompile
+bytecompile: cask
 	cask emacs -batch -L . -L test \
 	  --eval "(setq byte-compile-error-on-warn t)" \
-	  -f batch-byte-compile $$(cask files) \
-                            test/difftastic.t.el \
-                            test/difftastic-bindings.t.el; \
+	  -f batch-byte-compile $$(cask files) $(test_files)
 	  (ret=$$? ; cask clean-elc ; rm -f test/*.elc && exit $$ret)
 
 .PHONY: lint
@@ -22,15 +22,18 @@ lint: cask
 	cask emacs -batch -L . \
 	  --load package-lint \
       --eval '(setq package-lint-main-file "difftastic.el")' \
-	  --funcall package-lint-batch-and-exit \
-        difftastic.el \
-        difftastic-bindings.el
+	  --funcall package-lint-batch-and-exit $$(cask files)
+
+.PHONY: relint
+relint: cask
+	cask emacs -batch -L . -L test \
+	  --load relint \
+	  --funcall relint-batch $$(cask files) $(test_files)
 
 .PHONY: test
-test: cask compile
+test: cask bytecompile
 	cask emacs -batch \
-	  --load test/difftastic.t.el \
-	  --load test/difftastic-bindings.t.el \
+      $(foreach test_file,$(test_files),--load $(test_file)) \
 	  --eval "(let ((print-level 50) \
 	                (eval-expression-print-level 50) \
                     (eval-expression-print-length 1000) \

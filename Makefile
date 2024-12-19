@@ -30,6 +30,12 @@ relint: cask
 	  --load relint \
 	  --funcall relint-batch $$(cask files) $(test_files)
 
+.PHONY: checkdoc
+checkdoc: cask
+	cask emacs -batch -L . \
+	  --load checkdoc-batch \
+	  --funcall checkdoc-batch $$(cask files)
+
 .PHONY: test
 test: cask bytecompile
 	cask emacs -batch \

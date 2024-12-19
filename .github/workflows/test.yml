@@ -65,6 +65,8 @@ jobs:
       run: 'make lint'
     - name: 'Lint: relint'
       run: 'make relint'
+    - name: 'Lint: checkdoc'
+      run: 'make checkdoc'
     - name: Run tests
       run: 'make test'
 

@@ -2599,9 +2599,6 @@ test/difftastic.t.el --- Emacs Lisp
       (call-interactively #'difftastic-git-diff-range))))
 
 (ert-deftest difftastic.el-validate-commentary-in-sync-with-readme.org ()
-  :expected-result (if (version< "29" emacs-version) ;; since Emacs-29
-                       :passed
-                     :failed)
   (let ((org-export-show-temporary-export-buffer nil)
         (org-confirm-babel-evaluate nil)
         (readme.org-buffer "*Org DIFFTASTIC-COMMENTARY Export*")

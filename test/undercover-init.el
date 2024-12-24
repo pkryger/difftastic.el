@@ -1,8 +1,14 @@
-;;; undercover-init.el --- initialization for undercover
+;;; undercover-init.el --- initialization for undercover -*- lexical-binding: t -*-
 ;;; Commentary:
 ;;; Code:
-(when (require 'undercover nil t)
+
+(require 'undercover nil t)
+
+(when (featurep 'undercover)
   (undercover "*.el"
-	      (:report-format 'lcov)
-	      (:send-report nil)))
+	          (:report-format 'lcov)
+	          (:send-report nil)))
+
+(provide 'undercover-init.el)
+
 ;;; undercover-init.el ends here

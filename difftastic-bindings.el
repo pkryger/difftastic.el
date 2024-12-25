@@ -10,6 +10,11 @@
 (require 'transient)
 (require 'seq)
 
+(when (version< "29" emacs-version)
+  ;; The `if-let*' macros are not available by default until Emacs-29.
+  (unless (fboundp 'if-let*)
+    (require 'subr-x)))
+
 (defgroup difftastic-bindings nil
   "Key bindings for difftastic."
   :link '(emacs-commentary-link "difftastic")

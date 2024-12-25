@@ -11,6 +11,10 @@
 (require 'seq)
 (require 'compat)
 
+(eval-and-compile ;; Until Emacs-28
+  (unless (fboundp 'if-let*)
+    (require 'subr-x)))
+
 (defgroup difftastic-bindings nil
   "Key bindings for difftastic."
   :link '(emacs-commentary-link "difftastic")

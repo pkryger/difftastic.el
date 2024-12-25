@@ -9,11 +9,7 @@
 
 (require 'transient)
 (require 'seq)
-
-(when (version< "29" emacs-version)
-  ;; The `if-let*' macros are not available by default until Emacs-29.
-  (unless (fboundp 'if-let*)
-    (require 'subr-x)))
+(require 'compat)
 
 (defgroup difftastic-bindings nil
   "Key bindings for difftastic."
@@ -115,7 +111,8 @@ into.  After BINDINGS have been appended register it in KEYMAP
               (map (ignore-errors (eval keymap)))
               ((keymapp map)))
     (dolist (spec bindings)
-      (keymap-set map (car spec) (cadr spec)))
+      (compat-call ;; Since Emacs-29
+       keymap-set map (car spec) (cadr spec)))
     (put keymap 'difftastic--installed bindings)
     (difftastic-bindings--add-to-installed :keymaps keymap)))
 
@@ -131,7 +128,8 @@ remove them from `difftastic-bindings--installed-plist'."
               ((keymapp map))
               (bindings (get keymap 'difftastic--installed)))
     (dolist (spec bindings)
-      (keymap-unset map (car spec) 'remove))
+      (compat-call ;; Since Emacs-29
+       keymap-unset map (car spec) 'remove))
     (put keymap 'difftastic--installed nil)
     (difftastic-bindings--remove-from-installed :keymaps keymap)))
 

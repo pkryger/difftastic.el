@@ -1,6 +1,7 @@
 export EMACS ?= $(shell command -v emacs 2>/dev/null)
 CASK_DIR := $(shell cask package-directory)
 
+files = $$(cask files | grep -Ev 'difftastic-(pkg|autoloads).el')
 test_files = test/difftastic.t.el test/difftastic-bindings.t.el
 
 $(CASK_DIR): Cask
@@ -14,7 +15,7 @@ cask: $(CASK_DIR)
 bytecompile: cask
 	cask emacs -batch -L . -L test \
 	  --eval "(setq byte-compile-error-on-warn t)" \
-	  -f batch-byte-compile $$(cask files) $(test_files)
+	  -f batch-byte-compile $(files) $(test_files)
 	  (ret=$$? ; cask clean-elc ; rm -f test/*.elc && exit $$ret)
 
 .PHONY: lint
@@ -22,19 +23,19 @@ lint: cask
 	cask emacs -batch -L . \
 	  --load package-lint \
       --eval '(setq package-lint-main-file "difftastic.el")' \
-	  --funcall package-lint-batch-and-exit $$(cask files)
+	  --funcall package-lint-batch-and-exit $(files)
 
 .PHONY: relint
 relint: cask
 	cask emacs -batch -L . -L test \
 	  --load relint \
-	  --funcall relint-batch $$(cask files) $(test_files)
+	  --funcall relint-batch $(files) $(test_files)
 
 .PHONY: checkdoc
 checkdoc: cask
 	cask emacs -batch -L . \
 	  --load checkdoc-batch \
-	  --funcall checkdoc-batch $$(cask files)
+	  --funcall checkdoc-batch $(files)
 
 .PHONY: test
 test: cask bytecompile

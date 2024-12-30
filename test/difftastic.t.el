@@ -2642,7 +2642,7 @@ test/difftastic.t.el --- Emacs Lisp
                                      (- (re-search-forward " ") 1)))
                   (tmp-readme.org
                    (buffer-substring (point)
-                                     (line-end-position)))
+                                     (compat-call pos-eol))) ; Since Emacs-29
                   (inhibit-read-only t))
               (goto-char (point-min))
               (perform-replace tmp-difftastic.el "difftastic.el" nil nil nil)

@@ -643,8 +643,8 @@ regexp from `difftastic--chunk-regexp'."
                              (when (let ((chunk-no (match-string 1)))
                                      (or (not chunk-no)
                                          (string-equal "1" chunk-no)))
-                               (line-beginning-position))
-                           (line-beginning-position))))
+                               (compat-call pos-bol)) ; Since Emacs-29
+                           (compat-call pos-bol)))) ; Since Emacs-29
     (unless (or (difftastic--point-at-added-removed-p)
                 (get-text-property chunk-bol 'invisible))
       chunk-bol)))
@@ -652,7 +652,7 @@ regexp from `difftastic--chunk-regexp'."
 (defun difftastic--point-at-added-removed-p ()
   "Return whether a point is in added or removed line."
   (save-excursion
-    (goto-char (line-beginning-position))
+    (goto-char (compat-call pos-bol)) ; Since Emacs-29
     (save-match-data
       (looking-at (rx bol
                       (or (1+ ".")
@@ -665,7 +665,7 @@ When FILE-CHUNK is t only first file chunks are searched
 for.  Return nil when no chunk is found."
   (let ((chunk-regexp (difftastic--chunk-regexp file-chunk)))
     (save-excursion
-      (goto-char (line-end-position))
+      (goto-char (compat-call pos-eol)) ; Since Emacs-29
       (cl-block searching-next-chunk
         (while (re-search-forward chunk-regexp nil t)
           (when-let* ((chunk-bol
@@ -678,7 +678,7 @@ When FILE-CHUNK is t only first file chunks are searched
 for.  Return nil when no chunk is found."
   (let ((chunk-regexp (difftastic--chunk-regexp file-chunk)))
     (save-excursion
-      (goto-char (line-beginning-position))
+      (goto-char (compat-call pos-bol)) ; Since Emacs-29
       (when (> (point) (point-min))
         (backward-char)
         (cl-block searching-prev-chunk
@@ -690,9 +690,9 @@ for.  Return nil when no chunk is found."
 (defun difftastic--point-at-chunk-header-p (&optional file-chunk)
   "Return whether a point is in a chunk header.
 When FILE-CHUNK is non nil the header has to be a file header."
-  (when (not (eq (line-beginning-position) (line-end-position)))
+  (when (not (eq (compat-call pos-bol) (compat-call pos-eol))) ; Since Emacs-29
     (save-excursion
-      (goto-char (line-beginning-position))
+      (goto-char (compat-call pos-bol)) ; Since Emacs-29
       (and (looking-at-p (difftastic--chunk-regexp file-chunk))
            (not (difftastic--point-at-added-removed-p))))))
 
@@ -705,16 +705,16 @@ of the file."
   (when (difftastic--point-at-chunk-header-p file-chunk)
     (let ((inhibit-read-only t))
       (add-text-properties
-       (line-beginning-position)
-       (line-end-position)
+       (compat-call pos-bol) ; Since Emacs-29
+       (compat-call pos-eol) ; Since Emacs-29
        `(difftastic (:hidden ,(if file-chunk :file :chunk))))
       (add-text-properties
-       (line-end-position)
+       (compat-call pos-eol) ; Since Emacs-29
        (if-let*  ((next-chunk
                    (difftastic--next-chunk file-chunk)))
            (save-excursion
              (goto-char next-chunk)
-             (line-end-position -1))
+             (compat-call pos-eol -1)) ; Since Emacs-29
          (point-max))
        '(invisible difftastic)))))
 
@@ -726,18 +726,19 @@ The point needs to be in chunk header."
     (let ((inhibit-read-only t)
           (file-chunk
            (member :file
-                   (get-text-property (line-beginning-position) 'difftastic))))
+                   (get-text-property (compat-call pos-bol) ; Since Emacs-29
+                                      'difftastic))))
       ;; This is not ideal as it doesn't just undo how the chunk has been
       ;; hidden, but it bluntly shows everything when showing a file.  But it
       ;; allows to show all chunks that were hidden twice - first time as a
       ;; chunk, second as a file.
       (remove-list-of-text-properties
-       (line-beginning-position)
+       (compat-call pos-bol) ; Since Emacs-29
        (if-let* ((next-chunk
                   (difftastic--next-chunk file-chunk)))
            (save-excursion
              (goto-char next-chunk)
-             (line-end-position -1))
+             (compat-call pos-eol -1)) ; Since Emacs-29
          (point-max))
        '(invisible difftastic)))))
 
@@ -749,7 +750,8 @@ of the file."
   (interactive "P" difftastic-mode)
   (when (difftastic--point-at-chunk-header-p file-chunk)
     (if (member :hidden
-                (get-text-property (line-beginning-position) 'difftastic))
+                (get-text-property (compat-call pos-bol) ; Since Emacs-29
+                                   'difftastic))
         (difftastic-show-chunk)
       (difftastic-hide-chunk file-chunk))))
 

@@ -2,12 +2,11 @@
 ;;; Commentary:
 ;;; Code:
 
-(load-file (file-name-concat
-            "." (when-let* ((basename (file-name-nondirectory
-                                       (directory-file-name default-directory)))
-                            ((not (equal basename "test"))))
-                  "test")
-            "undercover-init.el"))
+(when-let* ((dir (file-name-directory (or load-file-name
+                                          byte-compile-current-file
+                                          buffer-file-name))))
+  (load-file (file-name-concat dir "undercover-init.el")))
+
 (require 'difftastic)
 (require 'el-mock)
 (require 'org)

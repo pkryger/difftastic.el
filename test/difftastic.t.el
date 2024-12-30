@@ -2364,7 +2364,7 @@ test/difftastic.t.el --- Emacs Lisp
       (mocklet (((difftastic--build-git-process-environment
                   "test-difftastic-width" '("test-difftastic-args"
                                             "--override"
-                                            "*:'test-lang-override'"))
+                                            "*:test-lang-override"))
                  => "test-process-environment"))
         (eval
          `(difftastic--with-temp-advice

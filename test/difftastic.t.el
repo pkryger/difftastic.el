@@ -237,7 +237,7 @@
              "--color" "always"
              "--width" "42"
              "--background" ,(format "%s" (frame-parameter nil 'background-mode))
-             "--override" "*:'test-language'"
+             "--override" "*:test-language"
              "test-file-A" "test-file-B")
            (difftastic--build-files-command (cons "test-file-A" nil)
                                             (cons "test-file-B" nil)

@@ -1448,9 +1448,10 @@ test/difftastic.t.el --- Emacs Lisp
                          "TypeScript TSX" "VHDL" "XML" "YAML" "Zig")
                        (difftastic--get-languages)))))))
 
-;; When running in batch mode there are no colors.  See this discussion:
-;; https://lists.gnu.org/archive/html/help-gnu-emacs/2024-02/msg00095.html
-;; For this reason only a couple sanity tests are run in CI.
+;; When running in noninteractive batch mode there are no faces defined, ergo:
+;; no colors.  See this discussion:
+;; https://lists.gnu.org/archive/html/help-gnu-emacs/2024-02/msg00095.html For
+;; this reason only a couple sanity tests are run in CI.
 
 (ert-deftest difftastic--run-command-filter:file-ansi-colors-applied ()
   (let* ((expected-fg
@@ -1465,9 +1466,6 @@ test/difftastic.t.el --- Emacs Lisp
            (propertize
             " --- 1/2 --- Emacs Lisp"
             'font-lock-face 'ansi-color-faint))))
-    (message "[%sinteractive] ((expected-fg %S))"
-             (if noninteractive "non" "")
-             expected-fg)
     (with-temp-buffer
       (eval
        `(mocklet ((process-buffer => ,(current-buffer)))
@@ -1503,331 +1501,531 @@ test/difftastic.t.el --- Emacs Lisp
 ;; The following few tests are meant to check for default face color values
 ;; such that it's easier to debug and update tests when these change upstream.
 
-(defconst difftastic-t-removed-fg (face-foreground 'magit-diff-removed nil t))
-(defconst difftastic-t-removed-bg (face-background 'magit-diff-removed nil t))
+(defun difftastic-t--face-attribute-or (face attribute default)
+  "Get FACE ATTRIBUTE or set it to DEFAULT if it is `unspecified'.
+This only happens when `noninteractive' to avoid messing up with faces."
+  (let ((value (face-attribute face attribute nil t)))
+    (if (not (eq value 'unspecified))
+        value
+      (when noninteractive
+        (set-face-attribute face nil attribute default)
+        default))))
+
+(defconst difftastic-t-removed-fg
+  (difftastic-t--face-attribute-or 'magit-diff-removed :foreground "removed-fg"))
+(defconst difftastic-t-removed-bg
+  (difftastic-t--face-attribute-or 'magit-diff-removed :background "removed-bg"))
 (defconst difftastic-t-removed-highlight-fg
-  (face-foreground (alist-get 'magit-diff-removed difftastic-highlight-alist) nil t))
+  (difftastic-t--face-attribute-or
+   (alist-get 'magit-diff-removed difftastic-highlight-alist)
+   :foreground "removed-highlight-fg"))
 (defconst difftastic-t-removed-highlight-bg
-  (face-background (alist-get 'magit-diff-removed difftastic-highlight-alist) nil t))
-(defconst difftastic-t-added-fg (face-foreground 'magit-diff-added nil t))
-(defconst difftastic-t-added-bg (face-background 'magit-diff-added nil t))
+  (difftastic-t--face-attribute-or
+   (alist-get 'magit-diff-removed difftastic-highlight-alist)
+   :background "removed-highlight-bg"))
+(defconst difftastic-t-added-fg
+  (difftastic-t--face-attribute-or 'magit-diff-added :foreground "added-fg"))
+(defconst difftastic-t-added-bg
+  (difftastic-t--face-attribute-or 'magit-diff-added :background "added-bg"))
 (defconst difftastic-t-added-highlight-fg
-  (face-foreground (alist-get 'magit-diff-added difftastic-highlight-alist) nil t))
+  (difftastic-t--face-attribute-or
+   (alist-get 'magit-diff-added difftastic-highlight-alist)
+   :foreground "added-highlight-fg"))
 (defconst difftastic-t-added-highlight-bg
-  (face-background (alist-get 'magit-diff-added difftastic-highlight-alist) nil t))
-(defconst difftastic-t-comment-fg (face-foreground 'font-lock-comment-face nil t))
-(defconst difftastic-t-comment-bg (face-background 'font-lock-comment-face nil t))
-(defconst difftastic-t-string-fg (face-foreground 'font-lock-string-face nil t))
-(defconst difftastic-t-string-bg (face-background 'font-lock-string-face nil t))
+  (difftastic-t--face-attribute-or
+   (alist-get 'magit-diff-added difftastic-highlight-alist)
+   :background "added-highlight-bg"))
+(defconst difftastic-t-comment-fg
+  (difftastic-t--face-attribute-or 'font-lock-comment-face :foreground "comment-fg"))
+(defconst difftastic-t-comment-bg
+  (difftastic-t--face-attribute-or 'font-lock-comment-face :background "comment-bg"))
+(defconst difftastic-t-string-fg
+  (difftastic-t--face-attribute-or 'font-lock-string-face :foreground "string-fg"))
+(defconst difftastic-t-string-bg
+  (difftastic-t--face-attribute-or 'font-lock-string-face :background "string-bg"))
 
 (ert-deftest difftastic--run-command-filter:removed-ansi-colors-applied ()
-  :tags '(interactive)
   (with-temp-buffer
     (eval
      '(mocklet ((process-buffer => (current-buffer)))
         (difftastic--run-command-filter
          'test-process
          "[31mremoved[0m")
-        (should
-         (equal-including-properties
-          (buffer-string)
-          (propertize "removed"
-                      'font-lock-face
-                      `((:background ,difftastic-t-removed-bg)
-                        (:foreground ,difftastic-t-removed-fg)))))))))
+        (if (version< "29" emacs-version) ;; since Emacs-29
+            (should
+             (equal-including-properties
+              (buffer-string)
+              (propertize "removed"
+                          'font-lock-face
+                          `((:background ,difftastic-t-removed-bg)
+                            (:foreground ,difftastic-t-removed-fg)))))
+          (should
+           (ert-equal-including-properties
+            (buffer-string)
+            (propertize "removed"
+                        'font-lock-face
+                        `((:background ,difftastic-t-removed-bg)
+                          (:foreground ,difftastic-t-removed-fg))))))))))
 
 (ert-deftest difftastic--run-command-filter:removed-bold-ansi-colors-applied ()
-  :tags '(interactive)
   (with-temp-buffer
     (eval
      '(mocklet ((process-buffer => (current-buffer)))
         (difftastic--run-command-filter
          'test-process
          "[31;1mremoved[0m")
-        (should
-         (equal-including-properties
-          (buffer-string)
-          (propertize "removed"
-                      'font-lock-face
-                      `((:background ,difftastic-t-removed-bg)
-                        ansi-color-bold
-                        (:foreground ,difftastic-t-removed-fg)))))))))
+        (if (version< "29" emacs-version) ;; since Emacs-29
+            (should
+             (equal-including-properties
+              (buffer-string)
+              (propertize "removed"
+                          'font-lock-face
+                          `((:background ,difftastic-t-removed-bg)
+                            ansi-color-bold
+                            (:foreground ,difftastic-t-removed-fg)))))
+          (should
+           (ert-equal-including-properties
+            (buffer-string)
+            (propertize "removed"
+                        'font-lock-face
+                        `(ansi-color-bold
+                          ((:background ,difftastic-t-removed-bg)
+                           (:foreground ,difftastic-t-removed-fg)))))))))))
 
 (ert-deftest difftastic--run-command-filter:removed-italic-ansi-colors-applied ()
-  :tags '(interactive)
   (with-temp-buffer
     (eval
      '(mocklet ((process-buffer => (current-buffer)))
         (difftastic--run-command-filter
          'test-process
          "[31;3mremoved[0m")
-        (should
-         (equal-including-properties
-          (buffer-string)
-          (propertize "removed"
-                      'font-lock-face
-                      `((:background ,difftastic-t-removed-bg)
-                        ansi-color-italic
-                        (:foreground ,difftastic-t-removed-fg)))))))))
+        (if (version< "29" emacs-version) ;; since Emacs-29
+            (should
+             (equal-including-properties
+              (buffer-string)
+              (propertize "removed"
+                          'font-lock-face
+                          `((:background ,difftastic-t-removed-bg)
+                            ansi-color-italic
+                            (:foreground ,difftastic-t-removed-fg)))))
+          (should
+           (ert-equal-including-properties
+            (buffer-string)
+            (propertize "removed"
+                        'font-lock-face
+                        `(ansi-color-italic
+                          ((:background ,difftastic-t-removed-bg)
+                           (:foreground ,difftastic-t-removed-fg)))))))))))
 
 (ert-deftest difftastic--run-command-filter:removed-bold-italic-ansi-colors-applied ()
-  :tags '(interactive)
   (with-temp-buffer
     (eval
      '(mocklet ((process-buffer => (current-buffer)))
         (difftastic--run-command-filter
          'test-process
          "[31;1;3mremoved[0m")
-        (should
-         (equal-including-properties
-          (buffer-string)
-          (propertize "removed"
-                      'font-lock-face
-                      `((:background ,difftastic-t-removed-bg)
-                        ansi-color-bold
-                        ansi-color-italic
-                        (:foreground ,difftastic-t-removed-fg)))))))))
+        (if (version< "29" emacs-version) ;; since Emacs-29
+            (should
+             (equal-including-properties
+              (buffer-string)
+              (propertize "removed"
+                          'font-lock-face
+                          `((:background ,difftastic-t-removed-bg)
+                            ansi-color-bold
+                            ansi-color-italic
+                            (:foreground ,difftastic-t-removed-fg)))))
+          (should
+           (ert-equal-including-properties
+            (buffer-string)
+            (propertize "removed"
+                        'font-lock-face
+                        `(ansi-color-bold
+                          ansi-color-italic
+                          ((:background ,difftastic-t-removed-bg)
+                           (:foreground ,difftastic-t-removed-fg)))))))))))
 
 (ert-deftest difftastic--run-command-filter:added-ansi-colors-applied ()
-  :tags '(interactive)
   (with-temp-buffer
     (eval
      '(mocklet ((process-buffer => (current-buffer)))
         (difftastic--run-command-filter
          'test-process
          "[32madded[0m")
-        (should
-         (equal-including-properties
-          (buffer-string)
-          (propertize "added"
-                      'font-lock-face
-                      `((:background ,difftastic-t-added-bg)
-                        (:foreground ,difftastic-t-added-fg)))))))))
+        (if (version< "29" emacs-version) ;; since Emacs-29
+            (should
+             (equal-including-properties
+              (buffer-string)
+              (propertize "added"
+                          'font-lock-face
+                          `((:background ,difftastic-t-added-bg)
+                            (:foreground ,difftastic-t-added-fg)))))
+          (should
+           (ert-equal-including-properties
+            (buffer-string)
+            (propertize "added"
+                        'font-lock-face
+                        `((:background ,difftastic-t-added-bg)
+                          (:foreground ,difftastic-t-added-fg))))))))))
 
 (ert-deftest difftastic--run-command-filter:added-bold-ansi-colors-applied ()
-  :tags '(interactive)
   (with-temp-buffer
     (eval
      '(mocklet ((process-buffer => (current-buffer)))
         (difftastic--run-command-filter
          'test-process
          "[32;1madded[0m")
-        (should
-         (equal-including-properties
-          (buffer-string)
-          (propertize "added"
-                      'font-lock-face
-                      `((:background ,difftastic-t-added-bg)
-                        ansi-color-bold
-                        (:foreground ,difftastic-t-added-fg)))))))))
+        (if (version< "29" emacs-version) ;; since Emacs-29
+            (should
+             (equal-including-properties
+              (buffer-string)
+              (propertize "added"
+                          'font-lock-face
+                          `((:background ,difftastic-t-added-bg)
+                            ansi-color-bold
+                            (:foreground ,difftastic-t-added-fg)))))
+          (should
+           (ert-equal-including-properties
+            (buffer-string)
+            (propertize "added"
+                        'font-lock-face
+                        `(ansi-color-bold
+                          ((:background ,difftastic-t-added-bg)
+                           (:foreground ,difftastic-t-added-fg)))))))))))
 
 (ert-deftest difftastic--run-command-filter:added-italic-ansi-colors-applied ()
-  :tags '(interactive)
   (with-temp-buffer
     (eval
      '(mocklet ((process-buffer => (current-buffer)))
         (difftastic--run-command-filter
          'test-process
          "[32;3madded[0m")
-        (should
-         (equal-including-properties
-          (buffer-string)
-          (propertize "added"
-                      'font-lock-face
-                      `((:background ,difftastic-t-added-bg)
-                        ansi-color-italic
-                        (:foreground ,difftastic-t-added-fg)))))))))
+        (if (version< "29" emacs-version) ;; since Emacs-29
+            (should
+             (equal-including-properties
+              (buffer-string)
+              (propertize "added"
+                          'font-lock-face
+                          `((:background ,difftastic-t-added-bg)
+                            ansi-color-italic
+                            (:foreground ,difftastic-t-added-fg)))))
+          (should
+           (ert-equal-including-properties
+            (buffer-string)
+            (propertize "added"
+                        'font-lock-face
+                        `(ansi-color-italic
+                          ((:background ,difftastic-t-added-bg)
+                           (:foreground ,difftastic-t-added-fg)))))))))))
 
 (ert-deftest difftastic--run-command-filter:added-bold-italic-ansi-colors-applied ()
-  :tags '(interactive)
   (with-temp-buffer
     (eval
      '(mocklet ((process-buffer => (current-buffer)))
         (difftastic--run-command-filter
          'test-process
          "[32;1;3madded[0m")
-        (should
-         (equal-including-properties
-          (buffer-string)
-          (propertize "added"
-                      'font-lock-face
-                      `((:background ,difftastic-t-added-bg)
-                        ansi-color-bold
-                        ansi-color-italic
-                        (:foreground ,difftastic-t-added-fg)))))))))
+        (if (version< "29" emacs-version) ;; since Emacs-29
+            (should
+             (equal-including-properties
+              (buffer-string)
+              (propertize "added"
+                          'font-lock-face
+                          `((:background ,difftastic-t-added-bg)
+                            ansi-color-bold
+                            ansi-color-italic
+                            (:foreground ,difftastic-t-added-fg)))))
+          (should
+           (ert-equal-including-properties
+            (buffer-string)
+            (propertize "added"
+                        'font-lock-face
+                        `(ansi-color-bold
+                          ansi-color-italic
+                          ((:background ,difftastic-t-added-bg)
+                           (:foreground ,difftastic-t-added-fg)))))))))))
 
 (ert-deftest difftastic--run-command-filter:removed-highlight-ansi-colors-applied ()
-  :tags '(interactive)
+  :expected-result (if (version< "29" emacs-version) ;; since Emacs-29
+                       :passed
+                     :failed)
   (with-temp-buffer
     (eval
      '(mocklet ((process-buffer => (current-buffer)))
         (difftastic--run-command-filter
          'test-process
          "[31;4mremoved[0m")
-        (should
-         (equal-including-properties
-          (buffer-string)
-          (propertize "removed"
-                      'font-lock-face
-                      `((:background ,difftastic-t-removed-highlight-bg)
-                        (:foreground ,difftastic-t-removed-highlight-fg)))))))))
-
-(ert-deftest difftastic--run-command-filter:removed-highlight-bold-ansi-colors-applied ()
-  :tags '(interactive)
-  (with-temp-buffer
-    (eval
-     '(mocklet ((process-buffer => (current-buffer)))
-        (difftastic--run-command-filter
-         'test-process
-         "[31;1;4mremoved[0m")
-        (should
-         (equal-including-properties
-          (buffer-string)
-          (propertize "removed"
-                      'font-lock-face
-                      `((:background ,difftastic-t-removed-highlight-bg)
-                        (:foreground ,difftastic-t-removed-highlight-fg)))))))))
-
-(ert-deftest difftastic--run-command-filter:removed-highlight-italic-ansi-colors-applied ()
-  :tags '(interactive)
-  (with-temp-buffer
-    (eval
-     '(mocklet ((process-buffer => (current-buffer)))
-        (difftastic--run-command-filter
-         'test-process
-         "[31;3;4mremoved[0m")
-        (should
-         (equal-including-properties
-          (buffer-string)
-          (propertize "removed"
-                      'font-lock-face
-                      `((:background ,difftastic-t-removed-highlight-bg)
-                        (:foreground ,difftastic-t-removed-highlight-fg)
-                        ansi-color-italic))))))))
-
-(ert-deftest difftastic--run-command-filter:removed-highlight-bold-italic-ansi-colors-applied ()
-  :tags '(interactive)
-  (with-temp-buffer
-    (eval
-     '(mocklet ((process-buffer => (current-buffer)))
-        (difftastic--run-command-filter
-         'test-process
-         "[31;1;3;4mremoved[0m")
-        (should
-         (equal-including-properties
-          (buffer-string)
-          (propertize "removed"
-                      'font-lock-face
-                      `((:background ,difftastic-t-removed-highlight-bg)
-                        (:foreground ,difftastic-t-removed-highlight-fg)
-                        ansi-color-italic))))))))
-
-(ert-deftest difftastic--run-command-filter:removed-highlight-no-strip-ansi-colors-applied ()
-  :tags '(interactive)
-  (let (difftastic-highlight-strip-face-properties)
-    (with-temp-buffer
-      (eval
-       '(mocklet ((process-buffer => (current-buffer)))
-          (difftastic--run-command-filter
-           'test-process
-           "[31;1;2;3;4mremoved[0m")
+        (if (version< "29" emacs-version) ;; since Emacs-29
+            (should
+             (equal-including-properties
+              (buffer-string)
+              (propertize "removed"
+                          'font-lock-face
+                          `((:background ,difftastic-t-removed-highlight-bg)
+                            (:foreground ,difftastic-t-removed-highlight-fg)))))
           (should
-           (equal-including-properties
-            (buffer-string)
-            (propertize "removed"
-                        'font-lock-face
-                        `((:background ,difftastic-t-removed-highlight-bg)
-                          (:foreground ,difftastic-t-removed-highlight-fg)
-                          ansi-color-bold
-                          ansi-color-faint
-                          ansi-color-italic
-                          ansi-color-underline)))))))))
-
-(ert-deftest difftastic--run-command-filter:removed-highlight-strip-all-ansi-colors-applied ()
-  :tags '(interactive)
-  (let ((difftastic-highlight-strip-face-properties '(:bold :faint :italic :underline)))
-    (with-temp-buffer
-      (eval
-       '(mocklet ((process-buffer => (current-buffer)))
-          (difftastic--run-command-filter
-           'test-process
-           "[31;1;2;3;4mremoved[0m")
-          (should
-           (equal-including-properties
+           (ert-equal-including-properties
             (buffer-string)
             (propertize "removed"
                         'font-lock-face
                         `((:background ,difftastic-t-removed-highlight-bg)
                           (:foreground ,difftastic-t-removed-highlight-fg))))))))))
 
+(ert-deftest difftastic--run-command-filter:removed-highlight-bold-ansi-colors-applied ()
+  :expected-result (if (version< "29" emacs-version) ;; since Emacs-29
+                       :passed
+                     :failed)
+  (with-temp-buffer
+    (eval
+     '(mocklet ((process-buffer => (current-buffer)))
+        (difftastic--run-command-filter
+         'test-process
+         "[31;1;4mremoved[0m")
+        (if (version< "29" emacs-version) ;; since Emacs-29
+            (should
+             (equal-including-properties
+              (buffer-string)
+              (propertize "removed"
+                          'font-lock-face
+                          `((:background ,difftastic-t-removed-highlight-bg)
+                            (:foreground ,difftastic-t-removed-highlight-fg)))))
+          (should
+           (ert-equal-including-properties
+            (buffer-string)
+            (propertize "removed"
+                        'font-lock-face
+                        `((:background ,difftastic-t-removed-highlight-bg)
+                          (:foreground ,difftastic-t-removed-highlight-fg))))))))))
+
+(ert-deftest difftastic--run-command-filter:removed-highlight-italic-ansi-colors-applied ()
+  :expected-result (if (version< "29" emacs-version) ;; since Emacs-29
+                       :passed
+                     :failed)
+  (with-temp-buffer
+    (eval
+     '(mocklet ((process-buffer => (current-buffer)))
+        (difftastic--run-command-filter
+         'test-process
+         "[31;3;4mremoved[0m")
+        (if (version< "29" emacs-version) ;; since Emacs-29
+            (should
+             (equal-including-properties
+              (buffer-string)
+              (propertize "removed"
+                          'font-lock-face
+                          `((:background ,difftastic-t-removed-highlight-bg)
+                            (:foreground ,difftastic-t-removed-highlight-fg)
+                            ansi-color-italic))))
+          (should
+           (ert-equal-including-properties
+            (buffer-string)
+            (propertize "removed"
+                        'font-lock-face
+                        `(ansi-color-italic
+                          ((:background ,difftastic-t-removed-highlight-bg)
+                           (:foreground ,difftastic-t-removed-highlight-fg)))))))))))
+
+(ert-deftest difftastic--run-command-filter:removed-highlight-bold-italic-ansi-colors-applied ()
+  :expected-result (if (version< "29" emacs-version) ;; since Emacs-29
+                       :passed
+                     :failed)
+  (with-temp-buffer
+    (eval
+     '(mocklet ((process-buffer => (current-buffer)))
+        (difftastic--run-command-filter
+         'test-process
+         "[31;1;3;4mremoved[0m")
+        (if (version< "29" emacs-version) ;; since Emacs-29
+            (should
+             (equal-including-properties
+              (buffer-string)
+              (propertize "removed"
+                          'font-lock-face
+                          `((:background ,difftastic-t-removed-highlight-bg)
+                            (:foreground ,difftastic-t-removed-highlight-fg)
+                            ansi-color-italic))))
+          (should
+           (ert-equal-including-properties
+            (buffer-string)
+            (propertize "removed"
+                        'font-lock-face
+                        `(ansi-color-italic
+                          ((:background ,difftastic-t-removed-highlight-bg)
+                           (:foreground ,difftastic-t-removed-highlight-fg)))))))))))
+
+(ert-deftest difftastic--run-command-filter:removed-highlight-no-strip-ansi-colors-applied ()
+  :expected-result (if (version< "29" emacs-version) ;; since Emacs-29
+                       :passed
+                     :failed)
+  (let (difftastic-highlight-strip-face-properties)
+    (with-temp-buffer
+      (eval
+       '(mocklet ((process-buffer => (current-buffer)))
+          (difftastic--run-command-filter
+           'test-process
+           "[31;1;2;3;4mremoved[0m")
+          (if (version< "29" emacs-version) ;; since Emacs-29
+              (should
+               (equal-including-properties
+                (buffer-string)
+                (propertize "removed"
+                            'font-lock-face
+                            `((:background ,difftastic-t-removed-highlight-bg)
+                              (:foreground ,difftastic-t-removed-highlight-fg)
+                              ansi-color-bold
+                              ansi-color-faint
+                              ansi-color-italic
+                              ansi-color-underline))))
+            (should
+             (ert-equal-including-properties
+              (buffer-string)
+              (propertize "removed"
+                          'font-lock-face
+                          `(ansi-color-bold
+                            ansi-color-faint
+                            ansi-color-italic
+                            ansi-color-underline
+                            ((:background ,difftastic-t-removed-highlight-bg)
+                             (:foreground ,difftastic-t-removed-highlight-fg))))))))))))
+
+(ert-deftest difftastic--run-command-filter:removed-highlight-strip-all-ansi-colors-applied ()
+  :expected-result (if (version< "29" emacs-version) ;; since Emacs-29
+                       :passed
+                     :failed)
+  (let ((difftastic-highlight-strip-face-properties '(:bold :faint :italic :underline)))
+    (with-temp-buffer
+      (eval
+       '(mocklet ((process-buffer => (current-buffer)))
+          (difftastic--run-command-filter
+           'test-process
+           "[31;1;2;3;4mremoved[0m")
+          (if (version< "29" emacs-version) ;; since Emacs-29
+              (should
+               (equal-including-properties
+                (buffer-string)
+                (propertize "removed"
+                            'font-lock-face
+                            `((:background ,difftastic-t-removed-highlight-bg)
+                              (:foreground ,difftastic-t-removed-highlight-fg)))))
+            (should
+             (ert-equal-including-properties
+              (buffer-string)
+              (propertize "removed"
+                          'font-lock-face
+                          `((:background ,difftastic-t-removed-highlight-bg)
+                            (:foreground ,difftastic-t-removed-highlight-fg)))))))))))
+
 (ert-deftest difftastic--run-command-filter:added-highlight-ansi-colors-applied ()
-  :tags '(interactive)
+  :expected-result (if (version< "29" emacs-version) ;; since Emacs-29
+                       :passed
+                     :failed)
   (with-temp-buffer
     (eval
      '(mocklet ((process-buffer => (current-buffer)))
         (difftastic--run-command-filter
          'test-process
          "[32;4madded[0m")
-        (should
-         (equal-including-properties
-          (buffer-string)
-          (propertize "added"
-                      'font-lock-face
-                      `((:background ,difftastic-t-added-highlight-bg)
-                        (:foreground ,difftastic-t-added-highlight-fg)))))))))
+        (if (version< "29" emacs-version) ;; since Emacs-29
+            (should
+             (equal-including-properties
+              (buffer-string)
+              (propertize "added"
+                          'font-lock-face
+                          `((:background ,difftastic-t-added-highlight-bg)
+                            (:foreground ,difftastic-t-added-highlight-fg)))))
+          (should
+           (ert-equal-including-properties
+            (buffer-string)
+            (propertize "added"
+                        'font-lock-face
+                        `((:background ,difftastic-t-added-highlight-bg)
+                          (:foreground ,difftastic-t-added-highlight-fg))))))))))
 
 (ert-deftest difftastic--run-command-filter:added-highlight-bold-ansi-colors-applied ()
-  :tags '(interactive)
+  :expected-result (if (version< "29" emacs-version) ;; since Emacs-29
+                       :passed
+                     :failed)
   (with-temp-buffer
     (eval
      '(mocklet ((process-buffer => (current-buffer)))
         (difftastic--run-command-filter
          'test-process
          "[32;1;4madded[0m")
-        (should
-         (equal-including-properties
-          (buffer-string)
-          (propertize "added"
-                      'font-lock-face
-                      `((:background ,difftastic-t-added-highlight-bg)
-                        (:foreground ,difftastic-t-added-highlight-fg)))))))))
+        (if (version< "29" emacs-version) ;; since Emacs-29
+            (should
+             (equal-including-properties
+              (buffer-string)
+              (propertize "added"
+                          'font-lock-face
+                          `((:background ,difftastic-t-added-highlight-bg)
+                            (:foreground ,difftastic-t-added-highlight-fg)))))
+          (should
+           (ert-equal-including-properties
+            (buffer-string)
+            (propertize "added"
+                        'font-lock-face
+                        `((:background ,difftastic-t-added-highlight-bg)
+                          (:foreground ,difftastic-t-added-highlight-fg))))))))))
 
 (ert-deftest difftastic--run-command-filter:added-highlight-italic-ansi-colors-applied ()
-  :tags '(interactive)
+  :expected-result (if (version< "29" emacs-version) ;; since Emacs-29
+                       :passed
+                     :failed)
   (with-temp-buffer
     (eval
      '(mocklet ((process-buffer => (current-buffer)))
         (difftastic--run-command-filter
          'test-process
          "[32;3;4madded[0m")
-        (should
-         (equal-including-properties
-          (buffer-string)
-          (propertize "added"
-                      'font-lock-face
-                      `((:background ,difftastic-t-added-highlight-bg)
-                        (:foreground ,difftastic-t-added-highlight-fg)
-                        ansi-color-italic))))))))
+        (if (version< "29" emacs-version) ;; since Emacs-29
+            (should
+             (equal-including-properties
+              (buffer-string)
+              (propertize "added"
+                          'font-lock-face
+                          `((:background ,difftastic-t-added-highlight-bg)
+                            (:foreground ,difftastic-t-added-highlight-fg)
+                            ansi-color-italic))))
+          (should
+           (ert-equal-including-properties
+            (buffer-string)
+            (propertize "added"
+                        'font-lock-face
+                        `(ansi-color-italic
+                          ((:background ,difftastic-t-added-highlight-bg)
+                           (:foreground ,difftastic-t-added-highlight-fg)))))))))))
 
 (ert-deftest difftastic--run-command-filter:added-highlight-bold-italic-ansi-colors-applied ()
-  :tags '(interactive)
+  :expected-result (if (version< "29" emacs-version) ;; since Emacs-29
+                       :passed
+                     :failed)
   (with-temp-buffer
     (eval
      '(mocklet ((process-buffer => (current-buffer)))
         (difftastic--run-command-filter
          'test-process
          "[32;1;3;4madded[0m")
-        (should
-         (equal-including-properties
-          (buffer-string)
-          (propertize "added"
-                      'font-lock-face
-                      `((:background ,difftastic-t-added-highlight-bg)
-                        (:foreground ,difftastic-t-added-highlight-fg)
-                        ansi-color-italic))))))))
+        (if (version< "29" emacs-version) ;; since Emacs-29
+            (should
+             (equal-including-properties
+              (buffer-string)
+              (propertize "added"
+                          'font-lock-face
+                          `((:background ,difftastic-t-added-highlight-bg)
+                            (:foreground ,difftastic-t-added-highlight-fg)
+                            ansi-color-italic))))
+          (should
+           (ert-equal-including-properties
+            (buffer-string)
+            (propertize "added"
+                        'font-lock-face
+                        `(ansi-color-italic
+                          ((:background ,difftastic-t-added-highlight-bg)
+                           (:foreground ,difftastic-t-added-highlight-fg)))))))))))
 
 (ert-deftest difftastic--run-command-filter:added-highlight-no-strip-ansi-colors-applied ()
-  :tags '(interactive)
+  :expected-result (if (version< "29" emacs-version) ;; since Emacs-29
+                       :passed
+                     :failed)
   (let (difftastic-highlight-strip-face-properties)
     (with-temp-buffer
       (eval
@@ -1835,20 +2033,34 @@ test/difftastic.t.el --- Emacs Lisp
           (difftastic--run-command-filter
            'test-process
            "[32;1;2;3;4madded[0m")
-          (should
-           (equal-including-properties
-            (buffer-string)
-            (propertize "added"
-                        'font-lock-face
-                        `((:background ,difftastic-t-added-highlight-bg)
-                          (:foreground ,difftastic-t-added-highlight-fg)
-                          ansi-color-bold
-                          ansi-color-faint
-                          ansi-color-italic
-                          ansi-color-underline)))))))))
+          (if (version< "29" emacs-version) ;; since Emacs-29
+              (should
+               (equal-including-properties
+                (buffer-string)
+                (propertize "added"
+                            'font-lock-face
+                            `((:background ,difftastic-t-added-highlight-bg)
+                              (:foreground ,difftastic-t-added-highlight-fg)
+                              ansi-color-bold
+                              ansi-color-faint
+                              ansi-color-italic
+                              ansi-color-underline))))
+            (should
+             (ert-equal-including-properties
+              (buffer-string)
+              (propertize "added"
+                          'font-lock-face
+                          `(ansi-color-bold
+                            ansi-color-faint
+                            ansi-color-italic
+                            ansi-color-underline
+                            ((:background ,difftastic-t-added-highlight-bg)
+                             (:foreground ,difftastic-t-added-highlight-fg))))))))))))
 
 (ert-deftest difftastic--run-command-filter:added-highlight-strip-all-ansi-colors-applied ()
-  :tags '(interactive)
+  :expected-result (if (version< "29" emacs-version) ;; since Emacs-29
+                       :passed
+                     :failed)
   (let ((difftastic-highlight-strip-face-properties '(:bold :faint :italic :underline)))
     (with-temp-buffer
       (eval
@@ -1856,16 +2068,23 @@ test/difftastic.t.el --- Emacs Lisp
           (difftastic--run-command-filter
            'test-process
            "[32;1;2;3;4madded[0m")
-          (should
-           (equal-including-properties
-            (buffer-string)
-            (propertize "added"
-                        'font-lock-face
-                        `((:background ,difftastic-t-added-highlight-bg)
-                          (:foreground ,difftastic-t-added-highlight-fg))))))))))
+          (if (version< "29" emacs-version) ;; since Emacs-29
+              (should
+               (equal-including-properties
+                (buffer-string)
+                (propertize "added"
+                            'font-lock-face
+                            `((:background ,difftastic-t-added-highlight-bg)
+                              (:foreground ,difftastic-t-added-highlight-fg)))))
+            (should
+             (ert-equal-including-properties
+              (buffer-string)
+              (propertize "added"
+                          'font-lock-face
+                          `((:background ,difftastic-t-added-highlight-bg)
+                            (:foreground ,difftastic-t-added-highlight-fg)))))))))))
 
 (ert-deftest difftastic--run-command-filter:removed-no-highlight-ansi-colors-applied ()
-  :tags '(interactive)
   (let (difftastic-highlight-alist)
     (with-temp-buffer
       (eval
@@ -1873,17 +2092,25 @@ test/difftastic.t.el --- Emacs Lisp
           (difftastic--run-command-filter
            'test-process
            "[31;4mremoved[0m")
-          (should
-           (equal-including-properties
-            (buffer-string)
-            (propertize "removed"
-                        'font-lock-face
-                        `((:background ,difftastic-t-removed-bg)
-                          ansi-color-underline
-                          (:foreground ,difftastic-t-removed-fg))))))))))
+          (if (version< "29" emacs-version) ;; since Emacs-29
+              (should
+               (equal-including-properties
+                (buffer-string)
+                (propertize "removed"
+                            'font-lock-face
+                            `((:background ,difftastic-t-removed-bg)
+                              ansi-color-underline
+                              (:foreground ,difftastic-t-removed-fg)))))
+            (should
+             (ert-equal-including-properties
+              (buffer-string)
+              (propertize "removed"
+                          'font-lock-face
+                          `(ansi-color-underline
+                            ((:background ,difftastic-t-removed-bg)
+                             (:foreground ,difftastic-t-removed-fg))))))))))))
 
 (ert-deftest difftastic--run-command-filter:removed-no-highlight-bold-ansi-colors-applied ()
-  :tags '(interactive)
   (let (difftastic-highlight-alist)
     (with-temp-buffer
       (eval
@@ -1891,18 +2118,27 @@ test/difftastic.t.el --- Emacs Lisp
           (difftastic--run-command-filter
            'test-process
            "[31;1;4mremoved[0m")
-          (should
-           (equal-including-properties
-            (buffer-string)
-            (propertize "removed"
-                        'font-lock-face
-                        `((:background ,difftastic-t-removed-bg)
-                          ansi-color-bold
-                          ansi-color-underline
-                          (:foreground ,difftastic-t-removed-fg))))))))))
+          (if (version< "29" emacs-version) ;; since Emacs-29
+              (should
+               (equal-including-properties
+                (buffer-string)
+                (propertize "removed"
+                            'font-lock-face
+                            `((:background ,difftastic-t-removed-bg)
+                              ansi-color-bold
+                              ansi-color-underline
+                              (:foreground ,difftastic-t-removed-fg)))))
+            (should
+             (ert-equal-including-properties
+              (buffer-string)
+              (propertize "removed"
+                          'font-lock-face
+                          `(ansi-color-bold
+                            ansi-color-underline
+                            ((:background ,difftastic-t-removed-bg)
+                             (:foreground ,difftastic-t-removed-fg))))))))))))
 
 (ert-deftest difftastic--run-command-filter:removed-no-highlight-italic-ansi-colors-applied ()
-  :tags '(interactive)
   (let (difftastic-highlight-alist)
     (with-temp-buffer
       (eval
@@ -1910,18 +2146,27 @@ test/difftastic.t.el --- Emacs Lisp
           (difftastic--run-command-filter
            'test-process
            "[31;3;4mremoved[0m")
-          (should
-           (equal-including-properties
-            (buffer-string)
-            (propertize "removed"
-                        'font-lock-face
-                        `((:background ,difftastic-t-removed-bg)
-                          ansi-color-italic
-                          ansi-color-underline
-                          (:foreground ,difftastic-t-removed-fg))))))))))
+          (if (version< "29" emacs-version) ;; since Emacs-29
+              (should
+               (equal-including-properties
+                (buffer-string)
+                (propertize "removed"
+                            'font-lock-face
+                            `((:background ,difftastic-t-removed-bg)
+                              ansi-color-italic
+                              ansi-color-underline
+                              (:foreground ,difftastic-t-removed-fg)))))
+            (should
+             (ert-equal-including-properties
+              (buffer-string)
+              (propertize "removed"
+                          'font-lock-face
+                          `(ansi-color-italic
+                            ansi-color-underline
+                            ((:background ,difftastic-t-removed-bg)
+                             (:foreground ,difftastic-t-removed-fg))))))))))))
 
 (ert-deftest difftastic--run-command-filter:removed-no-highlight-bold-italic-ansi-colors-applied ()
-  :tags '(interactive)
   (let (difftastic-highlight-alist)
     (with-temp-buffer
       (eval
@@ -1929,19 +2174,29 @@ test/difftastic.t.el --- Emacs Lisp
           (difftastic--run-command-filter
            'test-process
            "[31;1;3;4mremoved[0m")
-          (should
-           (equal-including-properties
-            (buffer-string)
-            (propertize "removed"
-                        'font-lock-face
-                        `((:background ,difftastic-t-removed-bg)
-                          ansi-color-bold
-                          ansi-color-italic
-                          ansi-color-underline
-                          (:foreground ,difftastic-t-removed-fg))))))))))
+          (if (version< "29" emacs-version) ;; since Emacs-29
+              (should
+               (equal-including-properties
+                (buffer-string)
+                (propertize "removed"
+                            'font-lock-face
+                            `((:background ,difftastic-t-removed-bg)
+                              ansi-color-bold
+                              ansi-color-italic
+                              ansi-color-underline
+                              (:foreground ,difftastic-t-removed-fg)))))
+            (should
+             (ert-equal-including-properties
+              (buffer-string)
+              (propertize "removed"
+                          'font-lock-face
+                          `(ansi-color-bold
+                            ansi-color-italic
+                            ansi-color-underline
+                            ((:background ,difftastic-t-removed-bg)
+                             (:foreground ,difftastic-t-removed-fg))))))))))))
 
 (ert-deftest difftastic--run-command-filter:added-no-highlight-ansi-colors-applied ()
-  :tags '(interactive)
   (let (difftastic-highlight-alist)
     (with-temp-buffer
       (eval
@@ -1949,17 +2204,25 @@ test/difftastic.t.el --- Emacs Lisp
           (difftastic--run-command-filter
            'test-process
            "[32;4madded[0m")
-          (should
-           (equal-including-properties
-            (buffer-string)
-            (propertize "added"
-                        'font-lock-face
-                        `((:background ,difftastic-t-added-bg)
-                          ansi-color-underline
-                          (:foreground ,difftastic-t-added-fg))))))))))
+          (if (version< "29" emacs-version) ;; since Emacs-29
+              (should
+               (equal-including-properties
+                (buffer-string)
+                (propertize "added"
+                            'font-lock-face
+                            `((:background ,difftastic-t-added-bg)
+                              ansi-color-underline
+                              (:foreground ,difftastic-t-added-fg)))))
+            (should
+             (ert-equal-including-properties
+              (buffer-string)
+              (propertize "added"
+                          'font-lock-face
+                          `(ansi-color-underline
+                            ((:background ,difftastic-t-added-bg)
+                             (:foreground ,difftastic-t-added-fg))))))))))))
 
 (ert-deftest difftastic--run-command-filter:added-no-highlight-bold-ansi-colors-applied ()
-  :tags '(interactive)
   (let (difftastic-highlight-alist)
     (with-temp-buffer
       (eval
@@ -1967,18 +2230,27 @@ test/difftastic.t.el --- Emacs Lisp
           (difftastic--run-command-filter
            'test-process
            "[32;1;4madded[0m")
-          (should
-           (equal-including-properties
-            (buffer-string)
-            (propertize "added"
-                        'font-lock-face
-                        `((:background ,difftastic-t-added-bg)
-                          ansi-color-bold
-                          ansi-color-underline
-                          (:foreground ,difftastic-t-added-fg))))))))))
+          (if (version< "29" emacs-version) ;; since Emacs-29
+              (should
+               (equal-including-properties
+                (buffer-string)
+                (propertize "added"
+                            'font-lock-face
+                            `((:background ,difftastic-t-added-bg)
+                              ansi-color-bold
+                              ansi-color-underline
+                              (:foreground ,difftastic-t-added-fg)))))
+            (should
+             (ert-equal-including-properties
+              (buffer-string)
+              (propertize "added"
+                          'font-lock-face
+                          `(ansi-color-bold
+                            ansi-color-underline
+                            ((:background ,difftastic-t-added-bg)
+                             (:foreground ,difftastic-t-added-fg))))))))))))
 
 (ert-deftest difftastic--run-command-filter:added-no-highlight-italic-ansi-colors-applied ()
-  :tags '(interactive)
   (let (difftastic-highlight-alist)
     (with-temp-buffer
       (eval
@@ -1986,18 +2258,27 @@ test/difftastic.t.el --- Emacs Lisp
           (difftastic--run-command-filter
            'test-process
            "[32;3;4madded[0m")
-          (should
-           (equal-including-properties
-            (buffer-string)
-            (propertize "added"
-                        'font-lock-face
-                        `((:background ,difftastic-t-added-bg)
-                          ansi-color-italic
-                          ansi-color-underline
-                          (:foreground ,difftastic-t-added-fg))))))))))
+          (if (version< "29" emacs-version) ;; since Emacs-29
+              (should
+               (equal-including-properties
+                (buffer-string)
+                (propertize "added"
+                            'font-lock-face
+                            `((:background ,difftastic-t-added-bg)
+                              ansi-color-italic
+                              ansi-color-underline
+                              (:foreground ,difftastic-t-added-fg)))))
+            (should
+             (ert-equal-including-properties
+              (buffer-string)
+              (propertize "added"
+                          'font-lock-face
+                          `(ansi-color-italic
+                            ansi-color-underline
+                            ((:background ,difftastic-t-added-bg)
+                             (:foreground ,difftastic-t-added-fg))))))))))))
 
 (ert-deftest difftastic--run-command-filter:added-no-highlight-bold-italic-ansi-colors-applied ()
-  :tags '(interactive)
   (let (difftastic-highlight-alist)
     (with-temp-buffer
       (eval
@@ -2005,144 +2286,277 @@ test/difftastic.t.el --- Emacs Lisp
           (difftastic--run-command-filter
            'test-process
            "[32;1;3;4madded[0m")
-          (should
-           (equal-including-properties
-            (buffer-string)
-            (propertize "added"
-                        'font-lock-face
-                        `((:background ,difftastic-t-added-bg)
-                          ansi-color-bold
-                          ansi-color-italic
-                          ansi-color-underline
-                          (:foreground ,difftastic-t-added-fg))))))))))
+          (if (version< "29" emacs-version) ;; since Emacs-29
+              (should
+               (equal-including-properties
+                (buffer-string)
+                (propertize "added"
+                            'font-lock-face
+                            `((:background ,difftastic-t-added-bg)
+                              ansi-color-bold
+                              ansi-color-italic
+                              ansi-color-underline
+                              (:foreground ,difftastic-t-added-fg)))))
+            (should
+             (ert-equal-including-properties
+              (buffer-string)
+              (propertize "added"
+                          'font-lock-face
+                          `(ansi-color-bold
+                            ansi-color-italic
+                            ansi-color-underline
+                            ((:background ,difftastic-t-added-bg)
+                             (:foreground ,difftastic-t-added-fg))))))))))))
 
 (ert-deftest difftastic--run-command-filter:comment-ansi-colors-applied ()
-  :tags '(interactive)
+  :expected-result (if (version< "29" emacs-version) ;; since Emacs-29
+                       :passed
+                     (if noninteractive
+                         :passed
+                       :failed)) ;; never checked interactively
   (with-temp-buffer
     (eval
      '(mocklet ((process-buffer => (current-buffer)))
         (difftastic--run-command-filter
          'test-process
          "[34mcomment[0m")
-        (should
-         (equal-including-properties
-          (buffer-string)
-          (propertize "comment"
-                      'font-lock-face
-                      `(:foreground ,difftastic-t-comment-fg))))))))
+        (if (version< "29" emacs-version) ;; since Emacs-29
+            (should
+             (equal-including-properties
+              (buffer-string)
+              (propertize "comment"
+                          'font-lock-face
+                          (if (face-background 'font-lock-comment-face)
+                              `((:background ,difftastic-t-comment-bg)
+                                (:foreground ,difftastic-t-comment-fg))
+                            `(:foreground ,difftastic-t-comment-fg)))))
+          (should
+           (ert-equal-including-properties
+            (buffer-string)
+            (propertize "comment"
+                        'font-lock-face
+                        `((:background ,difftastic-t-comment-bg)
+                          (:foreground ,difftastic-t-comment-fg))))))))))
 
 (ert-deftest difftastic--run-command-filter:comment-bold-ansi-colors-applied ()
-  :tags '(interactive)
+  :expected-result (if (version< "29" emacs-version) ;; since Emacs-29
+                       :passed
+                     (if noninteractive
+                         :passed
+                       :failed)) ;; never checked interactively
   (with-temp-buffer
     (eval
      '(mocklet ((process-buffer => (current-buffer)))
         (difftastic--run-command-filter
          'test-process
          "[34;1mcomment[0m")
-        (should
-         (equal-including-properties
-          (buffer-string)
-          (propertize "comment"
-                      'font-lock-face
-                      `(ansi-color-bold
-                        (:foreground ,difftastic-t-comment-fg)))))))))
+        (if (version< "29" emacs-version) ;; since Emacs-29
+            (should
+             (equal-including-properties
+              (buffer-string)
+              (propertize "comment"
+                          'font-lock-face
+                          `(,@(when (face-background 'font-lock-comment-face)
+                                `((:background ,difftastic-t-comment-bg)))
+                            ansi-color-bold
+                            (:foreground ,difftastic-t-comment-fg)))))
+          (should
+           (ert-equal-including-properties
+            (buffer-string)
+            (propertize "comment"
+                        'font-lock-face
+                        `(ansi-color-bold
+                          ((:background ,difftastic-t-comment-bg)
+                           (:foreground ,difftastic-t-comment-fg)))))))))))
 
 (ert-deftest difftastic--run-command-filter:comment-italic-ansi-colors-applied ()
-  :tags '(interactive)
+  :expected-result (if (version< "29" emacs-version) ;; since Emacs-29
+                       :passed
+                     (if noninteractive
+                         :passed
+                       :failed)) ;; never checked interactively
   (with-temp-buffer
     (eval
      '(mocklet ((process-buffer => (current-buffer)))
         (difftastic--run-command-filter
          'test-process
          "[34;3mcomment[0m")
-        (should
-         (equal-including-properties
-          (buffer-string)
-          (propertize "comment"
-                      'font-lock-face
-                      `(ansi-color-italic
-                        (:foreground ,difftastic-t-comment-fg)))))))))
+        (if (version< "29" emacs-version) ;; since Emacs-29
+            (should
+             (equal-including-properties
+              (buffer-string)
+              (propertize "comment"
+                          'font-lock-face
+                          `(,@(when (face-background 'font-lock-comment-face)
+                                `((:background ,difftastic-t-comment-bg)))
+                            ansi-color-italic
+                            (:foreground ,difftastic-t-comment-fg)))))
+          (should
+           (ert-equal-including-properties
+            (buffer-string)
+            (propertize "comment"
+                        'font-lock-face
+                        `(ansi-color-italic
+                          ((:background ,difftastic-t-comment-bg)
+                           (:foreground ,difftastic-t-comment-fg)))))))))))
 
 (ert-deftest difftastic--run-command-filter:comment-bold-italic-ansi-colors-applied ()
-  :tags '(interactive)
+  :expected-result (if (version< "29" emacs-version) ;; since Emacs-29
+                       :passed
+                     (if noninteractive
+                         :passed
+                       :failed)) ;; never checked interactively
   (with-temp-buffer
     (eval
      '(mocklet ((process-buffer => (current-buffer)))
         (difftastic--run-command-filter
          'test-process
          "[34;1;3mcomment[0m")
-        (should
-         (equal-including-properties
-          (buffer-string)
-          (propertize "comment"
-                      'font-lock-face
-                      `(ansi-color-bold
-                        ansi-color-italic
-                        (:foreground ,difftastic-t-comment-fg)))))))))
+        (if (version< "29" emacs-version) ;; since Emacs-29
+            (should
+             (equal-including-properties
+              (buffer-string)
+              (propertize "comment"
+                          'font-lock-face
+                          `(,@(when (face-background 'font-lock-comment-face)
+                                `((:background ,difftastic-t-comment-bg)))
+                            ansi-color-bold
+                            ansi-color-italic
+                            (:foreground ,difftastic-t-comment-fg)))))
+          (should
+           (ert-equal-including-properties
+            (buffer-string)
+            (propertize "comment"
+                        'font-lock-face
+                        `(ansi-color-bold
+                          ansi-color-italic
+                          ((:background ,difftastic-t-comment-bg)
+                           (:foreground ,difftastic-t-comment-fg)))))))))))
 
 (ert-deftest difftastic--run-command-filter:string-ansi-colors-applied ()
-  :tags '(interactive)
+  :expected-result (if (version< "29" emacs-version) ;; since Emacs-29
+                       :passed
+                     (if noninteractive
+                         :passed
+                       :failed)) ;; never checked interactively
   (with-temp-buffer
     (eval
      '(mocklet ((process-buffer => (current-buffer)))
         (difftastic--run-command-filter
          'test-process
          "[35mstring[0m")
-        (should
-         (equal-including-properties
-          (buffer-string)
-          (propertize "string"
-                      'font-lock-face
-                      `(:foreground ,difftastic-t-string-fg))))))))
+        (if (version< "29" emacs-version) ;; since Emacs-29
+            (should
+             (equal-including-properties
+              (buffer-string)
+              (propertize "string"
+                          'font-lock-face
+                          (if (face-background 'font-lock-string-face)
+                              `((:background ,difftastic-t-string-bg)
+                                (:foreground ,difftastic-t-string-fg))
+                            `(:foreground ,difftastic-t-string-fg)))))
+          (should
+           (ert-equal-including-properties
+            (buffer-string)
+            (propertize "string"
+                        'font-lock-face
+                        `((:background ,difftastic-t-string-bg)
+                          (:foreground ,difftastic-t-string-fg))))))))))
 
 (ert-deftest difftastic--run-command-filter:string-bold-ansi-colors-applied ()
-  :tags '(interactive)
+  :expected-result (if (version< "29" emacs-version) ;; since Emacs-29
+                       :passed
+                     (if noninteractive
+                         :passed
+                       :failed)) ;; never checked interactively
   (with-temp-buffer
     (eval
      '(mocklet ((process-buffer => (current-buffer)))
         (difftastic--run-command-filter
          'test-process
          "[35;1mstring[0m")
-        (should
-         (equal-including-properties
-          (buffer-string)
-          (propertize "string"
-                      'font-lock-face
-                      `(ansi-color-bold
-                        (:foreground ,difftastic-t-string-fg)))))))))
+        (if (version< "29" emacs-version) ;; since Emacs-29
+            (should
+             (equal-including-properties
+              (buffer-string)
+              (propertize "string"
+                          'font-lock-face
+                          `(,@(when (face-background 'font-lock-string-face)
+                                `((:background ,difftastic-t-string-bg)))
+                            ansi-color-bold
+                            (:foreground ,difftastic-t-string-fg)))))
+          (should
+           (ert-equal-including-properties
+            (buffer-string)
+            (propertize "string"
+                        'font-lock-face
+                        `(ansi-color-bold
+                          ((:background ,difftastic-t-string-bg)
+                           (:foreground ,difftastic-t-string-fg)))))))))))
 
 (ert-deftest difftastic--run-command-filter:string-italic-ansi-colors-applied ()
-  :tags '(interactive)
+  :expected-result (if (version< "29" emacs-version) ;; since Emacs-29
+                       :passed
+                     (if noninteractive
+                         :passed
+                       :failed)) ;; never checked interactively
   (with-temp-buffer
     (eval
      '(mocklet ((process-buffer => (current-buffer)))
         (difftastic--run-command-filter
          'test-process
          "[35;3mstring[0m")
-        (should
-         (equal-including-properties
-          (buffer-string)
-          (propertize "string"
-                      'font-lock-face
-                      `(ansi-color-italic
-                        (:foreground ,difftastic-t-string-fg)))))))))
+        (if (version< "29" emacs-version) ;; since Emacs-29
+            (should
+             (equal-including-properties
+              (buffer-string)
+              (propertize "string"
+                          'font-lock-face
+                          `(,@(when (face-background 'font-lock-string-face)
+                                `((:background ,difftastic-t-string-bg)))
+                            ansi-color-italic
+                            (:foreground ,difftastic-t-string-fg)))))
+          (should
+           (ert-equal-including-properties
+            (buffer-string)
+            (propertize "string"
+                        'font-lock-face
+                        `(ansi-color-italic
+                          ((:background ,difftastic-t-string-bg)
+                           (:foreground ,difftastic-t-string-fg)))))))))))
 
 (ert-deftest difftastic--run-command-filter:string-bold-italic-ansi-colors-applied ()
-  :tags '(interactive)
+  :expected-result (if (version< "29" emacs-version) ;; since Emacs-29
+                       :passed
+                     (if noninteractive
+                         :passed
+                       :failed)) ;; never checked interactively
   (with-temp-buffer
     (eval
      '(mocklet ((process-buffer => (current-buffer)))
         (difftastic--run-command-filter
          'test-process
          "[35;1;3mstring[0m")
-        (should
-         (equal-including-properties
-          (buffer-string)
-          (propertize "string"
-                      'font-lock-face
-                      `(ansi-color-bold
-                        ansi-color-italic
-                        (:foreground ,difftastic-t-string-fg)))))))))
+        (if (version< "29" emacs-version) ;; since Emacs-29
+            (should
+             (equal-including-properties
+              (buffer-string)
+              (propertize "string"
+                          'font-lock-face
+                          `(,@(when (face-background 'font-lock-string-face)
+                                `((:background ,difftastic-t-string-bg)))
+                            ansi-color-bold
+                            ansi-color-italic
+                            (:foreground ,difftastic-t-string-fg)))))
+          (should
+           (ert-equal-including-properties
+            (buffer-string)
+            (propertize "string"
+                        'font-lock-face
+                        `(ansi-color-bold
+                          ansi-color-italic
+                          ((:background ,difftastic-t-string-bg)
+                           (:foreground ,difftastic-t-string-fg)))))))))))
 
 (ert-deftest difftastic--run-command-sentinel:with-output-action-called ()
   (with-temp-buffer

@@ -2,7 +2,7 @@ export EMACS ?= $(shell command -v emacs 2>/dev/null)
 CASK_DIR := $(shell cask package-directory)
 
 files = $$(cask files | grep -Ev 'difftastic-(pkg|autoloads).el')
-test_files = test/difftastic.t.el test/difftastic-bindings.t.el
+test_files = $(wildcard test/difftastic*.t.el)
 
 $(CASK_DIR): Cask
 	cask install
@@ -16,7 +16,7 @@ bytecompile: cask
 	cask emacs -batch -L . -L test \
 	  --eval "(setq byte-compile-error-on-warn t)" \
 	  -f batch-byte-compile $(files) $(test_files)
-	  (ret=$$? ; cask clean-elc ; rm -f test/*.elc && exit $$ret)
+	  (ret=$$? ; cask clean-elc ; rm -f test/*.elc ; exit $$ret)
 
 .PHONY: lint
 lint: cask
@@ -38,7 +38,7 @@ checkdoc: cask
 	  --funcall checkdoc-batch $(files)
 
 .PHONY: test
-test: cask bytecompile
+test: cask
 	cask emacs -batch \
       $(foreach test_file,$(test_files),--load $(test_file)) \
 	  --eval "(let ((print-level 50) \

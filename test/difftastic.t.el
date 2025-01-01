@@ -2588,7 +2588,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
   (with-temp-buffer
     (insert "test output")
     (eval
-     '(mocklet (((process-status 'process) => 'not-exit)
+     '(mocklet (((process-status 'process) => 'run)
                 (process-buffer not-called)
                 (action not-called)
                 (message not-called))

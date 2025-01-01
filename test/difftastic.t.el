@@ -281,7 +281,8 @@
 (ert-deftest difftastic--rerun-file-buf:temporary-non-live-buffer-error-signaled ()
   (let (file-buf)
     (unwind-protect
-        (let (buffer rerun-alist orig-rerun-alist)
+        (let ((text-quoting-style 'straight)
+              buffer rerun-alist orig-rerun-alist)
           (with-temp-buffer
             (setq buffer (current-buffer)))
 
@@ -297,7 +298,7 @@
                         :type 'user-error))))
             (should
              (equal data
-                    "Buffer test [#<killed buffer>] doesn’t exist anymore")))
+                    "Buffer test [#<killed buffer>] doesn't exist anymore")))
 
           (should (equal orig-rerun-alist rerun-alist)))
 

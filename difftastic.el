@@ -859,23 +859,29 @@ adding background to faces if they have a foreground set."
     ;; well, but it's not as unambiguous as underline.  Use underline to detect
     ;; highlight, but remove all attributes that are in
     ;; `difftastic-highlight-strip-face-properties'.
-    (if-let* ((highlight-face (and (cl-member 'ansi-color-underline face)
+    (if-let* ((highlight-face (and (memq 'ansi-color-underline face)
                                    (alist-get difftastic-face
                                               difftastic-highlight-alist))))
-        (progn
-          (dolist (prop-face '((:underline . ansi-color-underline)
-                               (:bold . ansi-color-bold)
-                               (:italic . ansi-color-italic)
-                               (:faint . ansi-color-faint)))
-            (when (member (car prop-face)
-                          difftastic-highlight-strip-face-properties)
-              (setq face (cl-delete (cdr prop-face) face))))
+        (let ((to-strip (delq
+                         nil
+                         (mapcar
+                          (lambda (value-prop)
+                            (when (memq
+                                   (cdr value-prop)
+                                   difftastic-highlight-strip-face-properties)
+                              (car value-prop)))
+                          '((ansi-color-underline . :underline)
+                            (ansi-color-bold . :bold)
+                            (ansi-color-italic . :italic)
+                            (ansi-color-faint . :faint))))))
+          (setq face (cl-delete-if
+                      (lambda (value)
+                        (or (memq value to-strip)
+                            (and (listp value)
+                                 (plist-member value :foreground))))
+                      face))
           (cl-remf face :foreground)
-          (setq face
-                (cl-delete-if (lambda (elt)
-                                (and (listp elt)
-                                     (plist-get elt :foreground)))
-                              face))
+
           (push `(:foreground
                   ,(face-foreground highlight-face nil t))
                 face)

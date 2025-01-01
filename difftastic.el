@@ -418,7 +418,15 @@ display buffer at bottom."
    (aref ansi-color-normal-colors-vector 7))
   "Faces to use for colors on difftastic output (normal).
 Note that only foreground and background properties will be used."
-  :type '(vector face face face face face face face face)
+  :type '(vector
+          (face :tag "Black")
+          (face :tag "Removed")
+          (face :tag "Added")
+          (face :tag "Heading")
+          (face :tag "Comment")
+          (face :tag "String")
+          (face :tag "Warning")
+          (face :tag "White"))
   :group 'difftastic)
 
 (defcustom difftastic-bright-colors-vector
@@ -433,7 +441,15 @@ Note that only foreground and background properties will be used."
    (aref ansi-color-bright-colors-vector 7))
   "Faces to use for colors on difftastic output (bright).
 Note that only foreground and background properties will be used."
-  :type '(vector face face face face face face face face)
+  :type '(vector
+          (face :tag "Black")
+          (face :tag "Removed")
+          (face :tag "Added")
+          (face :tag "Heading")
+          (face :tag "Comment")
+          (face :tag "String")
+          (face :tag "Warning")
+          (face :tag "White"))
   :group 'difftastic)
 
 (defcustom difftastic-highlight-alist
@@ -445,7 +461,8 @@ between a non-highlighted face to a highlighted face.  Set to nil if
 you prefer unaltered difftastic output.
 
 Note that only foreground and background properties will be used."
-  :type '(alist :key-type face :value-type face)
+  :type '(alist :key-type (face :tag "Non-highlighted")
+                :value-type (face :tag "Highlighted"))
   :group 'difftastic)
 
 (defcustom difftastic-highlight-strip-face-properties '(:bold :underline)
@@ -592,6 +609,7 @@ It uses many keybindings from `view-mode' to provide a familiar
 behaviour to view diffs."
   :group 'difftastic
   (setq buffer-read-only t)
+  (setq font-lock-defaults '(nil t))
   (add-to-invisibility-spec '(difftastic . t)))
 
 (defvar-local difftastic--chunk-regexp-chunk nil)
@@ -725,9 +743,9 @@ The point needs to be in chunk header."
   (when (difftastic--point-at-chunk-header-p)
     (let ((inhibit-read-only t)
           (file-chunk
-           (member :file
-                   (get-text-property (compat-call pos-bol) ; Since Emacs-29
-                                      'difftastic))))
+           (memq :file
+                 (get-text-property (compat-call pos-bol) ; Since Emacs-29
+                                    'difftastic))))
       ;; This is not ideal as it doesn't just undo how the chunk has been
       ;; hidden, but it bluntly shows everything when showing a file.  But it
       ;; allows to show all chunks that were hidden twice - first time as a
@@ -749,9 +767,9 @@ FILE-CHUNK prefix hide all file chunks from the header to the end
 of the file."
   (interactive "P" difftastic-mode)
   (when (difftastic--point-at-chunk-header-p file-chunk)
-    (if (member :hidden
-                (get-text-property (compat-call pos-bol) ; Since Emacs-29
-                                   'difftastic))
+    (if (memq :hidden
+              (get-text-property (compat-call pos-bol) ; Since Emacs-29
+                                 'difftastic))
         (difftastic-show-chunk)
       (difftastic-hide-chunk file-chunk))))
 

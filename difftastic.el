@@ -592,6 +592,7 @@ It uses many keybindings from `view-mode' to provide a familiar
 behaviour to view diffs."
   :group 'difftastic
   (setq buffer-read-only t)
+  (setq font-lock-defaults '(nil t))
   (add-to-invisibility-spec '(difftastic . t)))
 
 (defvar-local difftastic--chunk-regexp-chunk nil)

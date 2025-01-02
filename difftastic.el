@@ -418,7 +418,15 @@ display buffer at bottom."
    (aref ansi-color-normal-colors-vector 7))
   "Faces to use for colors on difftastic output (normal).
 Note that only foreground and background properties will be used."
-  :type '(vector face face face face face face face face)
+  :type '(vector
+          (face :tag "Black")
+          (face :tag "Removed")
+          (face :tag "Added")
+          (face :tag "Heading")
+          (face :tag "Comment")
+          (face :tag "String")
+          (face :tag "Warning")
+          (face :tag "White"))
   :group 'difftastic)
 
 (defcustom difftastic-bright-colors-vector
@@ -433,7 +441,15 @@ Note that only foreground and background properties will be used."
    (aref ansi-color-bright-colors-vector 7))
   "Faces to use for colors on difftastic output (bright).
 Note that only foreground and background properties will be used."
-  :type '(vector face face face face face face face face)
+  :type '(vector
+          (face :tag "Black")
+          (face :tag "Removed")
+          (face :tag "Added")
+          (face :tag "Heading")
+          (face :tag "Comment")
+          (face :tag "String")
+          (face :tag "Warning")
+          (face :tag "White"))
   :group 'difftastic)
 
 (defcustom difftastic-highlight-alist
@@ -445,7 +461,8 @@ between a non-highlighted face to a highlighted face.  Set to nil if
 you prefer unaltered difftastic output.
 
 Note that only foreground and background properties will be used."
-  :type '(alist :key-type face :value-type face)
+  :type '(alist :key-type (face :tag "Non-highlighted")
+                :value-type (face :tag "Highlighted"))
   :group 'difftastic)
 
 (defcustom difftastic-highlight-strip-face-properties '(:bold :underline)

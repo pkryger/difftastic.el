@@ -726,9 +726,9 @@ The point needs to be in chunk header."
   (when (difftastic--point-at-chunk-header-p)
     (let ((inhibit-read-only t)
           (file-chunk
-           (member :file
-                   (get-text-property (compat-call pos-bol) ; Since Emacs-29
-                                      'difftastic))))
+           (memq :file
+                 (get-text-property (compat-call pos-bol) ; Since Emacs-29
+                                    'difftastic))))
       ;; This is not ideal as it doesn't just undo how the chunk has been
       ;; hidden, but it bluntly shows everything when showing a file.  But it
       ;; allows to show all chunks that were hidden twice - first time as a
@@ -750,9 +750,9 @@ FILE-CHUNK prefix hide all file chunks from the header to the end
 of the file."
   (interactive "P" difftastic-mode)
   (when (difftastic--point-at-chunk-header-p file-chunk)
-    (if (member :hidden
-                (get-text-property (compat-call pos-bol) ; Since Emacs-29
-                                   'difftastic))
+    (if (memq :hidden
+              (get-text-property (compat-call pos-bol) ; Since Emacs-29
+                                 'difftastic))
         (difftastic-show-chunk)
       (difftastic-hide-chunk file-chunk))))
 

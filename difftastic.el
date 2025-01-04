@@ -1086,8 +1086,8 @@ to difftastic."
        args)))))
 
 (defun difftastic--git-diff-range (rev-or-range args files)
-  "Implementation for `difftastic-git-diff-range'.
-See the original function documentation for REV-OR-RANGE, ARGS, and FILES."
+                                        ; checkdoc-params: (rev-or-range args files)
+  "Implementation for `difftastic-git-diff-range', which see."
   (pcase-let* ((`(,git-args ,difftastic-args)
                 (difftastic--transform-diff-arguments args))
                (buffer-name
@@ -1171,8 +1171,8 @@ The meaning of REV-OR-RANGE, ARGS, and FILES is like in
          (call-interactively #'difftastic-git-diff-range)))))))
 
 (defun difftastic--magit-show (rev)
-  "Implementation for `difftastic-magit-show'.
-See the original function documentation for REV."
+                                        ; checkdoc-params: (rev)
+  "Implementation for `difftastic-magit-show', which see."
   (if (not rev)
       (user-error "No revision specified")
     (difftastic--git-with-difftastic
@@ -1437,8 +1437,8 @@ temporary file or nil otherwise."
     file-buf))
 
 (defun difftastic--rerun (lang-override)
-  "Implementation for `difftastic-rerun'.
-See the original function documentation for LANG-OVERRIDE."
+                                        ; checkdoc-params: (lang-override)
+  "Implementation for `difftastic-rerun', which see."
   (if-let* (((eq major-mode 'difftastic-mode))
             (rerun-alist (copy-tree difftastic--rerun-alist)))
       (difftastic--with-file-bufs (file-buf-A file-buf-B)

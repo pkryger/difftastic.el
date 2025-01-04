@@ -1121,10 +1121,9 @@ The meaning of REV-OR-RANGE, ARGS, and FILES is like in
                      (magit-diff-arguments)))
   (difftastic--git-diff-range rev-or-range args files))
 
-;;;###autoload
-(defun difftastic-magit-diff (&optional args files)
-  "Show the result of \\='git diff ARGS -- FILES\\=' with difftastic."
-  (interactive (magit-diff-arguments))
+(defun difftastic--magit-diff (args files)
+                                        ; checkdoc-params: (args files)
+  "Implementation for `difftastic-magit-diff', which see."
   (let ((default-directory (magit-toplevel))
         (section (magit-current-section)))
     (cond
@@ -1169,6 +1168,12 @@ The meaning of REV-OR-RANGE, ARGS, and FILES is like in
          (difftastic-git-diff-range range args files))
         (_
          (call-interactively #'difftastic-git-diff-range)))))))
+
+;;;###autoload
+(defun difftastic-magit-diff (&optional args files)
+  "Show the result of \\='git diff ARGS -- FILES\\=' with difftastic."
+  (interactive (magit-diff-arguments))
+  (difftastic--magit-diff args files))
 
 (defun difftastic--magit-show (rev)
                                         ; checkdoc-params: (rev)

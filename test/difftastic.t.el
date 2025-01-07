@@ -3245,6 +3245,73 @@ This only happens when `noninteractive' to avoid messing up with faces."
             ((difftastic--magit-diff "test-args" "test-files")))
     (call-interactively #'difftastic-magit-diff)))
 
+(ert-deftest difftastic-mode--do-exit:basic ()
+  (with-temp-buffer
+    (let ((buffer (current-buffer))
+          difftastic-exits-all-viewing-windows)
+      (eval `(mocklet (((window-buffer) => ,buffer)
+                       ((quit-window) :times 1))
+               (difftastic-mode--do-exit))))))
+
+(ert-deftest difftastic-mode--do-exit:all-windows ()
+  (with-temp-buffer
+    (let ((buffer (current-buffer))
+          difftastic-exits-all-viewing-windows)
+      (eval `(mocklet (((window-buffer) => ,buffer)
+                       ((get-buffer-window-list) => '("window" "window"))
+                       ((quit-window nil "window") :times 2))
+               (difftastic-mode--do-exit nil t))))))
+
+(ert-deftest difftastic-mode--do-exit:exits-all-viewing-windows ()
+  (with-temp-buffer
+    (let ((buffer (current-buffer))
+          (difftastic-exits-all-viewing-windows t))
+      (eval `(mocklet (((window-buffer) => ,buffer)
+                       ((get-buffer-window-list) => '("window" "window"))
+                       ((quit-window nil "window") :times 2))
+               (difftastic-mode--do-exit))))))
+
+(ert-deftest difftastic-mode--do-exit:basic-and-exit-action ()
+  (with-temp-buffer
+    (let ((buffer (current-buffer))
+          difftastic-exits-all-viewing-windows)
+      (eval `(mocklet (((window-buffer) => ,buffer)
+                       ((quit-window) :times 1)
+                       ((exit-action ,buffer) :times 1))
+               (difftastic-mode--do-exit #'exit-action))))))
+
+(ert-deftest difftastic-mode--do-exit:all-windows-and-exit-action ()
+  (with-temp-buffer
+    (let ((buffer (current-buffer))
+          difftastic-exits-all-viewing-windows)
+      (eval `(mocklet (((window-buffer) => ,buffer)
+                       ((get-buffer-window-list) => '("window" "window"))
+                       ((quit-window nil "window") :times 2)
+                       ((exit-action ,buffer) :times 1))
+               (difftastic-mode--do-exit #'exit-action t))))))
+
+(ert-deftest difftastic-mode--do-exit:exits-all-viewing-windows-and-exit-action ()
+  (with-temp-buffer
+    (let ((buffer (current-buffer))
+          (difftastic-exits-all-viewing-windows t))
+      (eval `(mocklet (((window-buffer) => ,buffer)
+                       ((get-buffer-window-list) => '("window" "window"))
+                       ((quit-window nil "window") :times 2)
+                       ((exit-action ,buffer) :times 1))
+               (difftastic-mode--do-exit #'exit-action))))))
+
+(ert-deftest difftascit-leave:basic ()
+  (mocklet (((difftastic-mode--do-exit) :times 1))
+    (funcall-interactively #'difftastic-leave)))
+
+(ert-deftest difftascit-quit:basic ()
+  (mocklet (((difftastic-mode--do-exit 'kill-buffer) :times 1))
+    (funcall-interactively #'difftastic-quit)))
+
+(ert-deftest difftascit-quit-all:basic ()
+  (mocklet (((difftastic-mode--do-exit 'kill-buffer t) :times 1))
+    (funcall-interactively #'difftastic-quit-all)))
+
 (ert-deftest difftastic.el-validate-commentary-in-sync-with-readme.org ()
   (let ((org-export-show-temporary-export-buffer nil)
         (org-confirm-babel-evaluate nil)

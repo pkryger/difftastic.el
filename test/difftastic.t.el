@@ -3312,6 +3312,70 @@ This only happens when `noninteractive' to avoid messing up with faces."
   (mocklet (((difftastic-mode--do-exit 'kill-buffer t) :times 1))
     (funcall-interactively #'difftastic-quit-all)))
 
+(ert-deftest difftastic--dired-diff:basic ()
+  (mocklet (((dired-diff "test-file") :times 1))
+    (difftastic--dired-diff "test-file" nil)))
+
+(ert-deftest difftastic--dired-diff:basic-and-lang-override ()
+  (let ((dired-diff-called 0))
+    (mocklet (((difftastic-files "current" "test-file" "test-lang") :times 1))
+      (difftastic--with-temp-advice 'dired-diff
+          :override
+          (lambda (file &rest _)
+            (should (equal file "test-file"))
+            (diff "current" file)
+            (cl-incf dired-diff-called))
+        (difftastic--dired-diff "test-file" "test-lang")))
+    (should (equal 1 dired-diff-called))))
+
+(ert-deftest difftastic--dired-diff:interactive ()
+  (let ((dired-diff-called 0))
+    (mocklet (((difftastic-files "current" "test-file" "test-lang") :times 1))
+      (difftastic--with-temp-advice 'dired-diff
+          :override
+          (lambda (&rest _)
+            (interactive)
+            (let ((called-interactively (called-interactively-p 'any)))
+              (should called-interactively))
+            (diff "current" "test-file")
+            (cl-incf dired-diff-called))
+        (difftastic--dired-diff 'interactive "test-lang"))
+      (should (equal 1 dired-diff-called)))))
+
+(ert-deftest difftastic--dired-diff:interactive-and-lang-override ()
+  (let ((dired-diff-called 0))
+    (mocklet (((difftastic-files "current" "test-file" "test-lang") :times 1))
+      (difftastic--with-temp-advice 'dired-diff
+          :override
+          (lambda (&rest _)
+            (interactive)
+            (let ((called-interactively (called-interactively-p 'any)))
+              (should called-interactively))
+            (diff "current" "test-file")
+            (cl-incf dired-diff-called))
+        (difftastic--dired-diff 'interactive "test-lang"))
+      (should (equal 1 dired-diff-called)))))
+
+(ert-deftest difftastic-dired-diff:basic ()
+  (mocklet (((difftastic--dired-diff "test-file" nil) :times 1))
+    (difftastic-dired-diff "test-file")))
+
+(ert-deftest difftastic-dired-diff:basic-with-lang-override ()
+  (mocklet (((difftastic--dired-diff "test-file" "test-lang") :times 1))
+    (difftastic-dired-diff "test-file" "test-lang")))
+
+(ert-deftest difftastic-dired-diff:interactive ()
+  (mocklet (((difftastic--dired-diff 'interactive nil) :times 1)
+            (completing-read not-called))
+    (call-interactively #'difftastic-dired-diff)))
+
+(ert-deftest difftastic-dired-diff:interactive-with-lang-override ()
+  (let ((current-prefix-arg 4))
+    (mocklet (((difftastic--dired-diff 'interactive "test-lang") :times 1)
+              ((difftastic--get-languages) => "test-langs")
+              ((completing-read "Language: " "test-langs" nil t) => "test-lang"))
+      (call-interactively #'difftastic-dired-diff))))
+
 (ert-deftest difftastic.el-validate-commentary-in-sync-with-readme.org ()
   (let ((org-export-show-temporary-export-buffer nil)
         (org-confirm-babel-evaluate nil)

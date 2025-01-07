@@ -1410,6 +1410,17 @@ running difftastic."
    (cons file-B nil)
    lang-override))
 
+(defun difftastic--dired-diff (file lang-override)
+                                        ; checkdoc-params: (file lang-override)
+  "Implementation for `difftastic--dired-diff', which see."
+  (cl-letf (((symbol-function 'diff)
+             (lambda (current file &rest _)
+               (difftastic-files current file lang-override)))
+            (current-prefix-arg nil))
+    (if (eq file 'interactive)
+        (call-interactively #'dired-diff)
+      (funcall #'dired-diff file))))
+
 ;;;###autoload
 (defun difftastic-dired-diff (file &optional lang-override)
   "Compare file at point with FILE using difftastic.
@@ -1421,13 +1432,7 @@ makes the function prompt for LANG-OVERRIDE.  See \\='difft
          (when current-prefix-arg
            (completing-read "Language: " (difftastic--get-languages) nil t)))
    dired-mode)
-  (cl-letf (((symbol-function 'diff)
-             (lambda (current file _switches)
-               (difftastic-files current file lang-override)))
-            (current-prefix-arg nil))
-    (if (eq file 'interactive)
-        (call-interactively #'dired-diff))
-    (funcall #'dired-diff file)))
+  (difftastic--dired-diff file lang-override))
 
 (defun difftastic--rerun-file-buf (prefix file-buf rerun-alist)
   "Create a new temporary file for the FILE-BUF with PREFIX if needed.

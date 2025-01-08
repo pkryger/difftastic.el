@@ -127,7 +127,7 @@
       (when (and (cdr file-buf) (file-exists-p (car file-buf)))
         (delete-file (car file-buf))))))
 
-(ert-deftest difftastic--with-file-bufs:basic-case-temporary-file-bufs-are-preserved ()
+(ert-deftest difftastic--with-file-bufs:basic-temporary-file-bufs-are-preserved ()
   (let (temp-file-A temp-file-B temp-file-C)
     (unwind-protect
         (progn
@@ -153,7 +153,7 @@
         (when (file-exists-p temp-file)
           (delete-file temp-file))))))
 
-(ert-deftest difftastic--with-file-bufs:error-mode-temporary-file-bufs-are-deleted ()
+(ert-deftest difftastic--with-file-bufs:basic-body-error-temporary-file-bufs-are-deleted ()
   (let (temp-file-A temp-file-B temp-file-C)
     (unwind-protect
         (progn
@@ -175,6 +175,88 @@
         (when (file-exists-p temp-file)
           (delete-file temp-file))))))
 
+(ert-deftest difftastic--with-file-bufs:valueform-temporary-file-bufs-are-preserved ()
+  (let (temp-file-A temp-file-B temp-file-C)
+    (unwind-protect
+        (progn
+          (setq temp-file-A (make-temp-file "difftastic.t")
+                temp-file-B (make-temp-file "difftastic.t")
+                temp-file-C (make-temp-file "difftastic.t"))
+          (should
+           (equal 42
+                  (eval
+                   `(difftastic--with-file-bufs ((file-buf-A (cons ,temp-file-A t))
+                                                 (file-buf-B (cons ,temp-file-B nil))
+                                                 (file-buf-C (cons ,temp-file-C t)))
+                      (should (equal file-buf-A (cons ,temp-file-A t)))
+                      (should (equal file-buf-B (cons ,temp-file-B nil)))
+                      (should (equal file-buf-C (cons ,temp-file-C t)))
+                      42))))
+          (should (file-exists-p temp-file-A))
+          (should (file-exists-p temp-file-B))
+          (should (file-exists-p temp-file-C)))
+
+      (dolist (temp-file (list temp-file-A temp-file-B temp-file-C))
+        (when (file-exists-p temp-file)
+          (delete-file temp-file))))))
+
+(ert-deftest difftastic--with-file-bufs:valueform-body-error-temporary-file-bufs-are-deleted ()
+  (let (temp-file-A temp-file-B temp-file-C)
+    (unwind-protect
+        (progn
+          (setq temp-file-A (make-temp-file "difftastic.t")
+                temp-file-B (make-temp-file "difftastic.t")
+                temp-file-C (make-temp-file "difftastic.t"))
+          (should-error
+           (eval
+            `(difftastic--with-file-bufs ((file-buf-A (cons ,temp-file-A t))
+                                          (file-buf-B (cons ,temp-file-B nil))
+                                          (file-buf-C (cons ,temp-file-C t)))
+               (should (equal file-buf-A (cons ,temp-file-A t)))
+               (should (equal file-buf-B (cons ,temp-file-B nil)))
+               (should (equal file-buf-C (cons ,temp-file-C t)))
+               (signal 'error "test-error"))))
+          (should-not (file-exists-p temp-file-A))
+          (should (file-exists-p temp-file-B))
+          (should-not (file-exists-p temp-file-C)))
+
+      (dolist (temp-file (list temp-file-A temp-file-B temp-file-C))
+        (when (file-exists-p temp-file)
+          (delete-file temp-file))))))
+
+(ert-deftest difftastic--with-file-bufs:valueform-error-temporary-file-bufs-are-deleted ()
+  (let (temp-file-A temp-file-B temp-file-C)
+    (unwind-protect
+        (progn
+          (setq temp-file-A (make-temp-file "difftastic.t")
+                temp-file-B (make-temp-file "difftastic.t")
+                temp-file-C (make-temp-file "difftastic.t"))
+          (should-error
+           (eval
+            `(difftastic--with-file-bufs ((file-buf-A (cons ,temp-file-A t))
+                                          (file-buf-B (cons ,temp-file-B nil))
+                                          (file-buf-C (cons ,temp-file-C t))
+                                          (file-buf-D (signal 'error "test-error"))))))
+          (should-not (file-exists-p temp-file-A))
+          (should (file-exists-p temp-file-B))
+          (should-not (file-exists-p temp-file-C)))
+
+      (dolist (temp-file (list temp-file-A temp-file-B temp-file-C))
+        (when (file-exists-p temp-file)
+          (delete-file temp-file))))))
+
+(ert-deftest difftastic--with-file-bufs:valueform-error ()
+  (should-error (eval `(difftastic--with-file-bufs 42)))
+  (should-error (eval `(difftastic--with-file-bufs (nil))))
+  (should-error (eval `(difftastic--with-file-bufs (t))))
+  (should-error (eval `(difftastic--with-file-bufs (42))))
+  (should-error (eval `(difftastic--with-file-bufs ("foo"))))
+  (should-error (eval `(difftastic--with-file-bufs ((42 t)))))
+  (should-error (eval `(difftastic--with-file-bufs ((nil t)))))
+  (should-error (eval `(difftastic--with-file-bufs ((t t)))))
+  (should-error (eval `(difftastic--with-file-bufs (("foo" t)))))
+  (should-error (eval `(difftastic--with-file-bufs ((foo)))))
+  (should-error (eval `(difftastic--with-file-bufs ((foo bar baz))))))
 
 (ert-deftest difftastic--delete-temp-file-buf:nil-does-nothing ()
   (should-not (difftastic--delete-temp-file-buf nil)))

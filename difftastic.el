@@ -1322,15 +1322,43 @@ argument."
        (difftastic--delete-temp-file-buf file-buf-B)))))
 
 (defmacro difftastic--with-file-bufs (file-bufs &rest body)
-  "Exectue the forms in BODY with each symbol in FILE-BUFS list `let'-bound to nil.
-If any form in BODY signals an error each element in FILE-BUFS will be passed
-to `difftastic--delete-temp-file-buf'."
+  "Exectue the forms in BODY with each spec in FILE-BUFS list `let'-bound.
+Each element in FILE-BUFS is in a form of SYMBOL (which is a
+symbol bound to nil) or a list (SYMBOL VALUEFORM) (which binds
+SYMBOL to the value of VALUEFORM).  Each VALUEFORM value is bound
+sequentially and can reffer to symbols already bound by this
+FILE-BUFS.  If any of VALUEFORM or any form in BODY signals an
+error each symbol in FILE-BUFS will be passed to
+`difftastic--delete-temp-file-buf'."
   (declare (indent 1) (debug ((&rest symbolp) body)))
-  `(let ,file-bufs
+  `(let ,(mapcar (lambda (file-buf)
+                   (cond
+                    ((symbolp file-buf) file-buf)
+                    ((and (listp file-buf)
+                          (equal (length file-buf) 2)
+                          (symbolp (car file-buf)))
+                     (car file-buf))
+                    (t (error (concat "Wrong type argument: symbolp or "
+                                      "(SYMBOL VALUEFORM), %S")
+                              file-buf))))
+                 file-bufs)
      (condition-case err
-         (progn ,@body)
+         (progn
+           ,(apply #'append
+                   '(setq) ; empty `setq' should be fine
+                   (mapcar (lambda (file-buf)
+                             (when (listp file-buf)
+                               file-buf))
+                           file-bufs))
+           ,@body)
        (error
-        (dolist (file-buf (list ,@file-bufs))
+        (dolist (file-buf
+                 (list ,@(mapcar
+                          (lambda (file-buf)
+                            (cond
+                             ((symbolp file-buf)  file-buf)
+                             ((listp file-buf) (car file-buf))))
+                          file-bufs)))
           (difftastic--delete-temp-file-buf file-buf))
         (signal (car err) (cdr err))))))
 
@@ -1371,9 +1399,10 @@ BUFFER-B is a file buffer,
 then ask for language before running difftastic."
   (interactive (difftastic--buffers-args))
 
-  (difftastic--with-file-bufs (file-buf-A file-buf-B)
-    (setq file-buf-A (difftastic--get-file-buf "A" (get-buffer buffer-A))
-          file-buf-B (difftastic--get-file-buf "B" (get-buffer buffer-B)))
+  (difftastic--with-file-bufs ((file-buf-A (difftastic--get-file-buf
+                                            "A" (get-buffer buffer-A)))
+                               (file-buf-B (difftastic--get-file-buf
+                                             "B" (get-buffer buffer-B))))
     (difftastic--files-internal
      (get-buffer-create
       (concat "*difftastic " buffer-A " " buffer-B "*"))
@@ -1475,12 +1504,11 @@ temporary file or nil otherwise."
   "Implementation for `difftastic-rerun', which see."
   (if-let* (((eq major-mode 'difftastic-mode))
             (rerun-alist (copy-tree difftastic--rerun-alist)))
-      (difftastic--with-file-bufs (file-buf-A file-buf-B)
-        (let-alist rerun-alist
-          (setq file-buf-A
-                (difftastic--rerun-file-buf "A" .file-buf-A rerun-alist)
-                file-buf-B
-                (difftastic--rerun-file-buf "B" .file-buf-B rerun-alist))
+      (let-alist rerun-alist
+        (difftastic--with-file-bufs ((file-buf-A (difftastic--rerun-file-buf
+                                                  "A" .file-buf-A rerun-alist))
+                                     (file-buf-B (difftastic--rerun-file-buf
+                                                  "B" .file-buf-B rerun-alist)))
           (let* ((default-directory .default-directory)
                  (lang-override (or lang-override
                                     (alist-get 'lang-override rerun-alist)))

@@ -506,6 +506,15 @@ the selected window is considered for restoring."
   :type 'boolean
   :group 'difftastic)
 
+(defcustom difftastic-use-last-dir ediff-use-last-dir
+  "When non-nil difftastic will use previous directory when reading file name.
+Like `ediff-use-last-dir', which see."
+  :type 'boolean
+  :group 'difftastic)
+
+(defvar difftastic--last-dir-A nil)
+(defvar difftastic--last-dir-B nil)
+
 (defmacro difftastic--with-temp-advice (symbol how function &rest body)
   ;; checkdoc-params: (symbol how function)
   "Execute BODY with advice temporarily enabled.
@@ -1373,29 +1382,37 @@ then ask for language before running difftastic."
 (defun difftastic--files-args ()
   "Return arguments for `difftastic-files'."
   ;; adapted from `ediff-files'
-  (let ((dir-A (if ediff-use-last-dir
-                   ediff-last-dir-A
+  (let ((dir-A (if difftastic-use-last-dir
+                   difftastic--last-dir-A
                  default-directory))
-        dir-B f)
-    (list (setq f (ediff-read-file-name
-                   "File A to compare"
-                   dir-A
-                   (ediff-get-default-file-name)))
-          (ediff-read-file-name "File B to compare"
-                                (setq dir-B
-                                      (if ediff-use-last-dir
-                                          ediff-last-dir-B
-                                        (file-name-directory f)))
-                                (progn
-                                  (add-to-history
-                                   'file-name-history
-                                   (ediff-abbreviate-file-name
-                                    (expand-file-name
-                                     (file-name-nondirectory f)
-                                     dir-B)))
-                                  (ediff-get-default-file-name f 1)))
-          (when current-prefix-arg
-            (completing-read "Language: " (difftastic--get-languages) nil t)))))
+        dir-B f ff)
+    (prog1
+        (list (setq f (ediff-read-file-name
+                       "File A to compare"
+                       dir-A
+                       (ediff-get-default-file-name)))
+              (let ((file-name-history file-name-history))
+                (setq dir-B (if difftastic-use-last-dir
+                                difftastic--last-dir-B
+                              (file-name-directory f)))
+                (add-to-history 'file-name-history
+                                (ediff-abbreviate-file-name
+                                 (expand-file-name
+                                  (file-name-nondirectory f)
+                                  dir-B)))
+                (setq ff (ediff-read-file-name
+                          "File B to compare"
+                          dir-B
+                          (ediff-get-default-file-name f 1))))
+              (when current-prefix-arg
+                (completing-read "Language: "
+                                 (difftastic--get-languages)
+                                 nil
+                                 t)))
+      (setq difftastic--last-dir-A (file-name-as-directory
+                                    (file-name-directory f)))
+      (setq difftastic--last-dir-B (file-name-as-directory
+                                    (file-name-directory ff))))))
 
 ;;;###autoload
 (defun difftastic-files (file-A file-B &optional lang-override)

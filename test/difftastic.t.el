@@ -3704,9 +3704,10 @@ This only happens when `noninteractive' to avoid messing up with faces."
         (delete-file file-A)))))
 
 (ert-deftest difftastic--files-args:use-last-dir ()
-  (cl-letf* ((ediff-use-last-dir t)
-             (ediff-last-dir-A "/last-dir-A")
-             (ediff-last-dir-B "/last-dir-B")
+  (cl-letf* ((orig-file-name-history (copy-tree file-name-history))
+             (difftastic-use-last-dir t)
+             (difftastic--last-dir-A "/last-dir-A")
+             (difftastic--last-dir-B "/last-dir-B")
              (ediff-read-file-name-args '(("/last-dir-A/file-A"
                                            "File A to compare" "/last-dir-A" "default-A")
                                           ("/last-dir-B/file-B"
@@ -3739,11 +3740,15 @@ This only happens when `noninteractive' to avoid messing up with faces."
                    (list "/last-dir-A/file-A"
                          "/last-dir-B/file-B"
                          nil)))
+    (should (equal file-name-history orig-file-name-history))
+    (should (equal difftastic--last-dir-A "/last-dir-A/"))
+    (should (equal difftastic--last-dir-B "/last-dir-B/"))
     (should (equal ediff-read-file-name-called 2))
     (should (equal ediff-get-default-file-name-called 2))))
 
 (ert-deftest difftastic--files-args:use-default-dir ()
-  (cl-letf* ((ediff-use-last-dir nil)
+  (cl-letf* ((orig-file-name-history (copy-tree file-name-history))
+             (difftastic-use-last-dir nil)
              (default-directory "/test-directory")
              (ediff-read-file-name-args '(("/test-directory/file-A"
                                            "File A to compare" "/test-directory" "default-A")
@@ -3777,13 +3782,17 @@ This only happens when `noninteractive' to avoid messing up with faces."
                    (list "/test-directory/file-A"
                          "/test-directory/file-B"
                          nil)))
+    (should (equal file-name-history orig-file-name-history))
+    (should (equal difftastic--last-dir-A "/test-directory/"))
+    (should (equal difftastic--last-dir-B "/test-directory/"))
     (should (equal ediff-read-file-name-called 2))
     (should (equal ediff-get-default-file-name-called 2))))
 
 (ert-deftest difftastic--files-args:use-last-dir-with-prefix ()
-  (cl-letf* ((ediff-use-last-dir t)
-             (ediff-last-dir-A "/last-dir-A")
-             (ediff-last-dir-B "/last-dir-B")
+  (cl-letf* ((orig-file-name-history (copy-tree file-name-history))
+             (difftastic-use-last-dir t)
+             (difftastic--last-dir-A "/last-dir-A")
+             (difftastic--last-dir-B "/last-dir-B")
              (ediff-read-file-name-args '(("/last-dir-A/file-A"
                                            "File A to compare" "/last-dir-A" "default-A")
                                           ("/last-dir-B/file-B"
@@ -3819,11 +3828,15 @@ This only happens when `noninteractive' to avoid messing up with faces."
                    (list "/last-dir-A/file-A"
                          "/last-dir-B/file-B"
                          "test-lang"))))
+    (should (equal file-name-history orig-file-name-history))
+    (should (equal difftastic--last-dir-A "/last-dir-A/"))
+    (should (equal difftastic--last-dir-B "/last-dir-B/"))
     (should (equal ediff-read-file-name-called 2))
     (should (equal ediff-get-default-file-name-called 2))))
 
 (ert-deftest difftastic--files-args:use-default-dir-with-prefix ()
-  (cl-letf* ((ediff-use-last-dir nil)
+  (cl-letf* ((orig-file-name-history (copy-tree file-name-history))
+             (difftastic-use-last-dir nil)
              (default-directory "/test-directory")
              (ediff-read-file-name-args '(("/test-directory/file-A"
                                            "File A to compare" "/test-directory" "default-A")
@@ -3860,6 +3873,9 @@ This only happens when `noninteractive' to avoid messing up with faces."
                    (list "/test-directory/file-A"
                          "/test-directory/file-B"
                          "test-lang"))))
+    (should (equal file-name-history orig-file-name-history))
+    (should (equal difftastic--last-dir-A "/test-directory/"))
+    (should (equal difftastic--last-dir-B "/test-directory/"))
     (should (equal ediff-read-file-name-called 2))
     (should (equal ediff-get-default-file-name-called 2))))
 

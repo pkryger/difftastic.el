@@ -3703,6 +3703,174 @@ This only happens when `noninteractive' to avoid messing up with faces."
       (when (file-exists-p file-A)
         (delete-file file-A)))))
 
+(ert-deftest difftastic--files-args:use-last-dir ()
+  (cl-letf* ((ediff-use-last-dir t)
+             (ediff-last-dir-A "/last-dir-A")
+             (ediff-last-dir-B "/last-dir-B")
+             (ediff-read-file-name-args '(("/last-dir-A/file-A"
+                                           "File A to compare" "/last-dir-A" "default-A")
+                                          ("/last-dir-B/file-B"
+                                           "File B to compare" "/last-dir-B" "default-B")))
+             (ediff-read-file-name-called 0)
+             ((symbol-function #'ediff-read-file-name)
+              (lambda (&rest args)
+                (let ((current (car ediff-read-file-name-args)))
+                  (setq ediff-read-file-name-args
+                        (cdr ediff-read-file-name-args))
+                  (should (equal args (cdr current)))
+                  (cl-incf ediff-read-file-name-called)
+                  (car current))))
+             (ediff-get-default-file-name-args '(("default-A")
+                                                 ("default-B"
+                                                  "/last-dir-A/file-A" 1)))
+             (ediff-get-default-file-name-called 0)
+             ((symbol-function #'ediff-get-default-file-name)
+              (lambda (&rest args)
+                (let ((current (car ediff-get-default-file-name-args)))
+                  (setq ediff-get-default-file-name-args
+                        (cdr ediff-get-default-file-name-args))
+                  (should (equal args (cdr current)))
+                  (cl-incf ediff-get-default-file-name-called)
+                  (when (cdr current)
+                    (should (equal (car file-name-history)
+                                   "/last-dir-B/file-A"))) ; [sic!]
+                  (car current)))))
+    (should (equal (difftastic--files-args)
+                   (list "/last-dir-A/file-A"
+                         "/last-dir-B/file-B"
+                         nil)))
+    (should (equal ediff-read-file-name-called 2))
+    (should (equal ediff-get-default-file-name-called 2))))
+
+(ert-deftest difftastic--files-args:use-default-dir ()
+  (cl-letf* ((ediff-use-last-dir nil)
+             (default-directory "/test-directory")
+             (ediff-read-file-name-args '(("/test-directory/file-A"
+                                           "File A to compare" "/test-directory" "default-A")
+                                          ("/test-directory/file-B"
+                                           "File B to compare" "/test-directory/" "default-B")))
+             (ediff-read-file-name-called 0)
+             ((symbol-function #'ediff-read-file-name)
+              (lambda (&rest args)
+                (let ((current (car ediff-read-file-name-args)))
+                  (setq ediff-read-file-name-args
+                        (cdr ediff-read-file-name-args))
+                  (should (equal args (cdr current)))
+                  (cl-incf ediff-read-file-name-called)
+                  (car current))))
+             (ediff-get-default-file-name-args '(("default-A")
+                                                 ("default-B"
+                                                  "/test-directory/file-A" 1)))
+             (ediff-get-default-file-name-called 0)
+             ((symbol-function #'ediff-get-default-file-name)
+              (lambda (&rest args)
+                (let ((current (car ediff-get-default-file-name-args)))
+                  (setq ediff-get-default-file-name-args
+                        (cdr ediff-get-default-file-name-args))
+                  (should (equal args (cdr current)))
+                  (cl-incf ediff-get-default-file-name-called)
+                  (when (cdr current)
+                    (should (equal (car file-name-history)
+                                   "/test-directory/file-A")))
+                  (car current)))))
+    (should (equal (difftastic--files-args)
+                   (list "/test-directory/file-A"
+                         "/test-directory/file-B"
+                         nil)))
+    (should (equal ediff-read-file-name-called 2))
+    (should (equal ediff-get-default-file-name-called 2))))
+
+(ert-deftest difftastic--files-args:use-last-dir-with-prefix ()
+  (cl-letf* ((ediff-use-last-dir t)
+             (ediff-last-dir-A "/last-dir-A")
+             (ediff-last-dir-B "/last-dir-B")
+             (ediff-read-file-name-args '(("/last-dir-A/file-A"
+                                           "File A to compare" "/last-dir-A" "default-A")
+                                          ("/last-dir-B/file-B"
+                                           "File B to compare" "/last-dir-B" "default-B")))
+             (ediff-read-file-name-called 0)
+             ((symbol-function #'ediff-read-file-name)
+              (lambda (&rest args)
+                (let ((current (car ediff-read-file-name-args)))
+                  (setq ediff-read-file-name-args
+                        (cdr ediff-read-file-name-args))
+                  (should (equal args (cdr current)))
+                  (cl-incf ediff-read-file-name-called)
+                  (car current))))
+             (ediff-get-default-file-name-args '(("default-A")
+                                                 ("default-B"
+                                                  "/last-dir-A/file-A" 1)))
+             (ediff-get-default-file-name-called 0)
+             ((symbol-function #'ediff-get-default-file-name)
+              (lambda (&rest args)
+                (let ((current (car ediff-get-default-file-name-args)))
+                  (setq ediff-get-default-file-name-args
+                        (cdr ediff-get-default-file-name-args))
+                  (should (equal args (cdr current)))
+                  (cl-incf ediff-get-default-file-name-called)
+                  (when (cdr current)
+                    (should (equal (car file-name-history)
+                                   "/last-dir-B/file-A"))) ; [sic!]
+                  (car current))))
+             (current-prefix-arg 4))
+    (mocklet (((difftastic--get-languages) => "test-languages")
+              ((completing-read "Language: " "test-languages" nil t) => "test-lang"))
+      (should (equal (difftastic--files-args)
+                   (list "/last-dir-A/file-A"
+                         "/last-dir-B/file-B"
+                         "test-lang"))))
+    (should (equal ediff-read-file-name-called 2))
+    (should (equal ediff-get-default-file-name-called 2))))
+
+(ert-deftest difftastic--files-args:use-default-dir-with-prefix ()
+  (cl-letf* ((ediff-use-last-dir nil)
+             (default-directory "/test-directory")
+             (ediff-read-file-name-args '(("/test-directory/file-A"
+                                           "File A to compare" "/test-directory" "default-A")
+                                          ("/test-directory/file-B"
+                                           "File B to compare" "/test-directory/" "default-B")))
+             (ediff-read-file-name-called 0)
+             ((symbol-function #'ediff-read-file-name)
+              (lambda (&rest args)
+                (let ((current (car ediff-read-file-name-args)))
+                  (setq ediff-read-file-name-args
+                        (cdr ediff-read-file-name-args))
+                  (should (equal args (cdr current)))
+                  (cl-incf ediff-read-file-name-called)
+                  (car current))))
+             (ediff-get-default-file-name-args '(("default-A")
+                                                 ("default-B"
+                                                  "/test-directory/file-A" 1)))
+             (ediff-get-default-file-name-called 0)
+             ((symbol-function #'ediff-get-default-file-name)
+              (lambda (&rest args)
+                (let ((current (car ediff-get-default-file-name-args)))
+                  (setq ediff-get-default-file-name-args
+                        (cdr ediff-get-default-file-name-args))
+                  (should (equal args (cdr current)))
+                  (cl-incf ediff-get-default-file-name-called)
+                  (when (cdr current)
+                    (should (equal (car file-name-history)
+                                   "/test-directory/file-A")))
+                  (car current))))
+             (current-prefix-arg 4))
+    (mocklet (((difftastic--get-languages) => "test-languages")
+              ((completing-read "Language: " "test-languages" nil t) => "test-lang"))
+      (should (equal (difftastic--files-args)
+                   (list "/test-directory/file-A"
+                         "/test-directory/file-B"
+                         "test-lang"))))
+    (should (equal ediff-read-file-name-called 2))
+    (should (equal ediff-get-default-file-name-called 2))))
+
+(ert-deftest difftastic-files:basic ()
+  (mocklet (((difftastic--files-args) => '("/dir/file-A" "/dir/file-B" "test-lang"))
+            ((get-buffer-create "*difftastic file-A file-B*") => "test-buffer")
+            ((difftastic--files-internal
+              "test-buffer" '("/dir/file-A" . nil) '("/dir/file-B" . nil) "test-lang")
+             :times 1))
+    (call-interactively #'difftastic-files)))
+
 (ert-deftest difftastic.el-validate-commentary-in-sync-with-readme.org ()
   (let ((org-export-show-temporary-export-buffer nil)
         (org-confirm-babel-evaluate nil)

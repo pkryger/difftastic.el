@@ -3376,6 +3376,48 @@ This only happens when `noninteractive' to avoid messing up with faces."
               ((completing-read "Language: " "test-langs" nil t) => "test-lang"))
       (call-interactively #'difftastic-dired-diff))))
 
+(ert-deftest difftastic--files-internal:basic ()
+  (with-temp-buffer
+    (let* ((display-buffer-called 0)
+           (buffer (current-buffer))
+           (file-buf-A (cons (make-temp-file "difftastic.t") t))
+           (file-buf-B (cons (make-temp-file "difftastic.t") t))
+           (difftastic-requested-window-width-function (lambda () "test-width"))
+           (difftastic-display-buffer-function (lambda (buf width)
+                                                 (should (equal buffer buf))
+                                                 (should (equal width "test-width"))
+                                                 (cl-incf display-buffer-called))))
+      (unwind-protect
+          (eval
+           `(mocklet (((difftastic--build-files-command
+                        ',file-buf-A ',file-buf-B "test-width" "test-lang")
+                       => '("echo" "-n" "test output")))
+              (let ((process
+                     (difftastic--files-internal ,buffer
+                                                 ',file-buf-A
+                                                 ',file-buf-B
+                                                 "test-lang")))
+                (with-timeout (5
+                               (signal-process process 'SIGKILL)
+                               (ert-fail "timeout"))
+                  (while (accept-process-output process))))
+              (should (equal (buffer-string) "test output"))
+              (should (equal (alist-get 'default-directory difftastic--rerun-alist)
+                             default-directory))
+              (should (equal (alist-get 'lang-override difftastic--rerun-alist)
+                             "test-lang"))
+              (should (equal (alist-get 'file-buf-A difftastic--rerun-alist)
+                             ',file-buf-A))
+              (should (equal (alist-get 'file-buf-B difftastic--rerun-alist)
+                             ',file-buf-B))
+              (should-not (file-exists-p (car ',file-buf-A)))
+              (should-not (file-exists-p (car ',file-buf-B)))))
+        (when (file-exists-p (car file-buf-A))
+          (delete-file (car file-buf-A)))
+        (when (file-exists-p (car file-buf-B))
+          (delete-file (car file-buf-B))))
+      (should (equal display-buffer-called 1)))))
+
 (ert-deftest difftastic.el-validate-commentary-in-sync-with-readme.org ()
   (let ((org-export-show-temporary-export-buffer nil)
         (org-confirm-babel-evaluate nil)

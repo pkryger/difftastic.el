@@ -1323,6 +1323,29 @@ to `difftastic--delete-temp-file-buf'."
           (difftastic--delete-temp-file-buf file-buf))
         (signal (car err) (cdr err))))))
 
+(defun difftastic--buffers-args ()
+  "Return arguments for `difftastic-buffers'."
+  ;; adapted from `ediff-buffers'
+  (let (bf-A bf-B)
+    (list (setq bf-A (read-buffer "Buffer A to compare: "
+                                  (ediff-other-buffer "") t))
+          (setq bf-B (read-buffer "Buffer B to compare: "
+                                  (progn
+                                    ;; realign buffers so that two visible
+                                    ;; buffers will be at the top
+                                    (save-window-excursion (other-window 1))
+                                    (ediff-other-buffer bf-A))
+                                  t))
+          (when (or current-prefix-arg
+                    (and (not (buffer-file-name (get-buffer bf-A)))
+                         (not (buffer-file-name (get-buffer bf-B)))))
+            (let* ((languages (difftastic--get-languages))
+                   (suggested (difftastic--make-suggestion
+                               languages
+                               (get-buffer bf-A)
+                               (get-buffer bf-B))))
+              (completing-read "Language: " languages nil t suggested))))))
+
 ;;;###autoload
 (defun difftastic-buffers (buffer-A buffer-B &optional lang-override)
   "Run difftastic on a pair of buffers, BUFFER-A and BUFFER-B.
@@ -1335,27 +1358,7 @@ BUFFER-B is a file buffer,
 - or function is called with a prefix arg,
 
 then ask for language before running difftastic."
-  ;; adapted from `ediff-buffers'
-  (interactive
-   (let (bf-A bf-B)
-     (list (setq bf-A (read-buffer "Buffer A to compare: "
-                                   (ediff-other-buffer "") t))
-           (setq bf-B (read-buffer "Buffer B to compare: "
-                                   (progn
-                                     ;; realign buffers so that two visible
-                                     ;; buffers will be at the top
-                                     (save-window-excursion (other-window 1))
-                                     (ediff-other-buffer bf-A))
-                                   t))
-           (when (or current-prefix-arg
-                     (and (not (buffer-file-name (get-buffer bf-A)))
-                          (not (buffer-file-name (get-buffer bf-B)))))
-             (let* ((languages (difftastic--get-languages))
-                    (suggested (difftastic--make-suggestion
-                                languages
-                                (get-buffer bf-A)
-                                (get-buffer bf-B))))
-               (completing-read "Language: " languages nil t suggested))))))
+  (interactive (difftastic--buffers-args))
 
   (difftastic--with-file-bufs (file-buf-A file-buf-B)
     (setq file-buf-A (difftastic--get-file-buf "A" (get-buffer buffer-A))

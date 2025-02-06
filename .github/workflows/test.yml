@@ -1,4 +1,4 @@
-name: CI Tests
+name: difftastic.el - CI Tests
 
 on:
   workflow_dispatch:

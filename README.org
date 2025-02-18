@@ -396,50 +396,54 @@ issues that are not highlighted while authoring.  Please open the
 [[file:difftastic.el]] and check it for any new issues.
 
 #+begin_src emacs-lisp :results none
-(with-difftastic-org-export-commentary-defaults
- (org-export-to-buffer 'difftastic-commentary "*Org DIFFTASTIC-COMMENTARY Export*"
-   nil nil nil nil nil
-   (lambda ()
-     (emacs-lisp-mode)
-     (when (require 'flycheck nil t)
-       (flycheck-define-checker emacs-difftastic-commentary-checkdoc
-         "An Emacs Lisp style checker using CheckDoc.
+(let ((preview-buffer (get-buffer-create "*Org DIFFTASTIC-COMMENTARY Preview*")))
+  (with-current-buffer preview-buffer
+    (setq buffer-read-only nil))
+  (with-difftastic-org-export-commentary-defaults
+   (org-export-to-buffer 'difftastic-commentary preview-buffer
+     nil nil nil nil nil
+     (lambda ()
+       (emacs-lisp-mode)
+       (setq buffer-read-only t)
+       (when (require 'flycheck nil t)
+         (flycheck-define-checker emacs-difftastic-commentary-checkdoc
+           "An Emacs Lisp style checker using CheckDoc.
 
 Adjusted for commentary checks, boosting all diagnostics to errors
 and filtering header and footer ones.
 The checker runs `checkdoc-current-buffer'."
-         :command ("emacs" (eval flycheck-emacs-args)
-                   "--eval" (eval (flycheck-sexp-to-string
-                                   (flycheck-emacs-lisp-checkdoc-variables-form)))
-                   "--eval" (eval flycheck-emacs-lisp-checkdoc-form)
-                   "--" source)
-         :error-patterns
-         ((error line-start (file-name) ":" line ": " (message) line-end))
-         :error-filter
-         (lambda (errors)
-           (cl-remove-if
-            (lambda (err)
-              (string-match
-               (rx (or "The first line should be of the form: \";;; package --- Summary\""
-                       "You should have a summary line (\";;; .* --- .*\")"
-                       "You should have a section marked \";;; Commentary:\""
-                       "You should have a section marked \";;; Code:\""
-                       (seq "The footer should be: (provide '"
-                            (one-or-more alnum)
-                            ")\\n;;; "
-                            (one-or-more alnum) " ends here")))
-               (flycheck-error-message err)))
-            errors))
-         :modes (emacs-lisp-mode)
-         :enabled flycheck--emacs-lisp-checkdoc-enabled-p)
-       (add-to-list 'flycheck-disabled-checkers 'emacs-lisp-checkdoc)
-       (setf (car (flycheck-checker-get
-                   'emacs-difftastic-commentary-checkdoc 'command))
-             flycheck-this-emacs-executable)
-       ;; Do not clobber user configuration
-       (make-local-variable 'flycheck-checkers)
-       (add-to-list 'flycheck-checkers 'emacs-difftastic-commentary-checkdoc)
-       (flycheck-mode)))))
+           :command ("emacs" (eval flycheck-emacs-args)
+                     "--eval" (eval (flycheck-sexp-to-string
+                                     (flycheck-emacs-lisp-checkdoc-variables-form)))
+                     "--eval" (eval flycheck-emacs-lisp-checkdoc-form)
+                     "--" source)
+           :error-patterns
+           ((error line-start (file-name) ":" line ": " (message) line-end))
+           :error-filter
+           (lambda (errors)
+             (cl-remove-if
+              (lambda (err)
+                (string-match
+                 (rx (or "The first line should be of the form: \";;; package --- Summary\""
+                         "You should have a summary line (\";;; .* --- .*\")"
+                         "You should have a section marked \";;; Commentary:\""
+                         "You should have a section marked \";;; Code:\""
+                         (seq "The footer should be: (provide '"
+                              (one-or-more alnum)
+                              ")\\n;;; "
+                              (one-or-more alnum) " ends here")))
+                 (flycheck-error-message err)))
+              errors))
+           :modes (emacs-lisp-mode)
+           :enabled flycheck--emacs-lisp-checkdoc-enabled-p)
+         (add-to-list 'flycheck-disabled-checkers 'emacs-lisp-checkdoc)
+         (setf (car (flycheck-checker-get
+                     'emacs-difftastic-commentary-checkdoc 'command))
+               flycheck-this-emacs-executable)
+         ;; Do not clobber user configuration
+         (make-local-variable 'flycheck-checkers)
+         (add-to-list 'flycheck-checkers 'emacs-difftastic-commentary-checkdoc)
+         (flycheck-mode))))))
 #+end_src
 
 

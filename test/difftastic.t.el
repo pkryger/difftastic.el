@@ -3969,61 +3969,8 @@ This only happens when `noninteractive' to avoid messing up with faces."
              :times 1))
     (call-interactively #'difftastic-files)))
 
-(ert-deftest difftastic.el-validate-commentary-in-sync-with-readme.org ()
-  (let ((org-export-show-temporary-export-buffer nil)
-        (org-confirm-babel-evaluate nil)
-        (readme.org-buffer "*Org DIFFTASTIC-COMMENTARY Export*")
-        (default-directory
-         (file-name-as-directory
-          (replace-regexp-in-string
-           "\n\\'" ""
-           (shell-command-to-string "git rev-parse --show-toplevel")))))
-    (with-temp-buffer
-      (insert-file-contents "README.org")
-      (goto-char (point-min))
-      (org-mode)
-      (org-babel-goto-named-src-block "export-commentary-setup")
-      (org-babel-execute-src-block)
-      (declare-function with-difftastic-org-export-commentary-defaults
-                        "README.org" (body))
-      (goto-char (point-min))
-      (with-difftastic-org-export-commentary-defaults
-       (org-export-to-buffer 'difftastic-commentary readme.org-buffer)))
-
-    (with-temp-buffer
-      (insert-file-contents "difftastic.el")
-      (goto-char (point-min))
-      (re-search-forward "^;;; Commentary:$")
-      (beginning-of-line 3)
-      (delete-region (point-min) (point))
-      (re-search-forward "^;;; Code:$")
-      (end-of-line 0)
-      (delete-region (point) (point-max))
-      (let ((difftastic.el-buffer (current-buffer)))
-
-        (with-temp-buffer
-          (diff-no-select (get-buffer difftastic.el-buffer)
-                          (get-buffer readme.org-buffer)
-                          nil t (current-buffer))
-          (unless (string-match-p "\nDiff finished (no differences)\\."
-                                  (buffer-string))
-            (goto-char (point-min))
-            (let ((tmp-difftastic.el
-                   (buffer-substring (re-search-forward "^diff -u ")
-                                     (- (re-search-forward " ") 1)))
-                  (tmp-readme.org
-                   (buffer-substring (point)
-                                     (compat-call pos-eol))) ; Since Emacs-29
-                  (inhibit-read-only t))
-              (goto-char (point-min))
-              (perform-replace tmp-difftastic.el "difftastic.el" nil nil nil)
-              (goto-char (point-min))
-              (perform-replace tmp-readme.org "<exported from README.org>" nil nil nil))
-            (message "%s" (buffer-string))
-            (ert-fail
-             "Generated Commentary in `difftastic.el' differs from the one generated from `README.org'")))))))
-
 ;; LocalWords: README el
 
-;;; difftastic.t.el ends here
 (provide 'difftastic.t)
+
+;;; difftastic.t.el ends here

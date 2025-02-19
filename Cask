@@ -5,6 +5,8 @@
 
 (development
  (depends-on "org" "9.7.17")
+ (depends-on "org-commentary"
+             :git "https://github.com/pkryger/org-commentary.el.git")
  (depends-on "package-lint")
  (depends-on "relint")
  (depends-on "checkdoc-batch"

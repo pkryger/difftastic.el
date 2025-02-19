@@ -70,6 +70,8 @@ jobs:
       run: 'make relint'
     - name: 'Lint: checkdoc'
       run: 'make checkdoc'
+    - name: 'Lint: commentary'
+      run: 'make commentary'
     - name: Run tests
       run: 'make test'
 

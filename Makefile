@@ -37,6 +37,12 @@ checkdoc: cask
 	  --load checkdoc-batch \
 	  --funcall checkdoc-batch $(files)
 
+.PHONY: commentary
+commentary: cask
+	cask emacs -batch -L . \
+	  --load org-commentary \
+	  --funcall org-commentary-check-batch
+
 .PHONY: test
 test: cask
 	cask emacs -batch \

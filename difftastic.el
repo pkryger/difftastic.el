@@ -649,8 +649,9 @@ data."
         (set chunk-regexp
              (rx-to-string
               `(seq
+                line-start
                 ;; non greedy filename to let following group match
-                bol (not " ") ,(if file-chunk '(+? any) '(+ any))
+                (group (not " ") ,(if file-chunk '(+? any) '(+ any)))
                 ;; search for optional chunk info only when searching for a
                 ;; file-chunk
                 ,@(when file-chunk
@@ -794,6 +795,148 @@ of the file."
                                  'difftastic))
         (difftastic-show-chunk)
       (difftastic-hide-chunk file-chunk))))
+
+(defun difftastic--chunk-bounds ()
+  "TODO: write doc"
+  (when-let* (((not (looking-at (rx line-start line-end)))) ;; TODO: test: point in empty line between chunks
+              (start-pos (or
+                          (save-excursion
+                            (goto-char (compat-call pos-bol))
+                            (when (looking-at (difftastic--chunk-regexp t))
+                              (point)))
+                          (difftastic--prev-chunk)))
+              (end-pos (save-excursion
+                         (goto-char (or (difftastic--next-chunk)
+                                        (point-max)))
+                         (goto-char (compat-call pos-eol 0))
+                         (while (looking-at (rx line-start line-end)) ;; TODO: test: multiple empty lines at end of output
+                           (goto-char (compat-call pos-eol 0)))
+                         (point))))
+    (cons start-pos end-pos)))
+
+(defun difftastic--chunk-file-name (bounds)
+  "TODO: write doc"
+  (when-let* ((file-name (save-excursion
+                           (goto-char (car bounds))
+                           (when (looking-at (difftastic--chunk-regexp t))
+                             (match-string-no-properties 1)))))
+    (string-trim file-name)))
+
+(defun difftastic--line-num-rx (digits)
+  "TODO: write-doc"
+  `(or (seq (** 0 ,(1- digits) " ")
+            (group (or (** 1 ,digits digit)
+                       (** 1 ,digits ".")))
+            " ")
+       (** 2 ,(1+ digits) " ")))
+
+(defun difftastic--chunk-side-by-side-p (bounds)
+  "TODO: write doc"
+  (save-excursion
+    (goto-char (car bounds))
+    (catch 'side-by-side
+      (while (< (progn
+                  (goto-char (compat-call pos-bol 2))
+                  (point))
+                (cdr bounds))
+        (unless (rx-let ((line-num (eval (difftastic--line-num-rx 6)))) ;; TODO: figure out compile error
+                         ;; (line-num (or (seq (** 0 5 " ")
+                         ;;                    (group (** 1 6 (or digit ".")))
+                         ;;                    " ")
+                         ;;               (** 2 7 " ")))
+                  (or
+                   (looking-at (rx line-start line-num line-num))
+                   (and (looking-at (rx line-start line-num))
+                        (when-let* ((match (match-beginning 1)))
+                          (not (eq
+                                (get-text-property match 'font-lock-face)
+                                'ansi-color-faint))))))
+            (throw 'side-by-side t))))))
+
+(defun difftastic--parse-line-num (subexp prev)
+  "TODO: write doc"
+  (if-let* ((num (match-string (1+ subexp)))
+            (beg (match-beginning (1+ subexp)))
+            (end (match-end (1+ subexp))))
+      (if (string-match-p (rx (one-or-more digit)) num)
+          (list (string-to-number num) beg end)
+        (list prev beg end))
+    (list prev (match-beginning subexp) (match-end subexp))))
+
+(defun difftastic--parse-side-by-side-chunk (bounds)
+  "TODO: write doc"
+  (save-excursion
+    (goto-char (car bounds))
+    (let (lines
+          prev-num-left)
+      (while (re-search-forward
+              (rx-let ((line-num (eval (difftastic--line-num-rx 6))))
+                (rx line-start (group line-num)))
+              (cdr bounds)
+              t)
+        (let ((left (difftastic--parse-line-num 1 prev-num-left))
+              rights)
+          ;; right line number seems to be start not unless column 30
+          (goto-char (min (+ (compat-call pos-bol) 29)
+                          (cdr bounds)))
+          ;; collect candidates for a right line number
+          (while (re-search-forward
+                  (rx (group " " (group (or (** 1 6 ".")
+                                            (** 1 6 digit)))
+                             (or " " line-end)))
+                  (compat-call pos-eol)
+                  t)
+            (let ((right (difftastic--parse-line-num 1 nil)))
+              ;; append column number
+              (push (cons (1+ (- (caddr right) (compat-call pos-bol))) right)
+                    rights)))
+          (setq prev-num-left (or (car left)
+                                  prev-num-left))
+          (push (list left rights) lines)))
+      ;; find a common column accounting for missing line numbers
+      (let (cols
+            prev-right)
+        (dolist (line lines)
+          (when-let* ((right-cols (mapcar (lambda (candidate)
+                                            (car candidate))
+                                          (cadr line))))
+            (setq cols
+                  (cl-intersection (or cols right-cols)
+                                   right-cols))))
+        (setq lines (nreverse lines))
+        ;; use the first common column that has been found,
+        ;; also update missing line numbers in right
+        (dolist (line lines)
+          (setcdr line
+                  (list
+                   (if-let* ((right (cdr (cl-find-if
+                                          (lambda (candidate)
+                                            (equal (car cols) (car candidate)))
+                                          (cadr line)))))
+                       (progn (setcar right (or (car right)
+                                                (car prev-right)))
+                              (setq prev-right right))
+                     prev-right))))
+        lines))))
+
+(defun difftastic--parse-single-column-chunk (bounds)
+  "TODO: write doc"
+  (save-excursion
+    (goto-char (car bounds))
+    (let (lines
+          prev-num-left
+          prev-num-right)
+      (while (re-search-forward
+              (rx-let ((line-num (eval (difftastic--line-num-rx 6))))
+                (rx line-start (group line-num) (group line-num)))
+              (cdr bounds)
+              t)
+        (let ((left (difftastic--parse-line-num 1 prev-num-left))
+              (right (difftastic--parse-line-num 3 prev-num-right)))
+          (setq prev-num-left (or (car left) prev-num-left)
+                prev-num-right (or (car right) prev-num-right))
+          (push (list left right) lines)))
+      (nreverse lines))))
 
 ;; From `view-mode'
 

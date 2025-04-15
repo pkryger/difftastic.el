@@ -256,6 +256,18 @@
 ;;   at point.  The point has to be in a chunk header.  When called with a
 ;;   prefix all file chunks from the header to the end of the file.  See also
 ;;   `difftastic-hide-chunk' and `difftastic=show-chunk'.
+;; - `difftastic-diff-visit-file' (`RET'),
+;;   `difftastic-diff-visit-file-other-window',
+;;   `difftastic-diff-visit-file-other-frame' - from a diff visit appropriate
+;;   version of a chunk file.  This has been modeled after
+;;   `magit-diff-visit-file', but there are some differences, please see
+;;   documentation for `difftastic-diff-visit-file'.
+;; - `difftastic-diff-visit-worktree-file' (`C-RET', `C-j'),
+;;   `difftastic-diff-visit-worktree-file-other-window',
+;;   `difftastic-diff-visit-worktree-file-other-frame' - from a diff visit
+;;   appropriate version of a chunk file.  This has been modeled after
+;;   `magit-diff-visit-worktree-file', but there are some differences, please
+;;   see documentation for `difftastic-diff-visit-worktree-file'.
 ;; - `difftastic-git-diff-range' - transform `ARGS' for difftastic and show
 ;;   the result of `git diff ARGS REV-OR-RANGE -- FILES' with `difftastic'.
 ;;
@@ -319,6 +331,14 @@
 ;; - `difftastic-display-buffer-function' - this function is called after a
 ;;   first call to `difft'.  It is meant to select an appropriate Emacs
 ;;   mechanism to display the `difft' output.
+;;
+;;
+;; `difftastic-mode' behavior
+;; ~~~~~~~~~~~~~~~~~~~~~~~~~~
+;;
+;; - `difftastic-diff-visit-avoid-head-blob' - controls whether to avoid
+;;   visiting blob of a `HEAD' revision when visiting file form a
+;;   `difftastic-mode' buffer.
 ;;
 ;;
 ;; Contributing
@@ -519,6 +539,21 @@ the selected window is considered for restoring."
   :type 'boolean
   :group 'difftastic)
 
+(defcustom difftastic-diff-visit-avoid-head-blob nil
+  "Whether `difftastic-diff-visit-file' avoids visiting a blob from `HEAD'.
+
+By default `difftastic-diff-visit-file' always visits the blob that
+modified the current line (or is a context line of current
+modification), while `difftastic-diff-visit-worktree-file' visits the
+respective file in the working tree.  When the value of this option is
+non-nil, then for the `HEAD' commit, the former command visits the
+worktree file too, but that renders visiting a blob from `HEAD'
+impossible.
+
+This is similar to `magit-diff-visit-avoid-head-blob', which see."
+  :type 'boolean
+  :group 'difftastic)
+
 (defcustom difftastic-use-last-dir ediff-use-last-dir
   "When non-nil difftastic will use previous directory when reading file name.
 Like `ediff-use-last-dir', which see."
@@ -527,6 +562,7 @@ Like `ediff-use-last-dir', which see."
 
 (defvar difftastic--last-dir-A nil)
 (defvar difftastic--last-dir-B nil)
+(defvar-local difftastic--metadata nil)
 
 (defmacro difftastic--with-temp-advice (symbol how function &rest body)
   ;; checkdoc-params: (symbol how function)
@@ -577,6 +613,9 @@ See `advice-add' for explanation of SYMBOL, HOW, and FUNCTION arguments."
  "P"     #'difftastic-previous-file
  "g"     #'difftastic-rerun
  "TAB"   #'difftastic-toggle-chunk
+ "RET"   #'difftastic-diff-visit-file
+ "C-<return>" #'difftastic-diff-visit-worktree-file
+ "C-j"   #'difftastic-diff-visit-worktree-file
  ;; some keys from `view-mode'
  "C"     #'difftastic-quit-all
  "c"     #'difftastic-leave
@@ -598,8 +637,6 @@ See `advice-add' for explanation of SYMBOL, HOW, and FUNCTION arguments."
  "="     #'what-line
  "F"     #'View-revert-buffer-scroll-page-forward
  "y"     #'View-scroll-line-backward
- "C-j"   #'View-scroll-line-forward
- "RET"   #'View-scroll-line-forward
  "u"     #'View-scroll-half-page-backward
  "d"     #'View-scroll-half-page-forward
  "z"     #'View-scroll-page-forward-set-page-size
@@ -649,8 +686,9 @@ data."
         (set chunk-regexp
              (rx-to-string
               `(seq
+                line-start
                 ;; non greedy filename to let following group match
-                bol (not " ") ,(if file-chunk '(+? any) '(+ any))
+                (group (not " ") ,(if file-chunk '(+? any) '(+ any)))
                 ;; search for optional chunk info only when searching for a
                 ;; file-chunk
                 ,@(when file-chunk
@@ -680,7 +718,7 @@ when match data indicates this is the chunk number 1.  This
 function can be called only after a successfull searching for a
 regexp from `difftastic--chunk-regexp'."
   (when-let* ((chunk-bol (if file-chunk
-                             (when (let ((chunk-no (match-string 1)))
+                             (when (let ((chunk-no (match-string 2)))
                                      (or (not chunk-no)
                                          (string-equal "1" chunk-no)))
                                (compat-call pos-bol)) ; Since Emacs-29
@@ -794,6 +832,454 @@ of the file."
                                  'difftastic))
         (difftastic-show-chunk)
       (difftastic-hide-chunk file-chunk))))
+
+(defun difftastic--chunk-bounds ()
+  "Find bounds of a chunk at point.
+The return value is cons wher car is the chunk beginning position and
+cdr is chunk end position."
+  (when-let* (((not (looking-at (rx line-start line-end))))
+              (start-pos (or
+                          (save-excursion
+                            (goto-char (compat-call pos-bol)) ; Since Emacs-29
+                            (when (looking-at (difftastic--chunk-regexp t))
+                              (point)))
+                          (difftastic--prev-chunk)))
+              (end-pos (save-excursion
+                         (goto-char (or (difftastic--next-chunk)
+                                        (point-max)))
+                         (goto-char (compat-call pos-eol 0)) ; Since Emacs-29
+                         (while (looking-at (rx line-start line-end))
+                           (goto-char (compat-call pos-eol 0))) ; Since Emacs-29
+                         (point))))
+    (cons start-pos end-pos)))
+
+(defun difftastic--chunk-file-name (bounds)
+  "Return name of the file of chunk at BOUNDS."
+  (when-let* ((file-name (save-excursion
+                           (goto-char (car bounds))
+                           (when (looking-at (difftastic--chunk-regexp t))
+                             (match-string-no-properties 1)))))
+    (string-trim file-name)))
+
+(eval-and-compile
+  (defvar difftastic--line-num-digits 6
+    "Maximum number of digits in line numbers in difftastic output.
+The value of 6 allows for line numbers of up to 999,999.")
+
+  (defun difftastic--line-num-rx (digits)
+    "Return `rx' form for a up DIGITS long line number."
+    `(seq ,(append
+            ; favor only digits or only dots up to given length
+            `(or (group (** 1 ,digits digit))
+                 (group (** 1 ,digits ".")))
+             (let (num)
+               (dotimes (spaces (1- digits))
+                 (push `(seq
+                         ,(if (< 0 spaces)
+                              `(** 1 ,(1+ spaces) " ")
+                            `(= ,(1+ spaces) " "))
+                         (or (group (= ,(- digits (1+ spaces)) digit))
+                             (group (= ,(- digits (1+ spaces)) "."))))
+                       num))
+               ; favor more digits (or dots)
+               (nreverse num)))
+          (or " " line-end)))
+
+  (rx-define difftastic--line-num-rx
+    (eval (difftastic--line-num-rx difftastic--line-num-digits)))
+
+  (defun difftastic--line-num-or-spaces-rx (digits)
+    "Return `rx' form for a up DIGITS long line number or up to DIGITS spaces."
+    `(or
+      ; search for spaces first so they can be accounted as a left column
+      (** 2 ,(1+ digits) " ")
+      ,(difftastic--line-num-rx digits)))
+
+  (rx-define difftastic--line-num-or-spaces-rx
+    (eval (difftastic--line-num-or-spaces-rx difftastic--line-num-digits))))
+
+(defun difftastic--classify-chunk (bounds)
+  "Classify chunk at BOUNDS as either `single-column' or `side-by-side'."
+  (save-excursion
+    (goto-char (car bounds))
+    (let ((single-column 0)
+          (side-by-side 0))
+      (while (< (progn
+                  (goto-char (compat-call pos-bol 2)) ; Since Emacs-29
+                  (point))
+                (cdr bounds))
+        (cond
+         ((and
+           (looking-at (rx line-start
+                           difftastic--line-num-rx))
+           (save-excursion
+             (goto-char (match-end 0))
+             (and
+              (not (looking-at (rx difftastic--line-num-rx)))
+              (looking-at (rx (one-or-more any)
+                              difftastic--line-num-rx))))
+           (cl-incf side-by-side)))
+         ((looking-at (rx line-start
+                          difftastic--line-num-or-spaces-rx
+                          difftastic--line-num-or-spaces-rx))
+          (cl-incf single-column))))
+      (if (< side-by-side single-column)
+          'single-column
+        'side-by-side))))
+
+(defun difftastic--parse-line-num (subexp prev)
+  "Parse line number in current match data.
+Return a list in a from (LINE-NUM BEG END), where LINE-NUM is a line
+number (as a number) and BEG and END are positions where the number
+begins and ends respectively.  LINE-NUM is extracted form a SUBEXP + M
+match in current match data, where M is the first non-nil match after
+the SUBEXP.  If no LINE-NUM can be extracted from SUBEXP + M match, then
+PREV is used instead."
+  (let ((m 1)
+        beg)
+    (while (and (<= m (* 2 difftastic--line-num-digits))
+                (not (setq beg (match-beginning (+ subexp m)))))
+      (cl-incf m))
+    (when beg
+      (let* ((end (match-end (+ subexp m)))
+             (num (buffer-substring beg end)))
+        (if (string-match-p (rx (one-or-more digit)) num)
+            (list (string-to-number num) beg end)
+          (list prev beg end))))))
+
+(defun difftastic--parse-side-by-side-chunk (bounds)
+  "Parse a `side-by-side-column' chunk at BOUNDS.
+Return a list where each element is a list in a form (BEG-END LEFT
+RIGHT).  BEG-END is a list in a from (BEG END) where BEG is a line begin
+position and END is line end position.  Both LEFT and RIGHT are lists in
+a form (LINE-NUM BEG END), where LINE-NUM is a line number and BEG and
+END are positions where the line number begins and ends respectively."
+  (save-excursion
+    (goto-char (car bounds))
+    (goto-char (compat-call pos-bol 2)) ; Since Emacs-29
+    (let (lines
+          prev-num-left)
+      (while (re-search-forward
+              (rx line-start difftastic--line-num-or-spaces-rx)
+              (cdr bounds)
+              t)
+        (let ((left (difftastic--parse-line-num 0 prev-num-left))
+              (beg-end (list (compat-call pos-bol) (compat-call pos-eol))) ; Since Emacs-29
+              rights)
+          ;; collect candidates for a right line number
+          (while (re-search-forward
+                  (rx (group " " (group (or (** 1 6 ".")
+                                            (** 1 6 digit)))
+                             (or " " line-end)))
+                  (compat-call pos-eol) ; Since Emacs-29
+                  t)
+            (let ((right (difftastic--parse-line-num 1 nil)))
+              ;; append column number
+              (push (cons (1+ (- (caddr right) (compat-call pos-bol))) ; Since Emacs-29
+                          right)
+                    rights)))
+          (setq prev-num-left (or (car left)
+                                  prev-num-left))
+          (push (list beg-end left rights) lines)))
+      ;; find a common column accounting for missing line numbers
+      (let (cols
+            prev-num-right)
+        (dolist (line lines)
+          (when-let* ((right-cols (mapcar (lambda (candidate)
+                                            (car candidate))
+                                          (caddr line))))
+            (setq cols
+                  (cl-intersection (or cols right-cols)
+                                   (or right-cols cols)))))
+        (setq lines (nreverse lines))
+        ;; use the first common column that has been found,
+        ;; also update missing line numbers in right
+        (dolist (line lines)
+          (setcdr (cdr line)
+                  (list
+                   (when-let* ((right (cdr (cl-find-if
+                                            (lambda (candidate)
+                                              (equal (car cols)
+                                                     (car candidate)))
+                                            (caddr line)))))
+                       (setcar right (or (car right)
+                                         prev-num-right))
+                       (setq prev-num-right (car right))
+                       right))))
+        lines))))
+
+(defun difftastic--parse-single-column-chunk (bounds)
+  "Parse a `single-column' chunk at BOUNDS.
+Return a list where each element is a list in a form (BEG-END LEFT
+RIGHT).  BEG-END is a list in a from (BEG END) where BEG is a line begin
+position and END is line end position.  Both LEFT and RIGHT are lists in
+a form (LINE-NUM BEG END), where LINE-NUM is a line number and BEG and
+END are positions where the line number begins and ends respectively."
+  (save-excursion
+    (goto-char (car bounds))
+    (goto-char (compat-call pos-bol 2)) ; Since Emacs-29
+    (let (lines
+          prev-num-left
+          prev-num-right)
+      (while (re-search-forward
+              (rx line-start
+                  difftastic--line-num-or-spaces-rx
+                  difftastic--line-num-or-spaces-rx)
+              (cdr bounds)
+              t)
+        (let ((left (difftastic--parse-line-num 0 prev-num-left))
+              (right (difftastic--parse-line-num
+                      (* 2 difftastic--line-num-digits)
+                      prev-num-right))
+              (beg-end (list (compat-call pos-bol) (compat-call pos-eol)))) ; Since Emacs-29
+          (setq prev-num-left (or (car left) prev-num-left)
+                prev-num-right (or (car right) prev-num-right))
+          (push (list beg-end left right) lines)))
+      (nreverse lines))))
+
+(defun difftastic--chunk-file-at-point ()
+  "Return a chunk file at point.
+Chunk file is a list in a form of (FILE LINE-NUM SIDE), where FILE is
+the chunk file name, LINE-NUM is an optional line number within the FILE
+and SIDE is either `left' or `right'."
+  (when-let* ((bounds (difftastic--chunk-bounds))
+              (file (difftastic--chunk-file-name bounds))
+              (lines (pcase (difftastic--classify-chunk bounds)
+                       ('side-by-side
+                        (difftastic--parse-side-by-side-chunk bounds))
+                       ('single-column
+                        (difftastic--parse-single-column-chunk bounds))))
+              (point (point)))
+    (if (< point (caaar lines))
+        ; use right when point is in chunk header
+        (list file nil 'right)
+      (catch 'chunk-file
+        (while lines
+          (pcase-let* ((`((,bol ,eol) ,left ,right) (car lines)))
+            (when (and (<= bol point eol))
+              (if (and left
+                       (or (not right)
+                           (< point (cadr right))))
+                  (throw 'chunk-file (list file (car left) 'left))
+                (throw 'chunk-file (list file (car right) 'right))))
+            (setq lines (cdr lines))))))))
+
+(defun difftastic--diff-visit-file-setup (buffer line col)
+  "Setup the BUFFER after visiting it.
+Go to LINE and COL in the BUFFER, widening it if necessary.  After that
+start a smerge session (if there are unmerged changes) and run
+`difftastic-diff-visit-file-hook'."
+  (if-let* ((win (get-buffer-window buffer 'visible)))
+      (let ((pos (save-restriction
+                   (widen)
+                   (goto-char (point-min))
+                   (min (+ (compat-call pos-bol (or line 1)) ; Since Emacs-29
+                           col)
+                        (compat-call pos-eol (or line 1)))))) ; Since Emacs-29
+        (with-selected-window win
+          (unless (<= (point-min) pos (point-max))
+            (widen))
+          (goto-char pos))
+        (when (and buffer-file-name
+                   (magit-anything-unmerged-p buffer-file-name))
+          (smerge-start-session))
+        (run-hooks 'difftastic-diff-visit-file-hook))
+    (error "File buffer is not visible")))
+
+(defun difftastic--diff-visit-file-or-buffer (chunk-file fn)
+  "From a diff visit the appropriate file or buffer CHUNK-FILE.
+The CHUNK-FILE is a list in a form of (FILE LINE-NUM SIDE), where FILE
+is the chunk file name, LINE-NUM is an optional line number within the
+FILE and SIDE is either `left' or `right'.  Use FN to display the buffer
+in some window.  After visiting the FILE start a smerge session (if
+there are unmerged changes) and run `difftastic-diff-visit-file-hook'."
+  (pcase-let* ((`(,_ ,line ,side) chunk-file)
+               (file-buf (alist-get (if (eq side 'left)
+                                        'file-buf-A
+                                      'file-buf-B)
+                                    difftastic--metadata))
+               (file (car file-buf))
+               (buf (or (when-let* ((buf (cdr file-buf)))
+                          (if (buffer-live-p buf)
+                              buf
+                            (user-error "Buffer %s [%s] doesn't exist anymore"
+                                        (if (eq side 'left) "A" "B") buf)))
+                        (get-file-buffer file)
+                        (find-file-noselect file))))
+    (funcall fn buf)
+    (difftastic--diff-visit-file-setup buf line 0)
+    buf))
+
+(defun difftastic--diff-visit-git-file (chunk-file fn &optional force-worktree)
+  "From a diff visit the appropriate version of CHUNK-FILE in git repository.
+If FORCE-WORKTREE is non-nil, then visit the worktree version of the
+file, even if the diff is about a committed change.  The CHUNK-FILE is a
+list in a form of (FILE LINE-NUM SIDE), where FILE is the chunk file
+name, LINE-NUM is an optional line number within the FILE and SIDE is
+either `left' or `right'.  Use FN to display the buffer in some window.
+After visiting the FILE start a smerge session (if there are unmerged
+changes) and run `difftastic-diff-visit-file-hook'."
+  (pcase-let* ((`(,file ,line ,side) chunk-file)
+               (default-directory (alist-get 'default-directory
+                                             difftastic--metadata))
+               (rev (if-let* ((rev-or-range (alist-get 'rev-or-range
+                                                       difftastic--metadata))
+                              (range (cond
+                                      ((and
+                                        (stringp rev-or-range)
+                                        (string-match-p (rx "..") rev-or-range))
+                                       (string-split rev-or-range (rx "..")))
+                                      ((stringp rev-or-range)
+                                       (list (concat rev-or-range "^")
+                                             rev-or-range)))))
+                        (if (eq side 'left)
+                            (car range)
+                          (cadr range))
+                      rev-or-range))
+               (buf (if (or force-worktree
+                            (and (not (stringp rev))
+                                 (or (eq side 'right)
+                                     difftastic-diff-visit-avoid-head-blob)))
+                        (or (get-file-buffer file)
+                            (find-file-noselect file))
+                      (magit-find-file-noselect (if (stringp rev) rev "HEAD")
+                                           file))))
+    (when line
+      (with-current-buffer buf
+        (cond ((eq rev 'staged)
+               (setq line
+                     (magit-diff-visit--offset file nil line)))
+              ((and force-worktree
+                    (stringp rev))
+               (setq line
+                     (magit-diff-visit--offset file rev line))))))
+    (funcall fn buf)
+    (difftastic--diff-visit-file-setup buf line 0)
+    buf))
+
+(defun difftastic--diff-visit-file (chunk-file fn &optional force-worktree)
+  "From a diff visit the appropriate version of CHUNK-FILE.
+If FORCE-WORKTREE is non-nil, then visit the worktree version of the
+file, even if the diff is about a committed change.  The CHUNK-FILE is a
+list in a form of (FILE LINE-NUM SIDE), where FILE is the chunk file
+name, LINE-NUM is an optional line number within the FILE and SIDE is
+either `left' or `right'.  Use FN to display the buffer in some window.
+After visiting the FILE start a smerge session (if there are unmerged
+changes) and run `difftastic-diff-visit-file-hook'."
+  (if (assq 'git-command difftastic--metadata)
+      (difftastic--diff-visit-git-file chunk-file fn force-worktree)
+    (difftastic--diff-visit-file-or-buffer chunk-file fn)))
+
+(defun difftastic-diff-visit-file (chunk-file &optional other-window)
+  "From a diff visit the appropriate version CHUNK-FILE.
+The CHUNK-FILE is a list in a form of (FILE LINE-NUM SIDE), where FILE is
+the chunk file name, LINE-NUM is an optional line number within the FILE
+and SIDE is either `left' or `right'.
+
+Display the buffer in the selected window.  With a prefix argument
+OTHER-WINDOW display the buffer in another window instead.
+
+The point location inside the diff determines which file (at which
+version) or buffer is being visited.
+
+1. If the diff shows differeces between files or buffers, for example a
+   result of `difftastic-files' or `difftastic-buffers' then:
+   a.  If the diff is a side-by-side diff (two columns) then:
+       i.   if point is in \"left\" column then visit first file
+            or first buffer,
+       ii.  if point is in \"right\" column then visit second
+            file or second buffer.
+   b.  If the diff is a single column diff then:
+       i.   if point is at first line number (\"left\") then visit
+            first file or first buffer,
+       ii.  if point is at second number (\"right\") or in diff
+            content then visit second file or second buffer.
+
+2. If the diff shows uncommitted changes (i.e., staged or unstaged
+   changes), and point is in the \"right\" column (or at \"right\" line
+   number) or `difftastic-diff-visit-avoid-head-blob' is non-nil then
+   visit file in the working tree (i.e., the same \"real\" file that
+   `find-file' would visit).
+
+3. In all other cases visit a \"blob\" (i.e., the version of a file as
+   stored in some commit).
+   a.  If the diff is a side-by-side diff (two columns) then:
+       i.   if point is in \"left\" column then visit blob at
+            \"from\" endpoint,
+       ii.  if point is in \"right\" column then visit blob at
+            \"to\" endpoint.
+   b.  If the diff is a single column diff then:
+       i.   if point is at first line number (\"left\") then visit
+            blob at \"from\" endpoint,
+       ii.  if point is at second number (\"right\") or in the diff
+            content then visit the blob \"to\" endpoint.
+
+In the file-visiting buffer also go to the line that corresponds to the
+line that point is on in the diff.  After visiting the FILE start a
+smerge session (if there are unmerged changes) and run
+`difftastic-diff-visit-file-hook'.
+
+Note that this command only works if point is inside a diff."
+  (interactive (list (difftastic--chunk-file-at-point)
+                     current-prefix-arg))
+  (difftastic--diff-visit-file chunk-file (if other-window
+                                              #'switch-to-buffer-other-window
+                                            #'pop-to-buffer-same-window)))
+
+(defun difftastic-diff-visit-file-other-window (chunk-file)
+  "From a diff visit the appropriate version CHUNK-FILE in other window.
+Like `difftastic-diff-visit-file', which see, but use
+`switch-to-buffer-other-window'."
+  (interactive (list (difftastic--chunk-file-at-point)))
+  (difftastic--diff-visit-file chunk-file #'switch-to-buffer-other-window))
+
+(defun difftastic-diff-visit-file-other-frame (chunk-file)
+  "From a diff visit the appropriate version CHUNK-FILE in other frame.
+Like `difftastic-diff-visit-file', which see, but use
+`switch-to-buffer-other-frame'."
+  (interactive (list (difftastic--chunk-file-at-point)))
+  (difftastic--diff-visit-file chunk-file #'switch-to-buffer-other-frame))
+
+(defun difftastic-diff-visit-worktree-file (chunk-file &optional other-window)
+  "From a diff visit worktree version of CHUNK-FILE.
+The CHUNK-FILE is a list in a form of (FILE LINE-NUM SIDE), where FILE is
+the chunk file name, LINE-NUM is an optional line number within the FILE
+and SIDE is either `left' or `right'.
+
+Display the buffer in the selected window.  With a prefix
+argument OTHER-WINDOW display the buffer in another window
+instead.
+
+Visit worktree version of the appropriate file.  The location of point
+inside the diff determines which file is being visited.  This is similar
+to `difftastic-diff-visit-file', which see, but always use the \"real\"
+file when diff shows version control changes.
+
+In the file-visiting buffer also go to the line that corresponds
+to the line that point is on in the diff.  Lines that were added
+or removed in the working tree, the index and other commits in
+between are automatically accounted for."
+  (interactive (list (difftastic--chunk-file-at-point)
+                     current-prefix-arg))
+  (difftastic--diff-visit-file chunk-file
+                               (if other-window
+                                   #'switch-to-buffer-other-window
+                                 #'pop-to-buffer-same-window)
+                               t))
+
+(defun difftastic-diff-visit-worktree-file-other-window (chunk-file)
+  "From a diff visit the worktree version of CHUNK-FILE in other window.
+Like `difftastic-diff-visit-worktree-file', which see, but use
+`switch-to-buffer-other-window'."
+    (interactive (list (difftastic--chunk-file-at-point)))
+  (difftastic--diff-visit-file chunk-file #'switch-to-buffer-other-window t))
+
+(defun difftastic-diff-visit-worktree-file-other-frame (chunk-file)
+  "From a diff visit the worktree version of CHUNK-FILE in other frame.
+Like `difftastic-diff-visit-worktree-file', which see, but use
+`switch-to-buffer-other-frame'."
+    (interactive (list (difftastic--chunk-file-at-point)))
+  (difftastic--diff-visit-file chunk-file #'switch-to-buffer-other-frame t))
 
 ;; From `view-mode'
 
@@ -953,8 +1439,6 @@ Utilise `difftastic--ansi-color-add-background-cache' to cache
             difftastic--ansi-color-add-background-cache)
       face)))
 
-(defvar-local difftastic--metadata nil)
-
 (defun difftastic--build-git-process-environment (requested-width
                                                   &optional difftastic-args)
   "Build a difftastic git command with REQUESTED-WIDTH.
@@ -972,9 +1456,10 @@ The DIFFTASTIC-ARGS is a list of extra arguments to pass to
            ""))
         process-environment))
 
-(defun difftastic--git-with-difftastic (buffer command
+(defun difftastic--git-with-difftastic (buffer command rev-or-range
                                                &optional difftastic-args)
   "Run COMMAND with GIT_EXTERNAL_DIFF then show result in BUFFER.
+REV-OR-RANGE is the current git revision or range used by the COMMAND.
 The DIFFTASTIC-ARGS is a list of extra arguments to pass to
 `difftastic-executable'."
   (let* ((requested-width (funcall difftastic-requested-window-width-function))
@@ -988,6 +1473,7 @@ The DIFFTASTIC-ARGS is a list of extra arguments to pass to
      (lambda ()
        (setq difftastic--metadata
              `((default-directory . ,default-directory)
+               (rev-or-range . ,rev-or-range)
                (git-command . ,command)
                (difftastic-args . ,difftastic-args)))
        (funcall difftastic-display-buffer-function buffer requested-width)))))
@@ -1118,7 +1604,7 @@ to difftastic."
                  (if git-args
                      (mapconcat #'identity (cons "" git-args) " ")
                    "")
-                 (if rev-or-range (concat " " rev-or-range)
+                 (if rev-or-range (format " %s" rev-or-range)
                    "")
                  (if files
                      (mapconcat #'identity (cons " --" files) " ")
@@ -1128,8 +1614,9 @@ to difftastic."
      (get-buffer-create buffer-name)
      `("git" "--no-pager" "diff" "--ext-diff"
        ,@(when git-args git-args)
-       ,@(when rev-or-range (list rev-or-range))
+       ,@(when (stringp rev-or-range) (list rev-or-range))
        ,@(when files (cons "--" files)))
+     rev-or-range
      difftastic-args)))
 
 ;;;###autoload
@@ -1167,7 +1654,7 @@ The meaning of REV-OR-RANGE, ARGS, and FILES is like in
            (user-error "No merge is in progress"))
          (difftastic-git-diff-range (magit--merge-range) args files))
         ('unstaged
-         (difftastic-git-diff-range nil args files))
+         (difftastic-git-diff-range 'unstaged args files))
         ('staged
          (let ((file (magit-file-at-point)))
            (if (and file (equal (cddr (car (magit-file-status file)))
@@ -1179,7 +1666,7 @@ The meaning of REV-OR-RANGE, ARGS, and FILES is like in
                  (difftastic-git-diff-range
                   (magit--merge-range) args (list file)))
              (difftastic-git-diff-range
-              nil (cl-pushnew "--cached" args :test #'string=) files))))
+              'staged (cl-pushnew "--cached" args :test #'string=) files))))
         (`(stash . ,value)
          ;; ATM, `magit-diff--dwim' evaluates to `commit' when point is on stash
          ;; section
@@ -1204,7 +1691,8 @@ The meaning of REV-OR-RANGE, ARGS, and FILES is like in
       (user-error "No revision specified")
     (difftastic--git-with-difftastic
      (get-buffer-create (concat "*difftastic git show " rev "*"))
-     (list "git" "--no-pager" "show" "--ext-diff" rev))))
+     (list "git" "--no-pager" "show" "--ext-diff" rev)
+     rev)))
 
 ;;;###autoload
 (defun difftastic-magit-show (rev)
@@ -1570,6 +2058,8 @@ the latter is set to nil the call is made to
                                    (difftastic--get-languages) nil t)))
                difftastic-mode)
   (difftastic--rerun lang-override))
+
+;;; LocalWords: unmerged unstaged smerge
 
 (provide 'difftastic)
 ;;; difftastic.el ends here

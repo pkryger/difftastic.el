@@ -428,15 +428,15 @@
                 (should (string-match (difftastic--chunk-regexp t) header))
                 (cond
                  ((not chunk)
-                  (should-not (match-string 1 header)))
+                  (should-not (match-string 2 header)))
                  ((string= "1/2" chunk)
-                  (should (string-equal "1" (match-string 1 header))))
+                  (should (string-equal "1" (match-string 2 header))))
                  ((string= "2/2" chunk)
-                  (should (string-equal "2" (match-string 1 header))))
+                  (should (string-equal "2" (match-string 2 header))))
                  ((string= "3/30" chunk)
-                  (should (string-equal "3" (match-string 1 header))))
+                  (should (string-equal "3" (match-string 2 header))))
                  ((string= "40/40" chunk)
-                  (should (string-equal "40" (match-string 1 header)))))
+                  (should (string-equal "40" (match-string 2 header)))))
                 (should-not difftastic--chunk-regexp-chunk)
                 (should difftastic--chunk-regexp-file)))))))))
 
@@ -479,7 +479,7 @@
                 (should-not difftastic--chunk-regexp-chunk)
                 (should-not difftastic--chunk-regexp-file)
                 (should (string-match (difftastic--chunk-regexp nil) header))
-                (should-not (match-string 1 header))
+                (should-not (match-string 2 header))
                 (should difftastic--chunk-regexp-chunk)
                 (should-not difftastic--chunk-regexp-file)))))))))
 
@@ -605,7 +605,7 @@
               (with-temp-buffer
                 (difftastic-mode)
                 (should (string-match (difftastic--chunk-regexp t) header))
-                (should-not (match-string 1 header))
+                (should-not (match-string 2 header))
                 (should
                  (string-match-p (difftastic--chunk-regexp nil) header))))))))))
 
@@ -1503,6 +1503,2140 @@ test/difftastic.t.el --- Emacs Lisp
           (goto-char (point-min))
           (difftastic-toggle-chunk)
           (should (equal-including-properties (buffer-string) ,expected)))))))
+
+(ert-deftest difftastic--chunk-bounds:file-chunk-point-at-beginning ()
+  (mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
+    (with-temp-buffer
+      (insert "difftastic.el --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+")
+      (goto-char (point-min))
+      (should (equal (cons (point-min) (1- (point-max)))
+                     (difftastic--chunk-bounds))))))
+
+(ert-deftest difftastic--chunk-bounds:file-chunk-point-at-end ()
+  (mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
+    (with-temp-buffer
+      (insert "difftastic.el --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+")
+      (goto-char (1- (point-max)))
+      (should (equal (cons (point-min) (1- (point-max)))
+                     (difftastic--chunk-bounds))))))
+
+(ert-deftest difftastic--chunk-bounds:last-file-chunk-point-at-beginning ()
+  (mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
+    (with-temp-buffer
+      (insert "difftastic.el --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+")
+      (goto-char (point-min))
+      (should (equal (cons (point-min) (- (point-max) 2))
+                     (difftastic--chunk-bounds))))))
+
+(ert-deftest difftastic--chunk-bounds:last-file-chunk-point-at-end ()
+  (mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
+    (with-temp-buffer
+      (insert "difftastic.el --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+")
+      (goto-char (- (point-max) 2))
+      (should (equal (cons (point-min) (- (point-max) 2))
+                     (difftastic--chunk-bounds))))))
+
+(ert-deftest difftastic--chunk-bounds:file-chunk-point-after ()
+  (mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
+    (with-temp-buffer
+      (insert "difftastic.el --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+")
+      (goto-char (point-max))
+      (should-not (difftastic--chunk-bounds)))))
+
+(ert-deftest difftastic--chunk-bounds:chunk-point-at-beginning ()
+  (mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
+    (with-temp-buffer
+      (insert "difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+")
+      (goto-char (point-min))
+      (should (equal (cons (point-min) (1- (point-max)))
+                     (difftastic--chunk-bounds))))))
+
+(ert-deftest difftastic--chunk-bounds:chunk-point-at-end ()
+  (mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
+    (with-temp-buffer
+      (insert "difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+")
+      (goto-char (1- (point-max)))
+      (should (equal (cons (point-min) (1- (point-max)))
+                     (difftastic--chunk-bounds))))))
+
+(ert-deftest difftastic--chunk-bounds:last-chunk-point-at-beginning ()
+  (mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
+    (with-temp-buffer
+      (insert "difftastic.el --- 2/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+")
+      (goto-char (point-min))
+      (should (equal (cons (point-min) (- (point-max) 2))
+                     (difftastic--chunk-bounds))))))
+
+(ert-deftest difftastic--chunk-bounds:last-chunk-point-at-end ()
+  (mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
+    (with-temp-buffer
+      (insert "difftastic.el --- 2/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+")
+      (goto-char (- (point-max) 2))
+      (should (equal (cons (point-min) (- (point-max) 2))
+                     (difftastic--chunk-bounds))))))
+
+(ert-deftest difftastic--chunk-bounds:chunk-point-after ()
+  (mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
+    (with-temp-buffer
+      (insert "difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+")
+      (goto-char (point-max))
+      (should-not (difftastic--chunk-bounds)))))
+
+(ert-deftest difftastic--chunk-bounds:chunk-chunk-point-between ()
+  (mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
+    (with-temp-buffer
+      (insert "difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+")
+      (let ((pos (point)))
+        (insert "\ndifftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+")
+        (goto-char pos))
+      (should-not (difftastic--chunk-bounds)))))
+
+(ert-deftest difftastic--chunk-bounds:file-chunk-chunk-point-between ()
+  (mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
+    (with-temp-buffer
+      (insert "difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+")
+      (let ((pos (point)))
+        (insert "\ndifftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+")
+        (goto-char pos))
+      (should-not (difftastic--chunk-bounds)))))
+
+(ert-deftest difftastic--chunk-bounds:chunk-file-chunk-point-between ()
+  (mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
+    (with-temp-buffer
+      (insert "difftastic.t.el --- 2/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+")
+      (let ((pos (point)))
+        (insert "\ndifftastic.el --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+")
+        (goto-char pos))
+      (should-not (difftastic--chunk-bounds)))))
+
+(ert-deftest difftastic--chunk-bounds:file-chunk-file-chunk-point-between ()
+  (mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
+    (with-temp-buffer
+      (insert "difftastic.el --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+")
+      (let ((pos (point)))
+        (insert "\ndifftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+")
+        (goto-char pos))
+      (should-not (difftastic--chunk-bounds)))))
+
+(ert-deftest difftastic--chunk-file-name:file-chunk ()
+  (mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
+    (with-temp-buffer
+      (insert "difftastic.el --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-")
+      (should (equal "difftastic.el"
+                     (difftastic--chunk-file-name
+                      (cons (point-min) (point-max))))))))
+
+(ert-deftest difftastic--chunk-file-name:chunk ()
+  (mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
+    (with-temp-buffer
+      (insert "difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-")
+      (should (equal "difftastic.el"
+                     (difftastic--chunk-file-name
+                      (cons (point-min) (point-max))))))))
+
+(ert-deftest difftastic--line-num-rx:match ()
+  (should (eql 0
+               (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 1)))
+                               "1")))
+  (should (eql 0
+               (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 1)))
+                               "1 ")))
+  (should (eql 0
+               (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 1)))
+                               "1\n")))
+  (should (eql 0
+               (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 1)))
+                               ".")))
+  (should (eql 0
+               (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 1)))
+                               ". ")))
+  (should (eql 0
+               (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 1)))
+                               ".\n")))
+  (should (eql 0
+               (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 2)))
+                               "22")))
+  (should (eql 0
+               (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 2)))
+                               "22 ")))
+  (should (eql 0
+               (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 2)))
+                               "22\n")))
+  (should (eql 0
+               (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 2)))
+                               " 2")))
+  (should (eql 0
+               (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 2)))
+                               " 2 ")))
+  (should (eql 0
+               (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 2)))
+                               " 2\n")))
+  (should (eql 0
+               (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 3)))
+                               " 3")))
+  (should (eql 0
+               (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 3)))
+                               " 3 ")))
+  (should (eql 0
+               (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 3)))
+                               " 3\n")))
+  (should (eql 0
+               (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 3)))
+                               "  3")))
+  (should (eql 0
+               (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 3)))
+                               "  3 ")))
+  (should (eql 0
+               (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 3)))
+                               "  3\n")))
+  (should (eql 0
+               (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 2)))
+                               "..")))
+  (should (eql 0
+               (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 2)))
+                               ".. ")))
+  (should (eql 0
+               (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 2)))
+                               "..\n")))
+  (should (eql 0
+               (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 2)))
+                               " .")))
+  (should (eql 0
+               (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 2)))
+                               " . ")))
+  (should (eql 0
+               (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 2)))
+                               " .\n")))
+  (should (eql 0
+               (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 3)))
+                               "  .")))
+  (should (eql 0
+               (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 3)))
+                               "  . ")))
+  (should (eql 0
+               (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 3)))
+                               "  .\n")))
+  (should (eql 0
+               (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 3)))
+                               " .")))
+  (should (eql 0
+               (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 3)))
+                               " . ")))
+  (should (eql 0
+               (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 3)))
+                               " .\n"))))
+
+(ert-deftest difftastic--line-num-rx:no-match ()
+  (should-not (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 1)))
+                              " "))
+  (should-not (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 1)))
+                              " 1"))
+  (should-not (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 1)))
+                              " ."))
+  (should-not (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 1)))
+                              "22"))
+  (should-not (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 1)))
+                              ".."))
+  (should-not (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 2)))
+                              " 22"))
+  (should-not (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 2)))
+                              " .."))
+  (should-not (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 2)))
+                              ".2"))
+  (should-not (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 2)))
+                              "2."))
+  (should-not (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 3)))
+                              " 2."))
+  (should-not (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 3)))
+                              " .2")))
+
+(ert-deftest difftastic--classify-chunk:single-column-no-left-first ()
+  (with-temp-buffer
+    (insert "  1         bar
+1 2         foo
+. 3         bar
+2 4         foo
+")
+    (should (eq (difftastic--classify-chunk (cons (point-min) (point-max)))
+                'single-column))))
+
+(ert-deftest difftastic--classify-chunk:single-column-no-right-first ()
+  (with-temp-buffer
+    (insert "1           bar
+2 1         foo
+3 .         bar
+4 2         foo
+")
+    (should (eq (difftastic--classify-chunk (cons (point-min) (point-max)))
+                'single-column))))
+
+(ert-deftest difftastic--classify-chunk:single-column-no-left-last ()
+  (with-temp-buffer
+    (insert "1 1         foo
+2 2         foo
+  3         qux
+")
+    (should (eq (difftastic--classify-chunk (cons (point-min) (point-max)))
+                'single-column))))
+
+(ert-deftest difftastic--classify-chunk:single-column-no-right-last ()
+  (with-temp-buffer
+    (insert "1 1         foo
+2 2         foo
+3           qux
+")
+    (should (eq (difftastic--classify-chunk (cons (point-min) (point-max)))
+                'single-column))))
+
+(ert-deftest difftastic--classify-chunk:side-by-side-no-left-first ()
+  (with-temp-buffer
+    (insert "                              1         baz
+1         foo                 2         foo
+2         foo                 3         baz
+")
+    (should (eq (difftastic--classify-chunk (cons (point-min) (point-max)))
+                'side-by-side))))
+
+(ert-deftest difftastic--classify-chunk:side-by-side-dot-left-first ()
+  (with-temp-buffer
+    (insert ".                             1         baz
+1         foo                 2         foo
+2         foo                 3         baz
+3         qux
+")
+    (should (eq (difftastic--classify-chunk (cons (point-min) (point-max)))
+                'side-by-side))))
+
+(ert-deftest difftastic--classify-chunk:side-by-side-no-right-first ()
+  (with-temp-buffer
+    (insert "1         baz
+2         foo                 1         foo
+3         baz                 2         foo
+")
+    (should (eq (difftastic--classify-chunk (cons (point-min) (point-max)))
+                'side-by-side))))
+
+(ert-deftest difftastic--classify-chunk:side-by-side-dot-right-first ()
+  (with-temp-buffer
+    (insert "1         baz                 .
+2         foo                 1         foo
+3         baz                 2         foo
+")
+    (should (eq (difftastic--classify-chunk (cons (point-min) (point-max)))
+                'side-by-side))))
+
+(ert-deftest difftastic--classify-chunk:side-by-side-no-left-last ()
+  (with-temp-buffer
+    (insert "1         baz                 1         qux
+2         foo                 1         foo
+3         baz                 2         foo
+                              3         qux
+")
+    (should (eq (difftastic--classify-chunk (cons (point-min) (point-max)))
+                'side-by-side))))
+
+(ert-deftest difftastic--classify-chunk:side-by-side-no-right-last ()
+  (with-temp-buffer
+    (insert "1         bar                 1         baz
+2         foo                 2         foo
+3         bar                 3         baz
+4         foo
+")
+    (should (eq (difftastic--classify-chunk (cons (point-min) (point-max)))
+                'side-by-side))))
+
+(ert-deftest difftastic--parse-side-by-side-chunk:no-left-first ()
+  (with-temp-buffer
+    (insert "foo --- Text
+                              1         baz
+1         foo                 2         foo
+2         foo                 3         baz
+")
+    (should (equal
+             (difftastic--parse-side-by-side-chunk
+              (cons (point-min) (point-max)))
+             '(((14 57)   nil         (1 44 45))
+               ((58 101)  (1 58 59)   (2 88 89))
+               ((102 145) (2 102 103) (3 132 133)))))))
+
+(ert-deftest difftastic--parse-side-by-side-chunk:dot-left-first ()
+  (with-temp-buffer
+    (insert "foo --- Text
+.                             1         baz
+1         foo                 2         foo
+2         foo                 3         baz
+3         qux
+")
+    (should (equal
+             (difftastic--parse-side-by-side-chunk
+              (cons (point-min) (point-max)))
+             '(((14 57)   (nil 14 15) (1 44 45))
+               ((58 101)  (1 58 59)   (2 88 89))
+               ((102 145) (2 102 103) (3 132 133))
+               ((146 159) (3 146 147) nil))))))
+
+(ert-deftest difftastic--parse-side-by-side-chunk:no-right-first ()
+  (with-temp-buffer
+    (insert "foo --- Text
+1         baz
+2         foo                 1         foo
+3         baz                 2         foo
+")
+    (should (equal
+             (difftastic--parse-side-by-side-chunk
+              (cons (point-min) (point-max)))
+             '(((14 27)  (1 14 15) nil)
+               ((28 71)  (2 28 29) (1 58 59))
+               ((72 115) (3 72 73) (2 102 103)))))))
+
+(ert-deftest difftastic--parse-side-by-side-chunk:dot-right-first ()
+  (with-temp-buffer
+    (insert "foo --- Text
+1         baz                 .
+2         foo                 1         foo
+3         baz                 2         foo
+")
+    (should (equal
+             (difftastic--parse-side-by-side-chunk
+              (cons (point-min) (point-max)))
+             '(((14 45)  (1 14 15) (nil 44 45))
+               ((46 89)  (2 46 47) (1 76 77))
+               ((90 133) (3 90 91) (2 120 121)))))))
+
+(ert-deftest difftastic--parse-side-by-side-chunk:no-left-last ()
+  (with-temp-buffer
+    (insert "foo --- Text
+1         baz                 1         qux
+2         foo                 1         foo
+3         baz                 2         foo
+                              3         qux
+")
+    (should (equal
+             (difftastic--parse-side-by-side-chunk
+              (cons (point-min) (point-max)))
+             '(((14 57)   (1 14 15)   (1 44 45))
+               ((58 101)  (2 58 59)   (1 88 89))
+               ((102 145) (3 102 103) (2 132 133))
+               ((146 189) nil         (3 176 177)))))))
+
+(ert-deftest difftastic--parse-side-by-side-chunk:no-right-last ()
+  (with-temp-buffer
+    (insert "foo --- Text
+1         bar                 1         baz
+2         foo                 2         foo
+3         bar                 3         baz
+4         foo
+")
+    (should (equal
+             (difftastic--parse-side-by-side-chunk
+              (cons (point-min) (point-max)))
+             '(((14 57)   (1 14 15)   (1 44 45))
+               ((58 101)  (2 58 59)   (2 88 89))
+               ((102 145) (3 102 103) (3 132 133))
+               ((146 159) (4 146 147) nil))))))
+
+(ert-deftest difftastic--parse-side-by-side-chunk:no-middle-left ()
+  (with-temp-buffer
+    (insert "foo --- Text
+1         foo                 2         foo
+.                             3         bar
+2         foo                 4         foo
+")
+    (should (equal
+             (difftastic--parse-side-by-side-chunk
+              (cons (point-min) (point-max)))
+             '(((14 57)   (1 14 15)   (2 44 45))
+               ((58 101)  (1 58 59)   (3 88 89))
+               ((102 145) (2 102 103) (4 132 133)))))))
+
+(ert-deftest difftastic--parse-side-by-side-chunk:no-middle-right ()
+  (with-temp-buffer
+    (insert "foo --- Text
+2         foo                 1         foo
+3         bar                 .
+4         foo                 2         foo
+")
+    (should (equal
+             (difftastic--parse-side-by-side-chunk
+              (cons (point-min) (point-max)))
+             '(((14 57)  (2 14 15) (1 44 45))
+               ((58 89)  (3 58 59) (1 88 89))
+               ((90 133) (4 90 91) (2 120 121)))))))
+
+(ert-deftest difftastic--parse-side-by-side-chunk:different-line-num ()
+  (with-temp-buffer
+    (insert "foo --- Text
+ 9        bar                  99        baz
+10        foo                 100        foo
+11        bar                 101        baz
+")
+    (should (equal
+             (difftastic--parse-side-by-side-chunk
+              (cons (point-min) (point-max)))
+             '(((14 58)   (9 15 16)    (99 45 47))
+               ((59 103)  (10 59 61)   (100 89 92))
+               ((104 148) (11 104 106) (101 134 137)))))))
+
+(ert-deftest difftastic--parse-single-column-chunk:no-left-first ()
+  (with-temp-buffer
+    (insert "foo --- Text
+  1         bar
+1 2         foo
+. 3         bar
+2 4         foo
+")
+    (should (equal
+             (difftastic--parse-single-column-chunk
+              (cons (point-min) (point-max)))
+             '(((14 29) nil         (1 16 17))
+               ((30 45) (1 30 31)   (2 32 33))
+               ((46 61) (1 46 47)   (3 48 49))
+               ((62 77) (2 62 63)   (4 64 65)))))))
+
+(ert-deftest difftastic--parse-single-column-chunk:no-right-first ()
+  (with-temp-buffer
+    (insert "foo --- Text
+1           bar
+2 1         foo
+3 .         bar
+4 2         foo
+")
+    (should (equal
+             (difftastic--parse-single-column-chunk
+              (cons (point-min) (point-max)))
+             '(((14 29) (1 14 15) nil)
+               ((30 45) (2 30 31) (1 32 33))
+               ((46 61) (3 46 47) (1 48 49))
+               ((62 77) (4 62 63) (2 64 65)))))))
+
+(ert-deftest difftastic--parse-single-column-chunk:no-left-last ()
+  (with-temp-buffer
+    (insert "foo --- Text
+1 1         foo
+2 2         foo
+  3         qux
+")
+    (should (equal
+             (difftastic--parse-single-column-chunk
+              (cons (point-min) (point-max)))
+             '(((14 29) (1 14 15) (1 16 17))
+               ((30 45) (2 30 31) (2 32 33))
+               ((46 61) nil       (3 48 49)))))))
+
+(ert-deftest difftastic--parse-single-column-chunk:no-right-last ()
+  (with-temp-buffer
+    (insert "foo --- Text
+1 1         foo
+2 2         foo
+3           qux
+")
+    (should (equal
+             (difftastic--parse-single-column-chunk
+              (cons (point-min) (point-max)))
+             '(((14 29) (1 14 15) (1 16 17))
+               ((30 45) (2 30 31) (2 32 33))
+               ((46 61) (3 46 47) nil))))))
+
+(ert-deftest difftastic--parse-single-column-chunk:different-line-num ()
+  (with-temp-buffer
+    (insert "foo --- Text
+ 9  99         foo
+10 100         bar
+11 101         foo
+")
+    (should (equal
+             (difftastic--parse-single-column-chunk
+              (cons (point-min) (point-max)))
+             '(((14 32) (9 15 16)  (99 18 20))
+               ((33 51) (10 33 35) (100 36 39))
+               ((52 70) (11 52 54) (101 55 58)))))))
+
+(ert-deftest difftastic--chunk-file-at-point:side-by-side-no-right ()
+  (with-temp-buffer
+    (insert "foo --- Text
+ 7        bar
+ 8        bar                  99        baz
+ .        foo                  ..        foo
+ 9        bar                 100        baz
+10        bar
+")
+    (goto-char (point-min))
+    (should (equal (difftastic--chunk-file-at-point) '("foo" nil right)))
+    (goto-char (compat-call pos-eol)) ;  Since Emacs-29
+    (should (equal (difftastic--chunk-file-at-point) '("foo" nil right)))
+
+    (re-search-forward (rx line-start " 7"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 7 left)))
+    (goto-char (compat-call pos-bol)) ; Since Emacs-29
+    (should (equal (cons 'bol (difftastic--chunk-file-at-point))
+                   '(bol "foo" 7 left)))
+    (goto-char (compat-call pos-eol)) ; Since Emacs-29
+    (should (equal (cons 'eol (difftastic--chunk-file-at-point))
+                   '(eol "foo" 7 left)))
+
+    (re-search-forward (rx line-start " 8"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 8 left)))
+    (goto-char (compat-call pos-bol)) ; Since Emacs-29
+    (should (equal (cons 'bol (difftastic--chunk-file-at-point))
+                   '(bol "foo" 8 left)))
+    (re-search-forward (rx " 99"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 99 right)))
+    (re-search-backward (rx "99"))
+    (should (equal (cons 'line-num-beg (difftastic--chunk-file-at-point))
+                   '(line-num-beg "foo" 99 right)))
+    (goto-char (compat-call pos-eol)) ; Since Emacs-29
+    (should (equal (cons 'eol (difftastic--chunk-file-at-point))
+                   '(eol "foo" 99 right)))
+
+    (re-search-forward (rx line-start " ."))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 8 left)))
+    (goto-char (compat-call pos-bol)) ; Since Emacs-29
+    (should (equal (cons 'bol (difftastic--chunk-file-at-point))
+                   '(bol "foo" 8 left)))
+    (re-search-forward (rx " .."))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 99 right)))
+    (re-search-backward (rx ".."))
+    (should (equal (cons 'line-num-beg (difftastic--chunk-file-at-point))
+                   '(line-num-beg "foo" 99 right)))
+    (goto-char (compat-call pos-eol)) ; Since Emacs-29
+    (should (equal (cons 'eol (difftastic--chunk-file-at-point))
+                   '(eol "foo" 99 right)))
+
+    (re-search-forward (rx line-start " 9"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 9 left)))
+    (goto-char (compat-call pos-bol)) ; Since Emacs-29
+    (should (equal (cons 'bol (difftastic--chunk-file-at-point))
+                   '(bol "foo" 9 left)))
+    (re-search-forward (rx " 100"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 100 right)))
+    (re-search-backward (rx "100"))
+    (should (equal (cons 'line-num-beg (difftastic--chunk-file-at-point))
+                   '(line-num-beg "foo" 100 right)))
+    (goto-char (compat-call pos-eol)) ; Since Emacs-29
+    (should (equal (cons 'eol (difftastic--chunk-file-at-point))
+                   '(eol "foo" 100 right)))
+
+    (re-search-forward (rx line-start "10"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 10 left)))
+    (goto-char (compat-call pos-bol)) ; Since Emacs-29
+    (should (equal (cons 'bol (difftastic--chunk-file-at-point))
+                   '(bol "foo" 10 left)))
+    (goto-char (compat-call pos-eol)) ; Since Emacs-29
+    (should (equal (cons 'eol (difftastic--chunk-file-at-point))
+                   '(eol "foo" 10 left)))))
+
+(ert-deftest difftastic--chunk-file-at-point:side-by-side-dot-right ()
+  (with-temp-buffer
+    (insert "foo --- Text
+ 7        bar                  ..
+ 8        bar                  99        baz
+ .        foo                  ..        foo
+ 9        bar                 100        baz
+10        bar                 ...
+")
+    (goto-char (point-min))
+    (should (equal (difftastic--chunk-file-at-point) '("foo" nil right)))
+    (goto-char (compat-call pos-eol)) ;  Since Emacs-29
+    (should (equal (difftastic--chunk-file-at-point) '("foo" nil right)))
+
+    (re-search-forward (rx line-start " 7"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 7 left)))
+    (goto-char (compat-call pos-bol)) ; Since Emacs-29
+    (should (equal (cons 'bol (difftastic--chunk-file-at-point))
+                   '(bol "foo" 7 left)))
+    (re-search-forward (rx " .."))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" nil right)))
+    (re-search-backward (rx ".."))
+    (should (equal (cons 'line-num-beg (difftastic--chunk-file-at-point))
+                   '(line-num-beg "foo" nil right)))
+    (goto-char (compat-call pos-eol)) ; Since Emacs-29
+    (should (equal (cons 'eol (difftastic--chunk-file-at-point))
+                   '(eol "foo" nil right)))
+
+    (re-search-forward (rx line-start " 8"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 8 left)))
+    (goto-char (compat-call pos-bol)) ; Since Emacs-29
+    (should (equal (cons 'bol (difftastic--chunk-file-at-point))
+                   '(bol "foo" 8 left)))
+    (re-search-forward (rx " 99"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 99 right)))
+    (re-search-backward (rx "99"))
+    (should (equal (cons 'line-num-beg (difftastic--chunk-file-at-point))
+                   '(line-num-beg "foo" 99 right)))
+    (goto-char (compat-call pos-eol)) ; Since Emacs-29
+    (should (equal (cons 'eol (difftastic--chunk-file-at-point))
+                   '(eol "foo" 99 right)))
+
+    (re-search-forward (rx line-start " ."))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 8 left)))
+    (goto-char (compat-call pos-bol)) ; Since Emacs-29
+    (should (equal (cons 'bol (difftastic--chunk-file-at-point))
+                   '(bol "foo" 8 left)))
+    (re-search-forward (rx " .."))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 99 right)))
+    (re-search-backward (rx ".."))
+    (should (equal (cons 'line-num-beg (difftastic--chunk-file-at-point))
+                   '(line-num-beg "foo" 99 right)))
+    (goto-char (compat-call pos-eol)) ; Since Emacs-29
+    (should (equal (cons 'eol (difftastic--chunk-file-at-point))
+                   '(eol "foo" 99 right)))
+
+    (re-search-forward (rx line-start " 9"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 9 left)))
+    (goto-char (compat-call pos-bol)) ; Since Emacs-29
+    (should (equal (cons 'bol (difftastic--chunk-file-at-point))
+                   '(bol "foo" 9 left)))
+    (re-search-forward (rx " 100"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 100 right)))
+    (re-search-backward (rx "100"))
+    (should (equal (cons 'line-num-beg (difftastic--chunk-file-at-point))
+                   '(line-num-beg "foo" 100 right)))
+    (goto-char (compat-call pos-eol)) ; Since Emacs-29
+    (should (equal (cons 'eol (difftastic--chunk-file-at-point))
+                   '(eol "foo" 100 right)))
+
+    (re-search-forward (rx line-start "10"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 10 left)))
+    (goto-char (compat-call pos-bol)) ; Since Emacs-29
+    (should (equal (cons 'bol (difftastic--chunk-file-at-point))
+                   '(bol "foo" 10 left)))
+    (re-search-forward (rx " ..."))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 100 right)))
+    (re-search-backward (rx "..."))
+    (should (equal (cons 'line-num-beg (difftastic--chunk-file-at-point))
+                   '(line-num-beg "foo" 100 right)))
+    (goto-char (compat-call pos-eol)) ; Since Emacs-29
+    (should (equal (cons 'eol (difftastic--chunk-file-at-point))
+                   '(eol "foo" 100 right)))))
+
+(ert-deftest difftastic--chunk-file-at-point:side-by-side-no-left ()
+  (with-temp-buffer
+    (insert "foo --- Text
+                               98        bar
+ 8        bar                  99        baz
+ .        foo                  ..        foo
+ 9        bar                 100        baz
+                              101        bar
+")
+    (goto-char (point-min))
+    (should (equal (difftastic--chunk-file-at-point) '("foo" nil right)))
+    (goto-char (compat-call pos-eol)) ;  Since Emacs-29
+    (should (equal (difftastic--chunk-file-at-point) '("foo" nil right)))
+
+    (re-search-forward (rx " 98"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 98 right)))
+    (re-search-backward (rx "98"))
+    (should (equal (cons 'line-num-beg (difftastic--chunk-file-at-point))
+                   '(line-num-beg "foo" 98 right)))
+    (goto-char (compat-call pos-bol)) ; Since Emacs-29
+    (should (equal (cons 'bol (difftastic--chunk-file-at-point))
+                   '(bol "foo" 98 right)))
+    (goto-char (compat-call pos-eol)) ; Since Emacs-29
+    (should (equal (cons 'eol (difftastic--chunk-file-at-point))
+                   '(eol "foo" 98 right)))
+
+    (re-search-forward (rx line-start " 8"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 8 left)))
+    (goto-char (compat-call pos-bol)) ; Since Emacs-29
+    (should (equal (cons 'bol (difftastic--chunk-file-at-point))
+                   '(bol "foo" 8 left)))
+    (re-search-forward (rx " 99"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 99 right)))
+    (re-search-backward (rx "99"))
+    (should (equal (cons 'line-num-beg (difftastic--chunk-file-at-point))
+                   '(line-num-beg "foo" 99 right)))
+    (goto-char (compat-call pos-eol)) ; Since Emacs-29
+    (should (equal (cons 'eol (difftastic--chunk-file-at-point))
+                   '(eol "foo" 99 right)))
+
+    (re-search-forward (rx line-start " ."))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 8 left)))
+    (goto-char (compat-call pos-bol)) ; Since Emacs-29
+    (should (equal (cons 'bol (difftastic--chunk-file-at-point))
+                   '(bol "foo" 8 left)))
+    (re-search-forward (rx " .."))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 99 right)))
+    (re-search-backward (rx ".."))
+    (should (equal (cons 'line-num-beg (difftastic--chunk-file-at-point))
+                   '(line-num-beg "foo" 99 right)))
+    (goto-char (compat-call pos-eol)) ; Since Emacs-29
+    (should (equal (cons 'eol (difftastic--chunk-file-at-point))
+                   '(eol "foo" 99 right)))
+
+    (re-search-forward (rx line-start " 9"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 9 left)))
+    (goto-char (compat-call pos-bol)) ; Since Emacs-29
+    (should (equal (cons 'bol (difftastic--chunk-file-at-point))
+                   '(bol "foo" 9 left)))
+    (re-search-forward (rx " 100"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 100 right)))
+    (re-search-backward (rx "100"))
+    (should (equal (cons 'line-num-beg (difftastic--chunk-file-at-point))
+                   '(line-num-beg "foo" 100 right)))
+    (goto-char (compat-call pos-eol)) ; Since Emacs-29
+    (should (equal (cons 'eol (difftastic--chunk-file-at-point))
+                   '(eol "foo" 100 right)))
+
+    (re-search-forward (rx " 101"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 101 right)))
+    (re-search-backward (rx "101"))
+    (should (equal (cons 'line-num-beg (difftastic--chunk-file-at-point))
+                   '(line-num-beg "foo" 101 right)))
+    (goto-char (compat-call pos-bol)) ; Since Emacs-29
+    (should (equal (cons 'bol (difftastic--chunk-file-at-point))
+                   '(bol "foo" 101 right)))
+    (goto-char (compat-call pos-eol)) ; Since Emacs-29
+    (should (equal (cons 'eol (difftastic--chunk-file-at-point))
+                   '(eol "foo" 101 right)))))
+
+(ert-deftest difftastic--chunk-file-at-point:side-by-side-dot-left ()
+  (with-temp-buffer
+    (insert "foo --- Text
+ .                             98        bar
+ 8        bar                  99        baz
+ .        foo                  ..        foo
+ 9        bar                 100        baz
+ .                            101        bar
+")
+    (goto-char (point-min))
+    (should (equal (difftastic--chunk-file-at-point) '("foo" nil right)))
+    (goto-char (compat-call pos-eol)) ;  Since Emacs-29
+    (should (equal (difftastic--chunk-file-at-point) '("foo" nil right)))
+
+    (re-search-forward (rx line-start " ."))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" nil left)))
+    (re-search-backward (rx "."))
+    (should (equal (cons 'line-num-beg (difftastic--chunk-file-at-point))
+                   '(line-num-beg "foo" nil left)))
+    (goto-char (compat-call pos-bol)) ; Since Emacs-29
+    (should (equal (cons 'bol (difftastic--chunk-file-at-point))
+                   '(bol "foo" nil left)))
+    (re-search-forward (rx " 98"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 98 right)))
+    (re-search-backward (rx "98"))
+    (should (equal (cons 'line-num-beg (difftastic--chunk-file-at-point))
+                   '(line-num-beg "foo" 98 right)))
+    (goto-char (compat-call pos-eol)) ; Since Emacs-29
+    (should (equal (cons 'eol (difftastic--chunk-file-at-point))
+                   '(eol "foo" 98 right)))
+
+    (re-search-forward (rx line-start " 8"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 8 left)))
+    (goto-char (compat-call pos-bol)) ; Since Emacs-29
+    (should (equal (cons 'bol (difftastic--chunk-file-at-point))
+                   '(bol "foo" 8 left)))
+    (re-search-forward (rx " 99"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 99 right)))
+    (re-search-backward (rx "99"))
+    (should (equal (cons 'line-num-beg (difftastic--chunk-file-at-point))
+                   '(line-num-beg "foo" 99 right)))
+    (goto-char (compat-call pos-eol)) ; Since Emacs-29
+    (should (equal (cons 'eol (difftastic--chunk-file-at-point))
+                   '(eol "foo" 99 right)))
+
+    (re-search-forward (rx line-start " ."))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 8 left)))
+    (goto-char (compat-call pos-bol)) ; Since Emacs-29
+    (should (equal (cons 'bol (difftastic--chunk-file-at-point))
+                   '(bol "foo" 8 left)))
+    (re-search-forward (rx " .."))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 99 right)))
+    (re-search-backward (rx ".."))
+    (should (equal (cons 'line-num-beg (difftastic--chunk-file-at-point))
+                   '(line-num-beg "foo" 99 right)))
+    (goto-char (compat-call pos-eol)) ; Since Emacs-29
+    (should (equal (cons 'eol (difftastic--chunk-file-at-point))
+                   '(eol "foo" 99 right)))
+
+    (re-search-forward (rx line-start " 9"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 9 left)))
+    (goto-char (compat-call pos-bol)) ; Since Emacs-29
+    (should (equal (cons 'bol (difftastic--chunk-file-at-point))
+                   '(bol "foo" 9 left)))
+    (re-search-forward (rx " 100"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 100 right)))
+    (re-search-backward (rx "100"))
+    (should (equal (cons 'line-num-beg (difftastic--chunk-file-at-point))
+                   '(line-num-beg "foo" 100 right)))
+    (goto-char (compat-call pos-eol)) ; Since Emacs-29
+    (should (equal (cons 'eol (difftastic--chunk-file-at-point))
+                   '(eol "foo" 100 right)))
+
+    (re-search-forward (rx " 101"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 101 right)))
+    (re-search-backward (rx "101"))
+    (should (equal (cons 'line-num-beg (difftastic--chunk-file-at-point))
+                   '(line-num-beg "foo" 101 right)))
+    (goto-char (compat-call pos-bol)) ; Since Emacs-29
+    (should (equal (cons 'bol (difftastic--chunk-file-at-point))
+                   '(bol "foo" 9 left)))
+    (goto-char (compat-call pos-eol)) ; Since Emacs-29
+    (should (equal (cons 'eol (difftastic--chunk-file-at-point))
+                   '(eol "foo" 101 right)))))
+
+(ert-deftest difftastic--chunk-file-at-point:single-column-no-right ()
+  (with-temp-buffer
+    (insert "foo --- Text
+ 7            foo
+ 8  99        foo
+ .  ..        foo
+ 9 100        foo
+10            foo
+")
+    (goto-char (point-min))
+    (should (equal (difftastic--chunk-file-at-point) '("foo" nil right)))
+    (goto-char (compat-call pos-eol)) ;  Since Emacs-29
+    (should (equal (difftastic--chunk-file-at-point) '("foo" nil right)))
+
+    (re-search-forward (rx line-start " 7"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 7 left)))
+    (goto-char (compat-call pos-bol)) ; Since Emacs-29
+    (should (equal (cons 'bol (difftastic--chunk-file-at-point))
+                   '(bol "foo" 7 left)))
+    (goto-char (compat-call pos-eol)) ; Since Emacs-29
+    (should (equal (cons 'eol (difftastic--chunk-file-at-point))
+                   '(eol "foo" 7 left)))
+
+    (re-search-forward (rx line-start " 8"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 8 left)))
+    (goto-char (compat-call pos-bol)) ; Since Emacs-29
+    (should (equal (cons 'bol (difftastic--chunk-file-at-point))
+                   '(bol "foo" 8 left)))
+    (re-search-forward (rx " 99"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 99 right)))
+    (re-search-backward (rx "99"))
+    (should (equal (cons 'line-num-beg (difftastic--chunk-file-at-point))
+                   '(line-num-beg "foo" 99 right)))
+    (goto-char (compat-call pos-eol)) ; Since Emacs-29
+    (should (equal (cons 'eol (difftastic--chunk-file-at-point))
+                   '(eol "foo" 99 right)))
+
+    (re-search-forward (rx line-start " ."))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 8 left)))
+    (goto-char (compat-call pos-bol)) ; Since Emacs-29
+    (should (equal (cons 'bol (difftastic--chunk-file-at-point))
+                   '(bol "foo" 8 left)))
+    (re-search-forward (rx " .."))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 99 right)))
+    (re-search-backward (rx ".."))
+    (should (equal (cons 'line-num-beg (difftastic--chunk-file-at-point))
+                   '(line-num-beg "foo" 99 right)))
+    (goto-char (compat-call pos-eol)) ; Since Emacs-29
+    (should (equal (cons 'eol (difftastic--chunk-file-at-point))
+                   '(eol "foo" 99 right)))
+
+    (re-search-forward (rx line-start " 9"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 9 left)))
+    (goto-char (compat-call pos-bol)) ; Since Emacs-29
+    (should (equal (cons 'bol (difftastic--chunk-file-at-point))
+                   '(bol "foo" 9 left)))
+    (re-search-forward (rx " 100"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 100 right)))
+    (re-search-backward (rx "100"))
+    (should (equal (cons 'line-num-beg (difftastic--chunk-file-at-point))
+                   '(line-num-beg "foo" 100 right)))
+    (goto-char (compat-call pos-eol)) ; Since Emacs-29
+    (should (equal (cons 'eol (difftastic--chunk-file-at-point))
+                   '(eol "foo" 100 right)))
+
+    (re-search-forward (rx line-start "10"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 10 left)))
+    (goto-char (compat-call pos-bol)) ; Since Emacs-29
+    (should (equal (cons 'bol (difftastic--chunk-file-at-point))
+                   '(bol "foo" 10 left)))
+    (goto-char (compat-call pos-eol)) ; Since Emacs-29
+    (should (equal (cons 'eol (difftastic--chunk-file-at-point))
+                   '(eol "foo" 10 left)))))
+
+(ert-deftest difftastic--chunk-file-at-point:single-column-no-left ()
+  (with-temp-buffer
+    (insert "foo --- Text
+    98        foo
+ 8  99        foo
+ .  ..        foo
+ 9 100        foo
+   101        foo
+")
+    (goto-char (point-min))
+    (should (equal (difftastic--chunk-file-at-point) '("foo" nil right)))
+    (goto-char (compat-call pos-eol)) ;  Since Emacs-29
+    (should (equal (difftastic--chunk-file-at-point) '("foo" nil right)))
+
+    (re-search-forward (rx " 98"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 98 right)))
+    (goto-char (compat-call pos-bol)) ; Since Emacs-29
+    (should (equal (cons 'bol (difftastic--chunk-file-at-point))
+                   '(bol "foo" 98 right)))
+    (goto-char (compat-call pos-eol)) ; Since Emacs-29
+    (should (equal (cons 'eol (difftastic--chunk-file-at-point))
+                   '(eol "foo" 98 right)))
+
+    (re-search-forward (rx line-start " 8"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 8 left)))
+    (goto-char (compat-call pos-bol)) ; Since Emacs-29
+    (should (equal (cons 'bol (difftastic--chunk-file-at-point))
+                   '(bol "foo" 8 left)))
+    (re-search-forward (rx " 99"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 99 right)))
+    (re-search-backward (rx "99"))
+    (should (equal (cons 'line-num-beg (difftastic--chunk-file-at-point))
+                   '(line-num-beg "foo" 99 right)))
+    (goto-char (compat-call pos-eol)) ; Since Emacs-29
+    (should (equal (cons 'eol (difftastic--chunk-file-at-point))
+                   '(eol "foo" 99 right)))
+
+    (re-search-forward (rx line-start " ."))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 8 left)))
+    (goto-char (compat-call pos-bol)) ; Since Emacs-29
+    (should (equal (cons 'bol (difftastic--chunk-file-at-point))
+                   '(bol "foo" 8 left)))
+    (re-search-forward (rx " .."))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 99 right)))
+    (re-search-backward (rx ".."))
+    (should (equal (cons 'line-num-beg (difftastic--chunk-file-at-point))
+                   '(line-num-beg "foo" 99 right)))
+    (goto-char (compat-call pos-eol)) ; Since Emacs-29
+    (should (equal (cons 'eol (difftastic--chunk-file-at-point))
+                   '(eol "foo" 99 right)))
+
+    (re-search-forward (rx line-start " 9"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 9 left)))
+    (goto-char (compat-call pos-bol)) ; Since Emacs-29
+    (should (equal (cons 'bol (difftastic--chunk-file-at-point))
+                   '(bol "foo" 9 left)))
+    (re-search-forward (rx " 100"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 100 right)))
+    (re-search-backward (rx "100"))
+    (should (equal (cons 'line-num-beg (difftastic--chunk-file-at-point))
+                   '(line-num-beg "foo" 100 right)))
+    (goto-char (compat-call pos-eol)) ; Since Emacs-29
+    (should (equal (cons 'eol (difftastic--chunk-file-at-point))
+                   '(eol "foo" 100 right)))
+
+    (re-search-forward (rx " 101"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 101 right)))
+    (re-search-backward (rx "101"))
+    (should (equal (cons 'line-num-beg (difftastic--chunk-file-at-point))
+                   '(line-num-beg "foo" 101 right)))
+    (goto-char (compat-call pos-bol)) ; Since Emacs-29
+    (should (equal (cons 'bol (difftastic--chunk-file-at-point))
+                   '(bol "foo" 101 right)))
+    (goto-char (compat-call pos-eol)) ; Since Emacs-29
+    (should (equal (cons 'eol (difftastic--chunk-file-at-point))
+                   '(eol "foo" 101 right)))))
+
+(ert-deftest difftastic-diff-visit-file-setup:goto-line-col ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window))))
+      (insert "bar")
+      (eval
+       `(mocklet (((get-buffer-window ,buffer 'visible) => ,win))
+          (difftastic--diff-visit-file-setup ,buffer 1 0)
+          (should (equal (point) 1))
+          (difftastic--diff-visit-file-setup ,buffer 1 2)
+          (should (equal (point) 3))
+          (difftastic--diff-visit-file-setup ,buffer 2 0)
+          (should (equal (point) 5))
+          (difftastic--diff-visit-file-setup ,buffer 2 2)
+          (should (equal (point) 7))
+          (difftastic--diff-visit-file-setup ,buffer nil 0)
+          (should (equal (point) 1))
+          (difftastic--diff-visit-file-setup ,buffer nil 2)
+          (should (equal (point) 3))
+          (difftastic--diff-visit-file-setup ,buffer 1 7)
+          (should (equal (point) 4))
+          (difftastic--diff-visit-file-setup ,buffer 2 7)
+          (should (equal (point) 8))
+          (difftastic--diff-visit-file-setup ,buffer nil 7)
+          (should (equal (point) 4)))))))
+
+(ert-deftest difftastic-diff-visit-file-setup:start-smerge ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
+           (buffer-file-name "test-file"))
+      (insert "bar")
+      (eval
+       `(mocklet (((get-buffer-window ,buffer 'visible) => ,win)
+                  ((magit-anything-unmerged-p "test-file") => t)
+                  ((smerge-start-session)))
+          (difftastic--diff-visit-file-setup ,buffer 1 0)
+          (should (equal (point) 1)))))))
+
+(ert-deftest difftastic-diff-visit-file-setup:run-hooks ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window))))
+      (insert "bar")
+      (eval
+       `(mocklet (((get-buffer-window ,buffer 'visible) => ,win)
+                  ((test-hook)))
+          (let ((difftastic-diff-visit-file-hook '(test-hook)))
+            (difftastic--diff-visit-file-setup ,buffer 1 0)
+            (should (equal (point) 1))))))))
+
+(ert-deftest difftastic--diff-visit-file-or-buffer:left-buffer ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
+           (pos (point))
+           (difftastic--metadata `((file-buf-A . ("test-file-A" . ,buffer))
+                                   (file-buf-B . ("test-file-B" . "test-buf-B")))))
+      (insert "bar")
+      (eval
+       `(mocklet (((fn ,buffer))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-file-or-buffer
+                          '("foo" 2 left) #'fn)))
+          (should (equal (point) ,pos)))))))
+
+(ert-deftest difftastic--diff-visit-file-or-buffer:right-buffer ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
+           (pos (point))
+           (difftastic--metadata `((file-buf-A . ("test-file-A" . "test-buf-A"))
+                                   (file-buf-B . ("test-file-B" . ,buffer)))))
+      (insert "bar")
+      (eval
+       `(mocklet (((fn ,buffer))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-file-or-buffer
+                          '("foo" 2 right) #'fn)))
+          (should (equal (point) ,pos)))))))
+
+(ert-deftest difftastic--diff-visit-file-or-buffer:left-buffer-not-live ()
+  (let (buffer
+        (text-quoting-style 'straight))
+    (with-temp-buffer
+      (setq buffer (current-buffer)))
+    (let ((difftastic--metadata `((file-buf-A . ("test-file-A" . ,buffer))
+                                  (file-buf-B . ("test-file-B" . "test-buf-B")))))
+      (eval `(mocklet ((fn not-called))
+        (let ((data (cadr
+                     (should-error (difftastic--diff-visit-file-or-buffer
+                                    '("foo" 2 left) #'fn)))))
+          (should (equal data
+                         "Buffer A [#<killed buffer>] doesn't exist anymore"))))))))
+
+(ert-deftest difftastic--diff-visit-file-or-buffer:right-buffer-not-live ()
+  (let (buffer
+        (text-quoting-style 'straight))
+    (with-temp-buffer
+      (setq buffer (current-buffer)))
+    (let ((difftastic--metadata `((file-buf-A . ("test-file-A" . "test-buf-A"))
+                                  (file-buf-B . ("test-file-B" . ,buffer)))))
+      (eval `(mocklet ((fn not-called))
+        (let ((data (cadr
+                     (should-error (difftastic--diff-visit-file-or-buffer
+                                    '("foo" 2 right) #'fn)))))
+          (should (equal data
+                         "Buffer B [#<killed buffer>] doesn't exist anymore"))))))))
+
+(ert-deftest difftastic--diff-visit-file-or-buffer:left-visiting ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
+           (pos (point))
+           (difftastic--metadata '((file-buf-A . ("test-file-A" . nil))
+                                   (file-buf-B . ("test-file-B" . nil)))))
+      (insert "bar")
+      (eval
+       `(mocklet (((get-file-buffer "test-file-A") => ,buffer)
+                  ((fn ,buffer))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-file-or-buffer
+                          '("foo" 2 left) #'fn)))
+          (should (equal (point) ,pos)))))))
+
+(ert-deftest difftastic--diff-visit-file-or-buffer:right-visiting ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
+           (pos (point))
+           (difftastic--metadata '((file-buf-A . ("test-file-A" . nil))
+                                   (file-buf-B . ("test-file-B" . nil)))))
+      (insert "bar")
+      (eval
+       `(mocklet (((get-file-buffer "test-file-B") => ,buffer)
+                  ((fn ,buffer))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-file-or-buffer
+                          '("foo" 2 right) #'fn)))
+          (should (equal (point) ,pos)))))))
+
+(ert-deftest difftastic--diff-visit-file-or-buffer:left-not-visiting ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
+           (pos (point))
+           (difftastic--metadata '((file-buf-A . ("test-file-A" . nil))
+                                   (file-buf-B . ("test-file-B" . nil)))))
+      (insert "bar")
+      (eval
+       `(mocklet (((get-file-buffer "test-file-A"))
+                  ((find-file-noselect "test-file-A") => ,buffer)
+                  ((fn ,buffer))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-file-or-buffer
+                          '("foo" 2 left) #'fn)))
+          (should (equal (point) ,pos)))))))
+
+(ert-deftest difftastic--diff-visit-file-or-buffer:right-not-visiting ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
+           (pos (point))
+           (difftastic--metadata '((file-buf-A . ("test-file-A" . nil))
+                                   (file-buf-B . ("test-file-B" . nil)))))
+      (insert "bar")
+      (eval
+       `(mocklet (((get-file-buffer "test-file-B"))
+                  ((find-file-noselect "test-file-B") => ,buffer)
+                  ((fn ,buffer))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-file-or-buffer
+                          '("foo" 2 right) #'fn)))
+          (should (equal (point) ,pos)))))))
+
+(ert-deftest difftastic--diff-visit-git-file:left-revision ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
+           (pos (point))
+           (difftastic--metadata '((rev-or-range . "test-rev"))))
+      (insert "bar")
+      (eval
+       `(mocklet (((magit-find-file-noselect "test-rev^" "test-file") => ,buffer)
+                  ((fn ,buffer))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-git-file
+                          '("test-file" 2 left) #'fn)))
+          (should (equal (point) ,pos)))))))
+
+(ert-deftest difftastic--diff-visit-git-file:right-revision ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
+           (pos (point))
+           (difftastic--metadata '((rev-or-range . "test-rev"))))
+      (insert "bar")
+      (eval
+       `(mocklet (((magit-find-file-noselect "test-rev" "test-file") => ,buffer)
+                  ((fn ,buffer))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-git-file
+                          '("test-file" 2 right) #'fn)))
+          (should (equal (point) ,pos)))))))
+
+(ert-deftest difftastic--diff-visit-git-file:left-range ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
+           (pos (point))
+           (difftastic--metadata '((rev-or-range . "test-range-from..test-range-to"))))
+      (insert "bar")
+      (eval
+       `(mocklet (((magit-find-file-noselect "test-range-from" "test-file") => ,buffer)
+                  ((fn ,buffer))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-git-file
+                          '("test-file" 2 left) #'fn)))
+          (should (equal (point) ,pos)))))))
+
+(ert-deftest difftastic--diff-visit-git-file:right-range ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
+           (pos (point))
+           (difftastic--metadata '((rev-or-range . "test-range-from..test-range-to"))))
+      (insert "bar")
+      (eval
+       `(mocklet (((magit-find-file-noselect "test-range-to" "test-file") => ,buffer)
+                  ((fn ,buffer))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-git-file
+                          '("test-file" 2 right) #'fn)))
+          (should (equal (point) ,pos)))))))
+
+(ert-deftest difftastic--diff-visit-git-file:left-staged ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
+           (difftastic--metadata '((rev-or-range . staged))))
+      (insert "bar")
+      (eval
+       `(mocklet (((magit-find-file-noselect "HEAD" "test-file") => ,buffer)
+                  ((magit-diff-visit--offset "test-file" nil 2) => 3)
+                  ((fn ,buffer))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-git-file
+                          '("test-file" 2 left) #'fn)))
+          (should (equal (point) (point-max))))))))
+
+(ert-deftest difftastic--diff-visit-git-file:right-staged-visiting ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
+           (difftastic--metadata '((rev-or-range . staged))))
+      (insert "bar")
+      (eval
+       `(mocklet (((get-file-buffer "test-file") => ,buffer)
+                  ((fn ,buffer))
+                  ((magit-diff-visit--offset "test-file" nil 2) => 3)
+                  ((get-buffer-window ,buffer 'visible) => ,win))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-git-file
+                          '("test-file" 2 right) #'fn)))
+          (should (equal (point) (point-max))))))))
+
+(ert-deftest difftastic--diff-visit-git-file:right-staged-not-visiting ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
+           (difftastic--metadata '((rev-or-range . staged))))
+      (insert "bar")
+      (eval
+       `(mocklet (((get-file-buffer "test-file"))
+                  ((find-file-noselect "test-file") => ,buffer)
+                  ((fn ,buffer))
+                  ((magit-diff-visit--offset "test-file" nil 2) => 3)
+                  ((get-buffer-window ,buffer 'visible) => ,win))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-git-file
+                          '("test-file" 2 right) #'fn)))
+          (should (equal (point) (point-max))))))))
+
+(ert-deftest difftastic--diff-visit-git-file:left-staged-avoid-head-blob-visiting ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
+           (difftastic--metadata '((rev-or-range . staged)))
+           (difftastic-diff-visit-avoid-head-blob t))
+      (insert "bar")
+      (eval
+       `(mocklet (((get-file-buffer "test-file") => ,buffer)
+                  ((magit-diff-visit--offset "test-file" nil 2) => 3)
+                  ((fn ,buffer))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-git-file
+                          '("test-file" 2 left) #'fn)))
+          (should (equal (point) (point-max))))))))
+
+(ert-deftest difftastic--diff-visit-git-file:right-staged-avoid-head-blob-visiting ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
+           (difftastic--metadata '((rev-or-range . staged)))
+           (difftastic-diff-visit-avoid-head-blob t))
+      (insert "bar")
+      (eval
+       `(mocklet (((get-file-buffer "test-file") => ,buffer)
+                  ((magit-diff-visit--offset "test-file" nil 2) => 3)
+                  ((fn ,buffer))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-git-file
+                          '("test-file" 2 right) #'fn)))
+          (should (equal (point) (point-max))))))))
+
+(ert-deftest difftastic--diff-visit-git-file:left-staged-avoid-head-blob-not-visiting ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
+           (difftastic--metadata '((rev-or-range . staged)))
+           (difftastic-diff-visit-avoid-head-blob t))
+      (insert "bar")
+      (eval
+       `(mocklet (((get-file-buffer "test-file"))
+                  ((find-file-noselect "test-file") => ,buffer)
+                  ((magit-diff-visit--offset "test-file" nil 2) => 3)
+                  ((fn ,buffer))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-git-file
+                          '("test-file" 2 left) #'fn)))
+          (should (equal (point) (point-max))))))))
+
+(ert-deftest difftastic--diff-visit-git-file:right-staged-avoid-head-blob-not-visiting ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
+           (difftastic--metadata '((rev-or-range . staged)))
+           (difftastic-diff-visit-avoid-head-blob t))
+      (insert "bar")
+      (eval
+       `(mocklet (((get-file-buffer "test-file"))
+                  ((find-file-noselect "test-file") => ,buffer)
+                  ((magit-diff-visit--offset "test-file" nil 2) => 3)
+                  ((fn ,buffer))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-git-file
+                          '("test-file" 2 right) #'fn)))
+          (should (equal (point) (point-max))))))))
+
+(ert-deftest difftastic--diff-visit-git-file:left-unstaged ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
+           (pos (point))
+           (difftastic--metadata '((rev-or-range . unstaged))))
+      (insert "bar")
+      (eval
+       `(mocklet (((magit-find-file-noselect "HEAD" "test-file") => ,buffer)
+                  ((fn ,buffer))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-git-file
+                          '("test-file" 2 left) #'fn)))
+          (should (equal (point) ,pos)))))))
+
+(ert-deftest difftastic--diff-visit-git-file:right-unstaged-visiting ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
+           (pos (point))
+           (difftastic--metadata '((rev-or-range . unstaged))))
+      (insert "bar")
+      (eval
+       `(mocklet (((get-file-buffer "test-file") => ,buffer)
+                  ((fn ,buffer))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-git-file
+                          '("test-file" 2 right) #'fn)))
+          (should (equal (point) ,pos)))))))
+
+(ert-deftest difftastic--diff-visit-git-file:right-unstaged-not-visiting ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
+           (pos (point))
+           (difftastic--metadata '((rev-or-range . unstaged))))
+      (insert "bar")
+      (eval
+       `(mocklet (((get-file-buffer "test-file"))
+                  ((find-file-noselect "test-file") => ,buffer)
+                  ((fn ,buffer))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-git-file
+                          '("test-file" 2 right) #'fn)))
+          (should (equal (point) ,pos)))))))
+
+(ert-deftest difftastic--diff-visit-git-file:left-unstaged-avoid-head-blob-visiting ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
+           (pos (point))
+           (difftastic--metadata '((rev-or-range . unstaged)))
+           (difftastic-diff-visit-avoid-head-blob t))
+      (insert "bar")
+      (eval
+       `(mocklet (((get-file-buffer "test-file") => ,buffer)
+                  ((fn ,buffer))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-git-file
+                          '("test-file" 2 left) #'fn)))
+          (should (equal (point) ,pos)))))))
+
+(ert-deftest difftastic--diff-visit-git-file:right-unstaged-avoid-head-blob-visiting ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
+           (pos (point))
+           (difftastic--metadata '((rev-or-range . unstaged)))
+           (difftastic-diff-visit-avoid-head-blob t))
+      (insert "bar")
+      (eval
+       `(mocklet (((get-file-buffer "test-file") => ,buffer)
+                  ((fn ,buffer))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-git-file
+                          '("test-file" 2 right) #'fn)))
+          (should (equal (point) ,pos)))))))
+
+(ert-deftest difftastic--diff-visit-git-file:left-unstaged-avoid-head-blob-not-visiting ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
+           (pos (point))
+           (difftastic--metadata '((rev-or-range . unstaged)))
+           (difftastic-diff-visit-avoid-head-blob t))
+      (insert "bar")
+      (eval
+       `(mocklet (((get-file-buffer "test-file"))
+                  ((find-file-noselect "test-file") => ,buffer)
+                  ((fn ,buffer))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-git-file
+                          '("test-file" 2 left) #'fn)))
+          (should (equal (point) ,pos)))))))
+
+(ert-deftest difftastic--diff-visit-git-file:right-unstaged-avoid-head-blob-not-visiting ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
+           (pos (point))
+           (difftastic--metadata '((rev-or-range . unstaged)))
+           (difftastic-diff-visit-avoid-head-blob t))
+      (insert "bar")
+      (eval
+       `(mocklet (((get-file-buffer "test-file"))
+                  ((find-file-noselect "test-file") => ,buffer)
+                  ((fn ,buffer))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-git-file
+                          '("test-file" 2 right) #'fn)))
+          (should (equal (point) ,pos)))))))
+
+(ert-deftest difftastic--diff-visit-git-file:left-revision-force-worktree-visiting ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
+           (difftastic--metadata '((rev-or-range . "test-rev"))))
+      (insert "bar")
+      (eval
+       `(mocklet (((get-file-buffer "test-file") => ,buffer)
+                  ((magit-diff-visit--offset "test-file" "test-rev^" 2) => 3)
+                  ((fn ,buffer))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-git-file
+                          '("test-file" 2 left) #'fn t)))
+          (should (equal (point) (point-max))))))))
+
+(ert-deftest difftastic--diff-visit-git-file:right-revision-force-worktree-visiting ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
+           (difftastic--metadata '((rev-or-range . "test-rev"))))
+      (insert "bar")
+      (eval
+       `(mocklet (((get-file-buffer "test-file") => ,buffer)
+                  ((magit-diff-visit--offset "test-file" "test-rev" 2) => 3)
+                  ((fn ,buffer))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-git-file
+                          '("test-file" 2 right) #'fn t)))
+          (should (equal (point) (point-max))))))))
+
+(ert-deftest difftastic--diff-visit-git-file:left-revision-force-worktree-not-visiting ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
+           (difftastic--metadata '((rev-or-range . "test-rev"))))
+      (insert "bar")
+      (eval
+       `(mocklet (((get-file-buffer "test-file"))
+                  ((find-file-noselect "test-file") => ,buffer)
+                  ((magit-diff-visit--offset "test-file" "test-rev^" 2) => 3)
+                  ((fn ,buffer))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-git-file
+                          '("test-file" 2 left) #'fn t)))
+          (should (equal (point) (point-max))))))))
+
+(ert-deftest difftastic--diff-visit-git-file:right-revision-force-worktree-not-visiting ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
+           (difftastic--metadata '((rev-or-range . "test-rev"))))
+      (insert "bar")
+      (eval
+       `(mocklet (((get-file-buffer "test-file"))
+                  ((find-file-noselect "test-file") => ,buffer)
+                  ((magit-diff-visit--offset "test-file" "test-rev" 2) => 3)
+                  ((fn ,buffer))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-git-file
+                          '("test-file" 2 right) #'fn t)))
+          (should (equal (point) (point-max))))))))
+
+(ert-deftest difftastic--diff-visit-git-file:left-range-force-worktree-visiting ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
+           (difftastic--metadata '((rev-or-range . "test-range-from..test-range-to"))))
+      (insert "bar")
+      (eval
+       `(mocklet (((get-file-buffer "test-file") => ,buffer)
+                  ((magit-diff-visit--offset "test-file" "test-range-from" 2) => 3)
+                  ((fn ,buffer))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-git-file
+                          '("test-file" 2 left) #'fn t)))
+          (should (equal (point) (point-max))))))))
+
+(ert-deftest difftastic--diff-visit-git-file:right-range-force-worktree-visiting ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
+           (difftastic--metadata '((rev-or-range . "test-range-from..test-range-to"))))
+      (insert "bar")
+      (eval
+       `(mocklet (((get-file-buffer "test-file") => ,buffer)
+                  ((magit-diff-visit--offset "test-file" "test-range-to" 2) => 3)
+                  ((fn ,buffer))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-git-file
+                          '("test-file" 2 right) #'fn t)))
+          (should (equal (point) (point-max))))))))
+
+(ert-deftest difftastic--diff-visit-git-file:left-range-force-worktree-not-visiting ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
+           (difftastic--metadata '((rev-or-range . "test-range-from..test-range-to"))))
+      (insert "bar")
+      (eval
+       `(mocklet (((get-file-buffer "test-file"))
+                  ((find-file-noselect "test-file") => ,buffer)
+                  ((magit-diff-visit--offset "test-file" "test-range-from" 2) => 3)
+                  ((fn ,buffer))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-git-file
+                          '("test-file" 2 left) #'fn t)))
+          (should (equal (point) (point-max))))))))
+
+(ert-deftest difftastic--diff-visit-git-file:right-range-force-worktree-not-visiting ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
+           (difftastic--metadata '((rev-or-range . "test-range-from..test-range-to"))))
+      (insert "bar")
+      (eval
+       `(mocklet (((get-file-buffer "test-file"))
+                  ((find-file-noselect "test-file") => ,buffer)
+                  ((magit-diff-visit--offset "test-file" "test-range-to" 2) => 3)
+                  ((fn ,buffer))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-git-file
+                          '("test-file" 2 right) #'fn t)))
+          (should (equal (point) (point-max))))))))
+
+(ert-deftest difftastic--diff-visit-git-file:left-staged-force-worktree-visiting ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
+           (difftastic--metadata '((rev-or-range . staged))))
+      (insert "bar")
+      (eval
+       `(mocklet (((get-file-buffer "test-file") => ,buffer)
+                  ((magit-diff-visit--offset "test-file" nil 2) => 3)
+                  ((fn ,buffer))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-git-file
+                          '("test-file" 2 left) #'fn t)))
+          (should (equal (point) (point-max))))))))
+
+(ert-deftest difftastic--diff-visit-git-file:right-staged-force-worktree-visiting ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
+           (difftastic--metadata '((rev-or-range . staged))))
+      (insert "bar")
+      (eval
+       `(mocklet (((get-file-buffer "test-file") => ,buffer)
+                  ((magit-diff-visit--offset "test-file" nil 2) => 3)
+                  ((fn ,buffer))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-git-file
+                          '("test-file" 2 right) #'fn t)))
+          (should (equal (point) (point-max))))))))
+
+(ert-deftest difftastic--diff-visit-git-file:left-staged-force-worktree-not-visiting ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
+           (difftastic--metadata '((rev-or-range . staged))))
+      (insert "bar")
+      (eval
+       `(mocklet (((get-file-buffer "test-file"))
+                  ((find-file-noselect "test-file") => ,buffer)
+                  ((magit-diff-visit--offset "test-file" nil 2) => 3)
+                  ((fn ,buffer))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-git-file
+                          '("test-file" 2 left) #'fn t)))
+          (should (equal (point) (point-max))))))))
+
+(ert-deftest difftastic--diff-visit-git-file:right-staged-force-worktree-not-visiting ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
+           (difftastic--metadata '((rev-or-range . staged))))
+      (insert "bar")
+      (eval
+       `(mocklet (((get-file-buffer "test-file"))
+                  ((find-file-noselect "test-file") => ,buffer)
+                  ((magit-diff-visit--offset "test-file" nil 2) => 3)
+                  ((fn ,buffer))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-git-file
+                          '("test-file" 2 right) #'fn t)))
+          (should (equal (point) (point-max))))))))
+
+(ert-deftest difftastic--diff-visit-git-file:left-unstaged-froce-worktree-visiting ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
+           (pos (point))
+           (difftastic--metadata '((rev-or-range . unstaged))))
+      (insert "bar")
+      (eval
+       `(mocklet (((get-file-buffer "test-file") => ,buffer)
+                  ((fn ,buffer))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-git-file
+                          '("test-file" 2 left) #'fn t)))
+          (should (equal (point) ,pos)))))))
+
+(ert-deftest difftastic--diff-visit-git-file:right-unstaged-froce-worktree-visiting ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
+           (pos (point))
+           (difftastic--metadata '((rev-or-range . unstaged))))
+      (insert "bar")
+      (eval
+       `(mocklet (((get-file-buffer "test-file") => ,buffer)
+                  ((fn ,buffer))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-git-file
+                          '("test-file" 2 right) #'fn t)))
+          (should (equal (point) ,pos)))))))
+
+(ert-deftest difftastic--diff-visit-git-file:left-unstaged-froce-worktree-notvisiting ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
+           (pos (point))
+           (difftastic--metadata '((rev-or-range . unstaged))))
+      (insert "bar")
+      (eval
+       `(mocklet (((get-file-buffer "test-file"))
+                  ((find-file-noselect "test-file") => ,buffer)
+                  ((fn ,buffer))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-git-file
+                          '("test-file" 2 left) #'fn t)))
+          (should (equal (point) ,pos)))))))
+
+(ert-deftest difftastic--diff-visit-git-file:right-unstaged-froce-worktree-notvisiting ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
+           (pos (point))
+           (difftastic--metadata '((rev-or-range . unstaged))))
+      (insert "bar")
+      (eval
+       `(mocklet (((get-file-buffer "test-file"))
+                  ((find-file-noselect "test-file") => ,buffer)
+                  ((fn ,buffer))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-git-file
+                          '("test-file" 2 right) #'fn t)))
+          (should (equal (point) ,pos)))))))
+
+(ert-deftest difftastic--diff-visit-file:git-file ()
+  (mocklet (((difftastic--diff-visit-git-file "test-chunk-file" #'ignore t))
+            (difftastic--diff-visit-file-or-buffer not-called))
+    (let ((difftastic--metadata '((git-command "test-git-command"))))
+      (difftastic--diff-visit-file "test-chunk-file" #'ignore t))))
+
+(ert-deftest difftastic--diff-visit-file:file-or-buffer ()
+  (mocklet ((difftastic--diff-visit-git-file not-called)
+            ((difftastic--diff-visit-file-or-buffer "test-chunk-file" #'ignore)))
+    (let (difftastic--metadata )
+      (difftastic--diff-visit-file-or-buffer "test-chunk-file" #'ignore))))
+
+(ert-deftest difftastic-diff-visit-file:basic ()
+  (mocklet (((difftastic--chunk-file-at-point) => "test-chunk-file")
+            ((difftastic--diff-visit-file
+              "test-chunk-file" #'pop-to-buffer-same-window)))
+    (call-interactively #'difftastic-diff-visit-file)))
+
+(ert-deftest difftastic-diff-visit-file:prefix-arg ()
+  (mocklet (((difftastic--chunk-file-at-point) => "test-chunk-file")
+            ((difftastic--diff-visit-file
+              "test-chunk-file" #'switch-to-buffer-other-window)))
+    (let ((current-prefix-arg 4))
+      (call-interactively #'difftastic-diff-visit-file))))
+
+(ert-deftest difftastic-diff-visit-file-other-window:basic ()
+  (mocklet (((difftastic--chunk-file-at-point) => "test-chunk-file")
+            ((difftastic--diff-visit-file
+              "test-chunk-file" #'switch-to-buffer-other-window)))
+    (call-interactively #'difftastic-diff-visit-file-other-window)))
+
+(ert-deftest difftastic-diff-visit-file-other-frame:basic ()
+  (mocklet (((difftastic--chunk-file-at-point) => "test-chunk-file")
+            ((difftastic--diff-visit-file
+              "test-chunk-file" #'switch-to-buffer-other-frame)))
+    (call-interactively #'difftastic-diff-visit-file-other-frame)))
+
+(ert-deftest difftastic-diff-visit-worktree-file:basic ()
+  (mocklet (((difftastic--chunk-file-at-point) => "test-chunk-file")
+            ((difftastic--diff-visit-file
+              "test-chunk-file" #'pop-to-buffer-same-window t)))
+    (call-interactively #'difftastic-diff-visit-worktree-file)))
+
+(ert-deftest difftastic-diff-visit-worktree-file:prefix-arg ()
+  (mocklet (((difftastic--chunk-file-at-point) => "test-chunk-file")
+            ((difftastic--diff-visit-file
+              "test-chunk-file" #'switch-to-buffer-other-window t)))
+    (let ((current-prefix-arg 4))
+      (call-interactively #'difftastic-diff-visit-worktree-file))))
+
+(ert-deftest difftastic-diff-visit-worktree-file-other-window:basic ()
+  (mocklet (((difftastic--chunk-file-at-point) => "test-chunk-file")
+            ((difftastic--diff-visit-file
+              "test-chunk-file" #'switch-to-buffer-other-window t)))
+    (call-interactively #'difftastic-diff-visit-worktree-file-other-window)))
+
+(ert-deftest difftastic-diff-visit-worktree-file-other-frame:basic ()
+  (mocklet (((difftastic--chunk-file-at-point) => "test-chunk-file")
+            ((difftastic--diff-visit-file
+              "test-chunk-file" #'switch-to-buffer-other-frame t)))
+    (call-interactively #'difftastic-diff-visit-worktree-file-other-frame)))
 
 (ert-deftest difftastic--get-languages:parse-output ()
   (let ((file "difft--list-languages.out")
@@ -2989,6 +5123,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
 
 (ert-deftest difftastic--git-with-difftastic:basic ()
   (let ((rerun-alist '((default-directory . "test-default-directory")
+                       (rev-or-range . "test-rev-or-range")
                        (git-command . "test-command")
                        (difftastic-args . "test-difftastic-args")))
         (default-directory "test-default-directory")
@@ -3019,6 +5154,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
                   ,(cl-incf run-command-call-count))
               (difftastic--git-with-difftastic ,(current-buffer)
                                                "test-command"
+                                               "test-rev-or-range"
                                                "test-difftastic-args")))))
       (should (eq run-command-call-count 1))
       (should (eq display-buffer-call-count 1))
@@ -3034,7 +5170,8 @@ This only happens when `noninteractive' to avoid messing up with faces."
              => "test-buffer")
             ((difftastic--git-with-difftastic
               "test-buffer"
-              '("git" "--no-pager" "show" "--ext-diff" "test-rev"))))
+              '("git" "--no-pager" "show" "--ext-diff" "test-rev")
+              "test-rev")))
     (difftastic--magit-show "test-rev")))
 
 (ert-deftest difftastic-magit-show:no-prefix-no-thing-no-branch ()
@@ -3071,10 +5208,11 @@ This only happens when `noninteractive' to avoid messing up with faces."
             ((difftastic--git-with-difftastic
               "test-buffer"
               '("git" "--no-pager" "diff" "--ext-diff")
+              nil
               nil)))
     (difftastic--git-diff-range nil nil nil)))
 
-(ert-deftest difftastic--git-diff-range:with-args ()
+(ert-deftest difftastic--git-diff-range:with-args-string-rev-or-range ()
   (mocklet (((get-buffer-create
               "*difftastic git diff --ignore-submodules=all test-rev-or-range -- test-path*")
              => "test-buffer")
@@ -3082,8 +5220,23 @@ This only happens when `noninteractive' to avoid messing up with faces."
               "test-buffer"
               '("git" "--no-pager" "diff" "--ext-diff" "--ignore-submodules=all"
                 "test-rev-or-range" "--" "test-path")
+              "test-rev-or-range"
               '("--context 42"))))
     (difftastic--git-diff-range "test-rev-or-range"
+                                '("--ignore-submodules=all" "-U42")
+                                '("test-path"))))
+
+(ert-deftest difftastic--git-diff-range:with-args-symbol-rev-or-range ()
+  (mocklet (((get-buffer-create
+              "*difftastic git diff --ignore-submodules=all test-rev-or-range -- test-path*")
+             => "test-buffer")
+            ((difftastic--git-with-difftastic
+              "test-buffer"
+              '("git" "--no-pager" "diff" "--ext-diff" "--ignore-submodules=all"
+                "--" "test-path")
+              'test-rev-or-range
+              '("--context 42"))))
+    (difftastic--git-diff-range 'test-rev-or-range
                                 '("--ignore-submodules=all" "-U42")
                                 '("test-path"))))
 
@@ -3164,7 +5317,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
               ((magit-diff--dwim) => 'unstaged))
       (difftastic--with-temp-advice 'difftastic-git-diff-range
           :override (lambda (&optional rev-or-range args files)
-                      (should-not rev-or-range)
+                      (should (equal 'unstaged rev-or-range))
                       (should (equal args "test-args"))
                       (should (equal files "test-files"))
                       (should (equal default-directory "magit-toplevel"))
@@ -3212,7 +5365,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
               (magit--merge-range not-called))
       (difftastic--with-temp-advice 'difftastic-git-diff-range
           :override (lambda (&optional rev-or-range args files)
-                      (should-not rev-or-range)
+                      (should (equal 'staged rev-or-range))
                       (should (equal args '("--cached" "test-args")))
                       (should (equal files "test-files"))
                       (should (equal default-directory "magit-toplevel"))
@@ -3230,7 +5383,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
               (magit--merge-range not-called))
       (difftastic--with-temp-advice 'difftastic-git-diff-range
           :override (lambda (&optional rev-or-range args files)
-                      (should-not rev-or-range)
+                      (should (equal 'staged rev-or-range))
                       (should (equal args '("test-args" "--cached")))
                       (should (equal files "test-files"))
                       (should (equal default-directory "magit-toplevel"))
@@ -3248,7 +5401,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
               (magit--merge-range not-called))
       (difftastic--with-temp-advice 'difftastic-git-diff-range
           :override (lambda (&optional rev-or-range args files)
-                      (should-not rev-or-range)
+                      (should (equal 'staged rev-or-range))
                       (should (equal args '("--cached" "test-args")))
                       (should (equal files "test-files"))
                       (should (equal default-directory "magit-toplevel"))
@@ -3266,7 +5419,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
               (magit--merge-range not-called))
       (difftastic--with-temp-advice 'difftastic-git-diff-range
           :override (lambda (&optional rev-or-range args files)
-                      (should-not rev-or-range)
+                      (should (equal 'staged rev-or-range))
                       (should (equal args '("test-args" "--cached")))
                       (should (equal files "test-files"))
                       (should (equal default-directory "magit-toplevel"))

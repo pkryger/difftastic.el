@@ -827,8 +827,10 @@ of the file."
   `(or (seq (** 0 ,(1- digits) " ")
             (group (or (** 1 ,digits digit)
                        (** 1 ,digits ".")))
-            " ")
+            (or " " line-end))
        (** 2 ,(1+ digits) " ")))
+
+(rx-define difftastic--line-num-rx (eval (difftastic--line-num-rx 6)))
 
 (defun difftastic--chunk-side-by-side-p (bounds)
   "TODO: write doc"
@@ -839,18 +841,16 @@ of the file."
                   (goto-char (compat-call pos-bol 2))
                   (point))
                 (cdr bounds))
-        (unless (rx-let ((line-num (eval (difftastic--line-num-rx 6)))) ;; TODO: figure out compile error
-                         ;; (line-num (or (seq (** 0 5 " ")
-                         ;;                    (group (** 1 6 (or digit ".")))
-                         ;;                    " ")
-                         ;;               (** 2 7 " ")))
-                  (or
-                   (looking-at (rx line-start line-num line-num))
-                   (and (looking-at (rx line-start line-num))
-                        (when-let* ((match (match-beginning 1)))
-                          (not (eq
-                                (get-text-property match 'font-lock-face)
-                                'ansi-color-faint))))))
+        (unless (or
+                 (looking-at (rx line-start ;; TODO: figure out compile error
+                                 difftastic--line-num-rx
+                                 difftastic--line-num-rx))
+                 (and (looking-at (rx line-start
+                                      difftastic--line-num-rx))
+                      (when-let* ((match (match-beginning 1)))
+                        (not (eq
+                              (get-text-property match 'font-lock-face)
+                              'ansi-color-faint)))))
             (throw 'side-by-side t))))))
 
 (defun difftastic--parse-line-num (subexp prev)
@@ -870,8 +870,8 @@ of the file."
     (let (lines
           prev-num-left)
       (while (re-search-forward
-              (rx-let ((line-num (eval (difftastic--line-num-rx 6))))
-                (rx line-start (group line-num)))
+              (rx line-start
+                  (group difftastic--line-num-rx))
               (cdr bounds)
               t)
         (let ((left (difftastic--parse-line-num 1 prev-num-left))
@@ -927,8 +927,9 @@ of the file."
           prev-num-left
           prev-num-right)
       (while (re-search-forward
-              (rx-let ((line-num (eval (difftastic--line-num-rx 6))))
-                (rx line-start (group line-num) (group line-num)))
+              (rx line-start
+                  (group difftastic--line-num-rx)
+                  (group difftastic--line-num-rx))
               (cdr bounds)
               t)
         (let ((left (difftastic--parse-line-num 1 prev-num-left))

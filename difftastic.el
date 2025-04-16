@@ -822,15 +822,16 @@ of the file."
                              (match-string-no-properties 2)))))
     (string-trim file-name)))
 
-(defun difftastic--line-num-rx (digits)
-  "TODO: write-doc"
-  `(or (seq (** 0 ,(1- digits) " ")
-            (group (or (** 1 ,digits digit)
-                       (** 1 ,digits ".")))
-            (or " " line-end))
-       (** 2 ,(1+ digits) " ")))
+(eval-and-compile
+  (defun difftastic--line-num-rx (digits)
+    "TODO: write-doc"
+    `(or (seq (** 0 ,(1- digits) " ")
+              (group (or (** 1 ,digits digit)
+                         (** 1 ,digits ".")))
+              (or " " line-end))
+         (** 2 ,(1+ digits) " ")))
 
-(rx-define difftastic--line-num-rx (eval (difftastic--line-num-rx 6)))
+  (rx-define difftastic--line-num-rx (eval (difftastic--line-num-rx 6))))
 
 (defun difftastic--chunk-side-by-side-p (bounds)
   "TODO: write doc"
@@ -842,7 +843,7 @@ of the file."
                   (point))
                 (cdr bounds))
         (unless (or
-                 (looking-at (rx line-start ;; TODO: figure out compile error
+                 (looking-at (rx line-start
                                  difftastic--line-num-rx
                                  difftastic--line-num-rx))
                  (and (looking-at (rx line-start

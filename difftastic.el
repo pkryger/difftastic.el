@@ -881,7 +881,7 @@ The value of 6 allows for line numbers of up to 999,999.")
 
 (defun difftastic--parse-line-num (subexp prev)
   "Parse line number in current match data.
-Retrun a list in a from (LINE-NUM BEG END), where LINE-NUM is a line
+Return a list in a from (LINE-NUM BEG END), where LINE-NUM is a line
 number (as a number) and BEG and END are positions where the number
 begins and ends respectively.  LINE-NUM is extracted form a SUBEXP + 1
 match in current match data.  If no LINE-NUM can be extracted from

@@ -428,15 +428,15 @@
                 (should (string-match (difftastic--chunk-regexp t) header))
                 (cond
                  ((not chunk)
-                  (should-not (match-string 1 header)))
+                  (should-not (match-string 2 header)))
                  ((string= "1/2" chunk)
-                  (should (string-equal "1" (match-string 1 header))))
+                  (should (string-equal "1" (match-string 2 header))))
                  ((string= "2/2" chunk)
-                  (should (string-equal "2" (match-string 1 header))))
+                  (should (string-equal "2" (match-string 2 header))))
                  ((string= "3/30" chunk)
-                  (should (string-equal "3" (match-string 1 header))))
+                  (should (string-equal "3" (match-string 2 header))))
                  ((string= "40/40" chunk)
-                  (should (string-equal "40" (match-string 1 header)))))
+                  (should (string-equal "40" (match-string 2 header)))))
                 (should-not difftastic--chunk-regexp-chunk)
                 (should difftastic--chunk-regexp-file)))))))))
 
@@ -479,7 +479,7 @@
                 (should-not difftastic--chunk-regexp-chunk)
                 (should-not difftastic--chunk-regexp-file)
                 (should (string-match (difftastic--chunk-regexp nil) header))
-                (should-not (match-string 1 header))
+                (should-not (match-string 2 header))
                 (should difftastic--chunk-regexp-chunk)
                 (should-not difftastic--chunk-regexp-file)))))))))
 
@@ -605,7 +605,7 @@
               (with-temp-buffer
                 (difftastic-mode)
                 (should (string-match (difftastic--chunk-regexp t) header))
-                (should-not (match-string 1 header))
+                (should-not (match-string 2 header))
                 (should
                  (string-match-p (difftastic--chunk-regexp nil) header))))))))))
 

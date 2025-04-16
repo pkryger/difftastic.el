@@ -681,7 +681,7 @@ when match data indicates this is the chunk number 1.  This
 function can be called only after a successfull searching for a
 regexp from `difftastic--chunk-regexp'."
   (when-let* ((chunk-bol (if file-chunk
-                             (when (let ((chunk-no (match-string 1)))
+                             (when (let ((chunk-no (match-string 2)))
                                      (or (not chunk-no)
                                          (string-equal "1" chunk-no)))
                                (compat-call pos-bol)) ; Since Emacs-29
@@ -819,7 +819,7 @@ of the file."
   (when-let* ((file-name (save-excursion
                            (goto-char (car bounds))
                            (when (looking-at (difftastic--chunk-regexp t))
-                             (match-string-no-properties 1)))))
+                             (match-string-no-properties 2)))))
     (string-trim file-name)))
 
 (defun difftastic--line-num-rx (digits)

@@ -848,7 +848,7 @@ The value of 6 allows for line numbers of up to 999,999.")
   (rx-define difftastic--line-num-or-spaces-rx
     (eval (difftastic--line-num-or-spaces-rx difftastic--line-num-digits))))
 
-(defun difftastic--chunk-classify (bounds)
+(defun difftastic--classify-chunk (bounds)
   "Classify chunk at BOUNDS as either `single-column' or `side-by-side'."
   (save-excursion
     (goto-char (car bounds))

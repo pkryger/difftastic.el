@@ -1341,7 +1341,7 @@ sequentially and can reffer to symbols already bound by this
 FILE-BUFS.  If any of VALUEFORM or any form in BODY signals an
 error each symbol in FILE-BUFS will be passed to
 `difftastic--delete-temp-file-buf'."
-  (declare (indent 1) (debug ((&rest symbolp) body)))
+  (declare (indent 1) (debug ((&rest &or (sexp form) sexp) body)))
   `(let ,(mapcar (lambda (file-buf)
                    (cond
                     ((symbolp file-buf) file-buf)

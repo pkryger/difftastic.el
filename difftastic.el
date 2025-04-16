@@ -823,36 +823,59 @@ of the file."
     (string-trim file-name)))
 
 (eval-and-compile
+  (defvar difftastic--line-num-digits 6
+    "Maximum number of digits in line numbers in difftastic output.
+The value of 6 allows for line numbers of up to 999,999.")
+
   (defun difftastic--line-num-rx (digits)
-    "TODO: write-doc"
-    `(or (seq (** 0 ,(1- digits) " ")
-              (group (or (** 1 ,digits digit)
-                         (** 1 ,digits ".")))
-              (or " " line-end))
-         (** 2 ,(1+ digits) " ")))
+    "TODO: write doc DIGITS."
+    `(seq (** 0 ,(1- digits) " ")
+          (group (or (** 1 ,digits digit)
+                     (** 1 ,digits ".")))
+          (or " " line-end)))
 
-  (rx-define difftastic--line-num-rx (eval (difftastic--line-num-rx 6))))
+  (rx-define difftastic--line-num-rx
+    (eval (difftastic--line-num-rx difftastic--line-num-digits)))
 
-(defun difftastic--chunk-side-by-side-p (bounds)
+  (defun difftastic--line-num-or-spaces-rx (digits)
+    "TODO: write doc DIGITS."
+    `(or
+      ,(difftastic--line-num-rx digits)
+      (** 2 ,(1+ digits) " ")))
+
+  (rx-define difftastic--line-num-or-spaces-rx
+    (eval (difftastic--line-num-or-spaces-rx difftastic--line-num-digits))))
+
+(defun difftastic--chunk-classify (bounds)
   "TODO: write doc BOUNDS."
   (save-excursion
     (goto-char (car bounds))
-    (catch 'side-by-side
+    (let ((single-column 0)
+          (side-by-side 0))
       (while (< (progn
                   (goto-char (compat-call pos-bol 2))
                   (point))
                 (cdr bounds))
-        (unless (or
-                 (looking-at (rx line-start
-                                 difftastic--line-num-rx
-                                 difftastic--line-num-rx))
-                 (and (looking-at (rx line-start
-                                      difftastic--line-num-rx))
-                      (when-let* ((match (match-beginning 1)))
-                        (not (eq
-                              (get-text-property match 'font-lock-face)
-                              'ansi-color-faint)))))
-            (throw 'side-by-side t))))))
+        (cond
+         ((and
+           (looking-at (rx line-start
+                           difftastic--line-num-rx))
+           (save-excursion
+             (goto-char (match-end 0))
+             (and
+              (not (looking-at (rx difftastic--line-num-rx)))
+              (looking-at (rx (one-or-more any)
+                              difftastic--line-num-rx))))
+           (cl-incf side-by-side)))
+         ((looking-at (rx line-start
+                          difftastic--line-num-or-spaces-rx
+                          difftastic--line-num-or-spaces-rx))
+          (cl-incf single-column))
+         (t
+          (cl-incf side-by-side))))
+      (if (< side-by-side single-column)
+          'single-column
+        'side-by-side))))
 
 (defun difftastic--parse-line-num (subexp prev)
   "TODO: write doc SUBEXP PREV."
@@ -929,8 +952,8 @@ of the file."
           prev-num-right)
       (while (re-search-forward
               (rx line-start
-                  (group difftastic--line-num-rx)
-                  (group difftastic--line-num-rx))
+                  (group difftastic--line-num-or-spaces-rx)
+                  (group difftastic--line-num-or-spaces-rx))
               (cdr bounds)
               t)
         (let ((left (difftastic--parse-line-num 1 prev-num-left))

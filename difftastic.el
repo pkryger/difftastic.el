@@ -830,7 +830,7 @@ cdr is chunk end position."
 The value of 6 allows for line numbers of up to 999,999.")
 
   (defun difftastic--line-num-rx (digits)
-    "TODO: write doc DIGITS."
+    "Return `rx' form for a up DIGITS long line number."
     `(seq (** 0 ,(1- digits) " ")
           (group (or (** 1 ,digits digit)
                      (** 1 ,digits ".")))
@@ -840,7 +840,7 @@ The value of 6 allows for line numbers of up to 999,999.")
     (eval (difftastic--line-num-rx difftastic--line-num-digits)))
 
   (defun difftastic--line-num-or-spaces-rx (digits)
-    "TODO: write doc DIGITS."
+    "Return `rx' form for a up DIGITS long line number or up to DIGITS spaces."
     `(or
       ,(difftastic--line-num-rx digits)
       (** 2 ,(1+ digits) " ")))
@@ -849,7 +849,7 @@ The value of 6 allows for line numbers of up to 999,999.")
     (eval (difftastic--line-num-or-spaces-rx difftastic--line-num-digits))))
 
 (defun difftastic--chunk-classify (bounds)
-  "TODO: write doc BOUNDS."
+  "Classify chunk at BOUNDS as either `single-column' or `side-by-side'."
   (save-excursion
     (goto-char (car bounds))
     (let ((single-column 0)
@@ -880,7 +880,13 @@ The value of 6 allows for line numbers of up to 999,999.")
         'side-by-side))))
 
 (defun difftastic--parse-line-num (subexp prev)
-  "TODO: write doc SUBEXP PREV."
+  "Parse line number in current match data.
+Retrun a list in a from (LINE-NUM BEG END), where LINE-NUM is a line
+number (as a number) and BEG and END are positions where the number
+begins and ends respectively.  LINE-NUM is extracted form a SUBEXP + 1
+match in current match data.  If no LINE-NUM can be extracted from
+SUBEXP + 1 match, then PREV is used instead.  If there's no SUBEXP + 1
+match in match data, then SUBEXP is used for BEG and END."
   (if-let* ((num (match-string (1+ subexp)))
             (beg (match-beginning (1+ subexp)))
             (end (match-end (1+ subexp))))
@@ -890,7 +896,11 @@ The value of 6 allows for line numbers of up to 999,999.")
     (list prev (match-beginning subexp) (match-end subexp))))
 
 (defun difftastic--parse-side-by-side-chunk (bounds)
-  "TODO: write doc BOUNDS."
+  "Parse a `side-by-side-column' chunk at BOUNDS.
+Return a list where each element is a list in a form (LEFT RIGHT).  Both
+LEFT and RIGHT are lists in a form (LINE-NUM BEG END), where LINE-NUM is
+a line number and BEG and END are positions where the line number begins
+and ends respectively."
   (save-excursion
     (goto-char (car bounds))
     (let (lines
@@ -946,7 +956,11 @@ The value of 6 allows for line numbers of up to 999,999.")
         lines))))
 
 (defun difftastic--parse-single-column-chunk (bounds)
-  "TODO: write doc BOUNDS."
+  "Parse a `single-column' chunk at BOUNDS.
+Return a list where each element is a list in a form (LEFT RIGHT).  Both
+LEFT and RIGHT are lists in a form (LINE-NUM BEG END), where LINE-NUM is
+a line number and BEG and END are positions where the line number begins
+and ends respectively."
   (save-excursion
     (goto-char (car bounds))
     (let (lines

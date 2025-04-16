@@ -1746,14 +1746,13 @@ test/difftastic.t.el --- Emacs Lisp
     (insert "1         baz                 .
 2         foo                 1         foo
 3         baz                 2         foo
-                              3         qux
 ")
     (should (eq (difftastic--classify-chunk (cons (point-min) (point-max)))
                 'side-by-side))))
 
 (ert-deftest difftastic--classify-chunk:side-by-side-no-left-last ()
   (with-temp-buffer
-    (insert "1         baz                 .
+    (insert "1         baz                 1         qux
 2         foo                 1         foo
 3         baz                 2         foo
                               3         qux

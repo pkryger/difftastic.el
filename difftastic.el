@@ -803,16 +803,16 @@ cdr is chunk end position."
   (when-let* (((not (looking-at (rx line-start line-end))))
               (start-pos (or
                           (save-excursion
-                            (goto-char (compat-call pos-bol))
+                            (goto-char (compat-call pos-bol)) ; Since Emacs-29
                             (when (looking-at (difftastic--chunk-regexp t))
                               (point)))
                           (difftastic--prev-chunk)))
               (end-pos (save-excursion
                          (goto-char (or (difftastic--next-chunk)
                                         (point-max)))
-                         (goto-char (compat-call pos-eol 0))
+                         (goto-char (compat-call pos-eol 0)) ; Since Emacs-29
                          (while (looking-at (rx line-start line-end))
-                           (goto-char (compat-call pos-eol 0)))
+                           (goto-char (compat-call pos-eol 0))) ; Since Emacs-29
                          (point))))
     (cons start-pos end-pos)))
 
@@ -855,7 +855,7 @@ The value of 6 allows for line numbers of up to 999,999.")
     (let ((single-column 0)
           (side-by-side 0))
       (while (< (progn
-                  (goto-char (compat-call pos-bol 2))
+                  (goto-char (compat-call pos-bol 2)) ; Since Emacs-29
                   (point))
                 (cdr bounds))
         (cond
@@ -912,19 +912,17 @@ and ends respectively."
               t)
         (let ((left (difftastic--parse-line-num 1 prev-num-left))
               rights)
-          ;; right line number seems to be start not unless column 30
-          (goto-char (min (+ (compat-call pos-bol) 29)
-                          (cdr bounds)))
           ;; collect candidates for a right line number
           (while (re-search-forward
                   (rx (group " " (group (or (** 1 6 ".")
                                             (** 1 6 digit)))
                              (or " " line-end)))
-                  (compat-call pos-eol)
+                  (compat-call pos-eol) ; Since Emacs-29
                   t)
             (let ((right (difftastic--parse-line-num 1 nil)))
               ;; append column number
-              (push (cons (1+ (- (caddr right) (compat-call pos-bol))) right)
+              (push (cons (1+ (- (caddr right) (compat-call pos-bol))) ; Since Emacs-29
+                          right)
                     rights)))
           (setq prev-num-left (or (car left)
                                   prev-num-left))

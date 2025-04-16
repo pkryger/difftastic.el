@@ -1504,6 +1504,101 @@ test/difftastic.t.el --- Emacs Lisp
           (difftastic-toggle-chunk)
           (should (equal-including-properties (buffer-string) ,expected)))))))
 
+(ert-deftest difftastic--chunk-classify:single-column-no-left-first ()
+  (with-temp-buffer
+    (insert "  1         bar
+1 2         foo
+. 3         bar
+2 4         foo
+")
+    (should (eq (difftastic--chunk-classify (cons (point-min) (point-max)))
+                'single-column))))
+
+(ert-deftest difftastic--chunk-classify:single-column-no-right-first ()
+  (with-temp-buffer
+    (insert "1           bar
+2 1         foo
+3 .         bar
+4 2         foo
+")
+    (should (eq (difftastic--chunk-classify (cons (point-min) (point-max)))
+                'single-column))))
+
+(ert-deftest difftastic--chunk-classify:single-column-no-left-last ()
+  (with-temp-buffer
+    (insert "1 1         foo
+2 2         foo
+  3         qux
+")
+    (should (eq (difftastic--chunk-classify (cons (point-min) (point-max)))
+                'single-column))))
+
+(ert-deftest difftastic--chunk-classify:single-column-no-right-last ()
+  (with-temp-buffer
+    (insert "1 1         foo
+2 2         foo
+3           qux
+")
+    (should (eq (difftastic--chunk-classify (cons (point-min) (point-max)))
+                'single-column))))
+
+(ert-deftest difftastic--chunk-classify:side-by-side-no-left-first ()
+  (with-temp-buffer
+    (insert "                              1         baz
+1         foo                 2         foo
+2         foo                 3         baz
+")
+    (should (eq (difftastic--chunk-classify (cons (point-min) (point-max)))
+                'side-by-side))))
+
+(ert-deftest difftastic--chunk-classify:side-by-side-dot-left-first ()
+  (with-temp-buffer
+    (insert ".                             1         baz
+1         foo                 2         foo
+2         foo                 3         baz
+3         qux
+")
+    (should (eq (difftastic--chunk-classify (cons (point-min) (point-max)))
+                'side-by-side))))
+
+(ert-deftest difftastic--chunk-classify:side-by-side-no-right-first ()
+  (with-temp-buffer
+    (insert "1         baz
+2         foo                 1         foo
+3         baz                 2         foo
+")
+    (should (eq (difftastic--chunk-classify (cons (point-min) (point-max)))
+                'side-by-side))))
+
+(ert-deftest difftastic--chunk-classify:side-by-side-dot-right-first ()
+  (with-temp-buffer
+    (insert "1         baz                 .
+2         foo                 1         foo
+3         baz                 2         foo
+")
+    (should (eq (difftastic--chunk-classify (cons (point-min) (point-max)))
+                'side-by-side))))
+
+(ert-deftest difftastic--chunk-classify:side-by-side-no-left-last ()
+  (with-temp-buffer
+    (insert "1         baz                 1         qux
+2         foo                 1         foo
+3         baz                 2         foo
+                              3         qux
+")
+    (should (eq (difftastic--chunk-classify (cons (point-min) (point-max)))
+                'side-by-side))))
+
+(ert-deftest difftastic--chunk-classify:side-by-side-no-right-last ()
+  (with-temp-buffer
+    (insert "1         bar                 1         baz
+2         foo                 2         foo
+3         bar                 3         baz
+4         foo
+")
+    (should (eq (difftastic--chunk-classify (cons (point-min) (point-max)))
+                'side-by-side))))
+
 (ert-deftest difftastic--get-languages:parse-output ()
   (let ((file "difft--list-languages.out")
         out)

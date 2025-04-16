@@ -817,11 +817,11 @@ cdr is chunk end position."
     (cons start-pos end-pos)))
 
 (defun difftastic--chunk-file-name (bounds)
-  "TODO: write doc BOUNDS."
+  "Return name of the file of chunk at BOUNDS."
   (when-let* ((file-name (save-excursion
                            (goto-char (car bounds))
                            (when (looking-at (difftastic--chunk-regexp t))
-                             (match-string-no-properties 2)))))
+                             (match-string-no-properties 1)))))
     (string-trim file-name)))
 
 (eval-and-compile

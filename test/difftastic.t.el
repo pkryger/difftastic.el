@@ -1658,6 +1658,22 @@ test/difftastic.t.el --- Emacs Lisp
         (goto-char pos))
       (should-not (difftastic--chunk-bounds)))))
 
+(ert-deftest difftastic--chunk-file-name:file-chunk ()
+  (with-temp-buffer
+    (insert "difftastic.el --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-")
+    (should (equal "difftastic.el"
+                   (difftastic--chunk-file-name
+                    (cons (point-min) (point-max)))))))
+
+(ert-deftest difftastic--chunk-file-name:chunk ()
+  (with-temp-buffer
+    (insert "difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-")
+    (should (equal "difftastic.el"
+                   (difftastic--chunk-file-name
+                    (cons (point-min) (point-max)))))))
+
 (ert-deftest difftastic--chunk-classify:single-column-no-left-first ()
   (with-temp-buffer
     (insert "  1         bar

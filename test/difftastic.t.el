@@ -1504,6 +1504,160 @@ test/difftastic.t.el --- Emacs Lisp
           (difftastic-toggle-chunk)
           (should (equal-including-properties (buffer-string) ,expected)))))))
 
+(ert-deftest difftastic--chunk-bounds:file-chunk-point-at-beginning ()
+  (mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
+    (with-temp-buffer
+      (insert "difftastic.el --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+")
+      (goto-char (point-min))
+      (should (equal (cons (point-min) (1- (point-max)))
+                     (difftastic--chunk-bounds))))))
+
+(ert-deftest difftastic--chunk-bounds:file-chunk-point-at-end ()
+  (mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
+    (with-temp-buffer
+      (insert "difftastic.el --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+")
+      (goto-char (1- (point-max)))
+      (should (equal (cons (point-min) (1- (point-max)))
+                     (difftastic--chunk-bounds))))))
+
+(ert-deftest difftastic--chunk-bounds:last-file-chunk-point-at-beginning ()
+  (mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
+    (with-temp-buffer
+      (insert "difftastic.el --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+")
+      (goto-char (point-min))
+      (should (equal (cons (point-min) (- (point-max) 2))
+                     (difftastic--chunk-bounds))))))
+
+(ert-deftest difftastic--chunk-bounds:last-file-chunk-point-at-end ()
+  (mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
+    (with-temp-buffer
+      (insert "difftastic.el --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+")
+      (goto-char (- (point-max) 2))
+      (should (equal (cons (point-min) (- (point-max) 2))
+                     (difftastic--chunk-bounds))))))
+
+(ert-deftest difftastic--chunk-bounds:file-chunk-point-after ()
+  (mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
+    (with-temp-buffer
+      (insert "difftastic.el --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+")
+      (goto-char (point-max))
+      (should-not (difftastic--chunk-bounds)))))
+
+(ert-deftest difftastic--chunk-bounds:chunk-point-at-beginning ()
+  (mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
+    (with-temp-buffer
+      (insert "difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+")
+      (goto-char (point-min))
+      (should (equal (cons (point-min) (1- (point-max)))
+                     (difftastic--chunk-bounds))))))
+
+(ert-deftest difftastic--chunk-bounds:chunk-point-at-end ()
+  (mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
+    (with-temp-buffer
+      (insert "difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+")
+      (goto-char (1- (point-max)))
+      (should (equal (cons (point-min) (1- (point-max)))
+                     (difftastic--chunk-bounds))))))
+
+(ert-deftest difftastic--chunk-bounds:last-chunk-point-at-beginning ()
+  (mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
+    (with-temp-buffer
+      (insert "difftastic.el --- 2/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+")
+      (goto-char (point-min))
+      (should (equal (cons (point-min) (- (point-max) 2))
+                     (difftastic--chunk-bounds))))))
+
+(ert-deftest difftastic--chunk-bounds:last-chunk-point-at-end ()
+  (mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
+    (with-temp-buffer
+      (insert "difftastic.el --- 2/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+")
+      (goto-char (- (point-max) 2))
+      (should (equal (cons (point-min) (- (point-max) 2))
+                     (difftastic--chunk-bounds))))))
+
+(ert-deftest difftastic--chunk-bounds:chunk-point-after ()
+  (mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
+    (with-temp-buffer
+      (insert "difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+")
+      (goto-char (point-max))
+      (should-not (difftastic--chunk-bounds)))))
+
+(ert-deftest difftastic--chunk-bounds:chunk-chunk-point-between ()
+  (mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
+    (with-temp-buffer
+      (insert "difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+")
+      (let ((pos (point)))
+        (insert "\ndifftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+")
+        (goto-char pos))
+      (should-not (difftastic--chunk-bounds)))))
+
+(ert-deftest difftastic--chunk-bounds:file-chunk-chunk-point-between ()
+  (mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
+    (with-temp-buffer
+      (insert "difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+")
+      (let ((pos (point)))
+        (insert "\ndifftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+")
+        (goto-char pos))
+      (should-not (difftastic--chunk-bounds)))))
+
+(ert-deftest difftastic--chunk-bounds:chunk-file-chunk-point-between ()
+  (mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
+    (with-temp-buffer
+      (insert "difftastic.t.el --- 2/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+")
+      (let ((pos (point)))
+        (insert "\ndifftastic.el --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+")
+        (goto-char pos))
+      (should-not (difftastic--chunk-bounds)))))
+
+(ert-deftest difftastic--chunk-bounds:file-chunk-file-chunk-point-between ()
+  (mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
+    (with-temp-buffer
+      (insert "difftastic.el --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+")
+      (let ((pos (point)))
+        (insert "\ndifftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+")
+        (goto-char pos))
+      (should-not (difftastic--chunk-bounds)))))
+
 (ert-deftest difftastic--chunk-classify:single-column-no-left-first ()
   (with-temp-buffer
     (insert "  1         bar

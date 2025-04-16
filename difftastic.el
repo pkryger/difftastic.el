@@ -797,8 +797,10 @@ of the file."
       (difftastic-hide-chunk file-chunk))))
 
 (defun difftastic--chunk-bounds ()
-  "TODO: write doc."
-  (when-let* (((not (looking-at (rx line-start line-end)))) ;; TODO: test: point in empty line between chunks
+  "Find bounds of a chunk at point.
+The return value is cons wher car is the chunk beginning position and
+cdr is chunk end position."
+  (when-let* (((not (looking-at (rx line-start line-end))))
               (start-pos (or
                           (save-excursion
                             (goto-char (compat-call pos-bol))
@@ -809,7 +811,7 @@ of the file."
                          (goto-char (or (difftastic--next-chunk)
                                         (point-max)))
                          (goto-char (compat-call pos-eol 0))
-                         (while (looking-at (rx line-start line-end)) ;; TODO: test: multiple empty lines at end of output
+                         (while (looking-at (rx line-start line-end))
                            (goto-char (compat-call pos-eol 0)))
                          (point))))
     (cons start-pos end-pos)))

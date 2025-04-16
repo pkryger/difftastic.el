@@ -797,7 +797,7 @@ of the file."
       (difftastic-hide-chunk file-chunk))))
 
 (defun difftastic--chunk-bounds ()
-  "TODO: write doc"
+  "TODO: write doc."
   (when-let* (((not (looking-at (rx line-start line-end)))) ;; TODO: test: point in empty line between chunks
               (start-pos (or
                           (save-excursion
@@ -815,7 +815,7 @@ of the file."
     (cons start-pos end-pos)))
 
 (defun difftastic--chunk-file-name (bounds)
-  "TODO: write doc"
+  "TODO: write doc BOUNDS."
   (when-let* ((file-name (save-excursion
                            (goto-char (car bounds))
                            (when (looking-at (difftastic--chunk-regexp t))
@@ -834,7 +834,7 @@ of the file."
   (rx-define difftastic--line-num-rx (eval (difftastic--line-num-rx 6))))
 
 (defun difftastic--chunk-side-by-side-p (bounds)
-  "TODO: write doc"
+  "TODO: write doc BOUNDS."
   (save-excursion
     (goto-char (car bounds))
     (catch 'side-by-side
@@ -855,7 +855,7 @@ of the file."
             (throw 'side-by-side t))))))
 
 (defun difftastic--parse-line-num (subexp prev)
-  "TODO: write doc"
+  "TODO: write doc SUBEXP PREV."
   (if-let* ((num (match-string (1+ subexp)))
             (beg (match-beginning (1+ subexp)))
             (end (match-end (1+ subexp))))
@@ -865,7 +865,7 @@ of the file."
     (list prev (match-beginning subexp) (match-end subexp))))
 
 (defun difftastic--parse-side-by-side-chunk (bounds)
-  "TODO: write doc"
+  "TODO: write doc BOUNDS."
   (save-excursion
     (goto-char (car bounds))
     (let (lines
@@ -921,7 +921,7 @@ of the file."
         lines))))
 
 (defun difftastic--parse-single-column-chunk (bounds)
-  "TODO: write doc"
+  "TODO: write doc BOUNDS."
   (save-excursion
     (goto-char (car bounds))
     (let (lines

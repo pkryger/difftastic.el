@@ -904,11 +904,12 @@ a line number and BEG and END are positions where the line number begins
 and ends respectively."
   (save-excursion
     (goto-char (car bounds))
+    (goto-char (compat-call pos-bol 2)) ; Since Emacs-29
     (let (lines
           prev-num-left)
       (while (re-search-forward
               (rx line-start
-                  (group difftastic--line-num-rx))
+                  (group difftastic--line-num-or-spaces-rx))
               (cdr bounds)
               t)
         (let ((left (difftastic--parse-line-num 1 prev-num-left))
@@ -962,6 +963,7 @@ a line number and BEG and END are positions where the line number begins
 and ends respectively."
   (save-excursion
     (goto-char (car bounds))
+    (goto-char (compat-call pos-bol 2)) ; Since Emacs-29
     (let (lines
           prev-num-left
           prev-num-right)

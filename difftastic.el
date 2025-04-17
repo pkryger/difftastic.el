@@ -842,8 +842,9 @@ The value of 6 allows for line numbers of up to 999,999.")
   (defun difftastic--line-num-or-spaces-rx (digits)
     "Return `rx' form for a up DIGITS long line number or up to DIGITS spaces."
     `(or
-      ,(difftastic--line-num-rx digits)
-      (** 2 ,(1+ digits) " ")))
+      ; search for spaces first so they can be accounted as a left column
+      (** 2 ,(1+ digits) " ")
+      ,(difftastic--line-num-rx digits)))
 
   (rx-define difftastic--line-num-or-spaces-rx
     (eval (difftastic--line-num-or-spaces-rx difftastic--line-num-digits))))

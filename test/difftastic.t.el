@@ -1676,6 +1676,144 @@ test/difftastic.t.el --- Emacs Lisp
                      (difftastic--chunk-file-name
                       (cons (point-min) (point-max))))))))
 
+(ert-deftest difftastic--line-num-rx:match ()
+  (should (eql 0
+               (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 1)))
+                               "1")))
+  (should (eql 0
+               (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 1)))
+                               "1 ")))
+  (should (eql 0
+               (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 1)))
+                               "1\n")))
+  (should (eql 0
+               (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 1)))
+                               ".")))
+  (should (eql 0
+               (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 1)))
+                               ". ")))
+  (should (eql 0
+               (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 1)))
+                               ".\n")))
+  (should (eql 0
+               (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 2)))
+                               "22")))
+  (should (eql 0
+               (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 2)))
+                               "22 ")))
+  (should (eql 0
+               (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 2)))
+                               "22\n")))
+  (should (eql 0
+               (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 2)))
+                               " 2")))
+  (should (eql 0
+               (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 2)))
+                               " 2 ")))
+  (should (eql 0
+               (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 2)))
+                               " 2\n")))
+  (should (eql 0
+               (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 2)))
+                               "..")))
+  (should (eql 0
+               (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 2)))
+                               ".. ")))
+  (should (eql 0
+               (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 2)))
+                               "..\n")))
+  (should (eql 0
+               (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 2)))
+                               " .")))
+  (should (eql 0
+               (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 2)))
+                               " . ")))
+  (should (eql 0
+               (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 2)))
+                               " .\n"))))
+
+(ert-deftest difftastic--line-num-rx:no-match ()
+  (should-not (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 1)))
+                              " "))
+  (should-not (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 1)))
+                              " 1"))
+  (should-not (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 1)))
+                              " ."))
+  (should-not (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 1)))
+                              "22"))
+  (should-not (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 1)))
+                              ".."))
+  (should-not (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 2)))
+                              " 22"))
+  (should-not (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 2)))
+                              " .."))
+  (should-not (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 2)))
+                              ".2"))
+  (should-not (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 2)))
+                              "2."))
+  (should-not (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 3)))
+                              " 2."))
+  (should-not (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 3)))
+                              " .2")))
+
 (ert-deftest difftastic--classify-chunk:single-column-no-left-first ()
   (with-temp-buffer
     (insert "  1         bar

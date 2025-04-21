@@ -831,9 +831,19 @@ The value of 6 allows for line numbers of up to 999,999.")
 
   (defun difftastic--line-num-rx (digits)
     "Return `rx' form for a up DIGITS long line number."
-    `(seq (** 0 ,(1- digits) " ")
-          (group (or (** 1 ,digits digit)
-                     (** 1 ,digits ".")))
+    `(seq ,(append
+            ; favor only digits or only dots up to given length
+            `(or (** 1 ,digits digit)
+                 (** 1 ,digits "."))
+             (let (num)
+               (dotimes (spaces (1- digits))
+                 (push `(seq
+                         (= ,(1+ spaces) " ")
+                         (or (= ,(- digits (1+ spaces)) digit)
+                             (= ,(- digits (1+ spaces)) ".")))
+                       num))
+               ; favor more digits (or dots)
+               (nreverse num)))
           (or " " line-end)))
 
   (rx-define difftastic--line-num-rx

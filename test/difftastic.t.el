@@ -52,8 +52,8 @@
             (difftastic--with-temp-advice 'treesit-ready-p
                 :filter-args (lambda (&rest args)
                                (list (car args) t))
-              (let ((treesit-auto-install t))
-                (ignore treesit-auto-install)
+              (let ((treesit-auto-install-grammar t))
+                (ignore treesit-auto-install-grammar) ;; until Emacs-30.2
                 (c++-ts-mode)))
           (c++-mode))
         (setq c++-buffer (current-buffer))

@@ -1969,6 +1969,138 @@ test/difftastic.t.el --- Emacs Lisp
     (should (eq (difftastic--classify-chunk (cons (point-min) (point-max)))
                 'side-by-side))))
 
+(ert-deftest difftastic--parse-side-by-side-chunk:no-left-first ()
+  (with-temp-buffer
+    (insert "foo --- Text
+                              1         baz
+1         foo                 2         foo
+2         foo                 3         baz
+")
+    (should (equal
+             (difftastic--parse-side-by-side-chunk
+              (cons (point-min) (point-max)))
+             '(((nil 14 21) (1 44 45))
+               ((1 58 59)   (2 88 89))
+               ((2 102 103) (3 132 133)))))))
+
+(ert-deftest difftastic--parse-side-by-side-chunk:dot-left-first ()
+  (with-temp-buffer
+    (insert "foo --- Text
+.                             1         baz
+1         foo                 2         foo
+2         foo                 3         baz
+3         qux
+")
+    (should (equal
+             (difftastic--parse-side-by-side-chunk
+              (cons (point-min) (point-max)))
+             '(((nil 14 15) (1 44 45))
+               ((1 58 59)   (2 88 89))
+               ((2 102 103) (3 132 133))
+               ((3 146 147) (3 132 133)))))))
+
+(ert-deftest difftastic--parse-side-by-side-chunk:no-right-first ()
+  (with-temp-buffer
+    (insert "foo --- Text
+1         baz
+2         foo                 1         foo
+3         baz                 2         foo
+")
+    (should (equal
+             (difftastic--parse-side-by-side-chunk
+              (cons (point-min) (point-max)))
+             '(((1 14 15) nil)
+               ((2 28 29) (1 58 59))
+               ((3 72 73) (2 102 103)))))))
+
+(ert-deftest difftastic--parse-side-by-side-chunk:dot-right-first ()
+  (with-temp-buffer
+    (insert "foo --- Text
+1         baz                 .
+2         foo                 1         foo
+3         baz                 2         foo
+")
+    (should (equal
+             (difftastic--parse-side-by-side-chunk
+              (cons (point-min) (point-max)))
+             '(((1 14 15) (nil 44 45))
+               ((2 46 47) (1 76 77))
+               ((3 90 91) (2 120 121)))))))
+
+(ert-deftest difftastic--parse-side-by-side-chunk:no-left-last ()
+  (with-temp-buffer
+    (insert "foo --- Text
+1         baz                 1         qux
+2         foo                 1         foo
+3         baz                 2         foo
+                              3         qux
+")
+    (should (equal
+             (difftastic--parse-side-by-side-chunk
+              (cons (point-min) (point-max)))
+             '(((1 14 15)   (1 44 45))
+               ((2 58 59)   (1 88 89))
+               ((3 102 103) (2 132 133))
+               ((3 146 153) (3 176 177)))))))
+
+(ert-deftest difftastic--parse-side-by-side-chunk:no-right-last ()
+  (with-temp-buffer
+    (insert "foo --- Text
+1         bar                 1         baz
+2         foo                 2         foo
+3         bar                 3         baz
+4         foo
+")
+    (should (equal
+             (difftastic--parse-side-by-side-chunk
+              (cons (point-min) (point-max)))
+             '(((1 14 15)   (1 44 45))
+               ((2 58 59)   (2 88 89))
+               ((3 102 103) (3 132 133))
+               ((4 146 147) (3 132 133)))))))
+
+(ert-deftest difftastic--parse-side-by-side-chunk:no-middle-left ()
+  (with-temp-buffer
+    (insert "foo --- Text
+1         foo                 2         foo
+.                             3         bar
+2         foo                 4         foo
+")
+    (should (equal
+             (difftastic--parse-side-by-side-chunk
+              (cons (point-min) (point-max)))
+             '(((1 14 15)   (2 44 45))
+               ((1 58 59)   (3 88 89))
+               ((2 102 103) (4 132 133)))))))
+
+(ert-deftest difftastic--parse-side-by-side-chunk:no-middle-right ()
+  (with-temp-buffer
+    (insert "foo --- Text
+2         foo                 1         foo
+3         bar                 .
+4         foo                 2         foo
+")
+    (should (equal
+             (difftastic--parse-side-by-side-chunk
+              (cons (point-min) (point-max)))
+             '(((2 14 15) (1 44 45))
+               ((3 58 59) (1 88 89))
+               ((4 90 91) (2 120 121)))))))
+
+(ert-deftest difftastic--parse-side-by-side-chunk:different-line-num ()
+  (with-temp-buffer
+    (insert "foo --- Text
+ 9        bar                  99        baz
+10        foo                 100        foo
+11        bar                 101        baz
+")
+    (should (equal
+             (difftastic--parse-side-by-side-chunk
+              (cons (point-min) (point-max)))
+             '(((9 15 16)    (99 45 47))
+               ((10 59 61)   (100 89 92))
+               ((11 104 106) (101 134 137)))))))
+
 (ert-deftest difftastic--get-languages:parse-output ()
   (let ((file "difft--list-languages.out")
         out)

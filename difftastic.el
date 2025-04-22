@@ -833,14 +833,16 @@ The value of 6 allows for line numbers of up to 999,999.")
     "Return `rx' form for a up DIGITS long line number."
     `(seq ,(append
             ; favor only digits or only dots up to given length
-            `(or (** 1 ,digits digit)
-                 (** 1 ,digits "."))
+            `(or (group (** 1 ,digits digit))
+                 (group (** 1 ,digits ".")))
              (let (num)
                (dotimes (spaces (1- digits))
                  (push `(seq
-                         (= ,(1+ spaces) " ")
-                         (or (= ,(- digits (1+ spaces)) digit)
-                             (= ,(- digits (1+ spaces)) ".")))
+                         ,(if (< 0 spaces)
+                              `(** 1 ,(1+ spaces) " ")
+                            `(= ,(1+ spaces) " "))
+                         (or (group (= ,(- digits (1+ spaces)) digit))
+                             (group (= ,(- digits (1+ spaces)) "."))))
                        num))
                ; favor more digits (or dots)
                (nreverse num)))

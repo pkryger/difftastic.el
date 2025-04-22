@@ -1740,6 +1740,36 @@ test/difftastic.t.el --- Emacs Lisp
   (should (eql 0
                (string-match-p (rx-to-string
                                 `(seq string-start
+                                      ,(difftastic--line-num-rx 3)))
+                               " 3")))
+  (should (eql 0
+               (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 3)))
+                               " 3 ")))
+  (should (eql 0
+               (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 3)))
+                               " 3\n")))
+  (should (eql 0
+               (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 3)))
+                               "  3")))
+  (should (eql 0
+               (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 3)))
+                               "  3 ")))
+  (should (eql 0
+               (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 3)))
+                               "  3\n")))
+  (should (eql 0
+               (string-match-p (rx-to-string
+                                `(seq string-start
                                       ,(difftastic--line-num-rx 2)))
                                "..")))
   (should (eql 0
@@ -1766,6 +1796,36 @@ test/difftastic.t.el --- Emacs Lisp
                (string-match-p (rx-to-string
                                 `(seq string-start
                                       ,(difftastic--line-num-rx 2)))
+                               " .\n")))
+  (should (eql 0
+               (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 3)))
+                               "  .")))
+  (should (eql 0
+               (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 3)))
+                               "  . ")))
+  (should (eql 0
+               (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 3)))
+                               "  .\n")))
+  (should (eql 0
+               (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 3)))
+                               " .")))
+  (should (eql 0
+               (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 3)))
+                               " . ")))
+  (should (eql 0
+               (string-match-p (rx-to-string
+                                `(seq string-start
+                                      ,(difftastic--line-num-rx 3)))
                                " .\n"))))
 
 (ert-deftest difftastic--line-num-rx:no-match ()

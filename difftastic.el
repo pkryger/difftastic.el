@@ -896,17 +896,23 @@ The value of 6 allows for line numbers of up to 999,999.")
   "Parse line number in current match data.
 Return a list in a from (LINE-NUM BEG END), where LINE-NUM is a line
 number (as a number) and BEG and END are positions where the number
-begins and ends respectively.  LINE-NUM is extracted form a SUBEXP + 1
-match in current match data.  If no LINE-NUM can be extracted from
-SUBEXP + 1 match, then PREV is used instead.  If there's no SUBEXP + 1
-match in match data, then SUBEXP is used for BEG and END."
-  (if-let* ((num (match-string (1+ subexp)))
-            (beg (match-beginning (1+ subexp)))
-            (end (match-end (1+ subexp))))
-      (if (string-match-p (rx (one-or-more digit)) num)
-          (list (string-to-number num) beg end)
-        (list prev beg end))
-    (list prev (match-beginning subexp) (match-end subexp))))
+begins and ends respectively.  LINE-NUM is extracted form a SUBEXP + M
+match in current match data, where M is the first non-nil match after
+the SUBEXP.  If no LINE-NUM can be extracted from SUBEXP + M match, then
+PREV is used instead.  If there's no SUBEXP + M match in match data,
+then SUBEXP is used for BEG and END."
+  (let ((m 1)
+        beg)
+    (while (and (<= m (* 2 difftastic--line-num-digits))
+                (not (setq beg (match-beginning (+ subexp m)))))
+      (cl-incf m))
+    (if beg
+        (let* ((end (match-end (+ subexp m)))
+               (num (buffer-substring beg end)))
+          (if (string-match-p (rx (one-or-more digit)) num)
+              (list (string-to-number num) beg end)
+            (list prev beg end)))
+      (list prev (match-beginning subexp) (match-end subexp)))))
 
 (defun difftastic--parse-side-by-side-chunk (bounds)
   "Parse a `side-by-side-column' chunk at BOUNDS.

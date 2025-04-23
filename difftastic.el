@@ -992,7 +992,8 @@ and ends respectively."
               (cdr bounds)
               t)
         (let ((left (difftastic--parse-line-num 1 prev-num-left))
-              (right (difftastic--parse-line-num 3 prev-num-right)))
+              (right (difftastic--parse-line-num
+                      (+ 2 (* 2 difftastic--line-num-digits)) prev-num-right)))
           (setq prev-num-left (or (car left) prev-num-left)
                 prev-num-right (or (car right) prev-num-right))
           (push (list left right) lines)))

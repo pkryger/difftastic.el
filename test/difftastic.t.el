@@ -2101,6 +2101,80 @@ test/difftastic.t.el --- Emacs Lisp
                ((10 59 61)   (100 89 92))
                ((11 104 106) (101 134 137)))))))
 
+(ert-deftest difftastic--parse-single-column-chunk:no-left-first ()
+  (with-temp-buffer
+    (insert "foo --- Text
+  1         bar
+1 2         foo
+. 3         bar
+2 4         foo
+")
+    (should (equal
+             (difftastic--parse-single-column-chunk
+              (cons (point-min) (point-max)))
+             '(((nil 14 16) (1 16 18))
+               ((1 30 31)   (2 32 34))
+               ((1 46 47)   (3 48 50))
+               ((2 62 63)   (4 64 66)))))))
+
+(ert-deftest difftastic--parse-single-column-chunk:no-right-first ()
+  (with-temp-buffer
+    (insert "foo --- Text
+1           bar
+2 1         foo
+3 .         bar
+4 2         foo
+")
+    (should (equal
+             (difftastic--parse-single-column-chunk
+              (cons (point-min) (point-max)))
+             '(((1 14 15) (nil 16 23))
+               ((2 30 31) (1 32 34))
+               ((3 46 47) (1 48 50))
+               ((4 62 63) (2 64 66)))))))
+
+(ert-deftest difftastic--parse-single-column-chunk:no-left-last ()
+  (with-temp-buffer
+    (insert "foo --- Text
+1 1         foo
+2 2         foo
+  3         qux
+")
+    (should (equal
+             (difftastic--parse-single-column-chunk
+              (cons (point-min) (point-max)))
+             '(((1 14 15) (1 16 18))
+               ((2 30 31) (2 32 34))
+               ((2 46 48) (3 48 50)))))))
+
+(ert-deftest difftastic--parse-single-column-chunk:no-right-last ()
+  (with-temp-buffer
+    (insert "foo --- Text
+1 1         foo
+2 2         foo
+3           qux
+")
+    (should (equal
+             (difftastic--parse-single-column-chunk
+              (cons (point-min) (point-max)))
+             '(((1 14 15) (1 16 18))
+               ((2 30 31) (2 32 34))
+               ((3 46 47) (2 48 55)))))))
+
+(ert-deftest difftastic--parse-single-column-chunk:different-line-num ()
+  (with-temp-buffer
+    (insert "foo --- Text
+ 9  99         foo
+10 100         bar
+11 101         foo
+")
+    (should (equal
+             (difftastic--parse-single-column-chunk
+              (cons (point-min) (point-max)))
+             '(((9 15 16)  (99 18 20))
+               ((10 33 35) (100 36 39))
+               ((11 52 54) (101 55 58)))))))
+
 (ert-deftest difftastic--get-languages:parse-output ()
   (let ((file "difft--list-languages.out")
         out)

@@ -914,10 +914,11 @@ PREV is used instead."
 
 (defun difftastic--parse-side-by-side-chunk (bounds)
   "Parse a `side-by-side-column' chunk at BOUNDS.
-Return a list where each element is a list in a form (LEFT RIGHT).  Both
-LEFT and RIGHT are lists in a form (LINE-NUM BEG END), where LINE-NUM is
-a line number and BEG and END are positions where the line number begins
-and ends respectively."
+Return a list where each element is a list in a form (BEG-END LEFT
+RIGHT).  BEG-END is a list in a from (BEG END) where BEG is a line begin
+position and END is line end position.  Both LEFT and RIGHT are lists in
+a form (LINE-NUM BEG END), where LINE-NUM is a line number and BEG and
+END are positions where the line number begins and ends respectively."
   (save-excursion
     (goto-char (car bounds))
     (goto-char (compat-call pos-bol 2)) ; Since Emacs-29
@@ -929,6 +930,7 @@ and ends respectively."
               (cdr bounds)
               t)
         (let ((left (difftastic--parse-line-num 1 prev-num-left))
+              (beg-end (list (compat-call pos-bol) (compat-call pos-eol))) ; Since Emacs-29
               rights)
           ;; collect candidates for a right line number
           (while (re-search-forward
@@ -944,14 +946,14 @@ and ends respectively."
                     rights)))
           (setq prev-num-left (or (car left)
                                   prev-num-left))
-          (push (list left rights) lines)))
+          (push (list beg-end left rights) lines)))
       ;; find a common column accounting for missing line numbers
       (let (cols
             prev-num-right)
         (dolist (line lines)
           (when-let* ((right-cols (mapcar (lambda (candidate)
                                             (car candidate))
-                                          (cadr line))))
+                                          (caddr line))))
             (setq cols
                   (cl-intersection (or cols right-cols)
                                    (or right-cols cols)))))
@@ -959,13 +961,13 @@ and ends respectively."
         ;; use the first common column that has been found,
         ;; also update missing line numbers in right
         (dolist (line lines)
-          (setcdr line
+          (setcdr (cdr line)
                   (list
                    (when-let* ((right (cdr (cl-find-if
                                             (lambda (candidate)
                                               (equal (car cols)
                                                      (car candidate)))
-                                            (cadr line)))))
+                                            (caddr line)))))
                        (setcar right (or (car right)
                                          prev-num-right))
                        (setq prev-num-right (car right))
@@ -974,10 +976,11 @@ and ends respectively."
 
 (defun difftastic--parse-single-column-chunk (bounds)
   "Parse a `single-column' chunk at BOUNDS.
-Return a list where each element is a list in a form (LEFT RIGHT).  Both
-LEFT and RIGHT are lists in a form (LINE-NUM BEG END), where LINE-NUM is
-a line number and BEG and END are positions where the line number begins
-and ends respectively."
+Return a list where each element is a list in a form (BEG-END LEFT
+RIGHT).  BEG-END is a list in a from (BEG END) where BEG is a line begin
+position and END is line end position.  Both LEFT and RIGHT are lists in
+a form (LINE-NUM BEG END), where LINE-NUM is a line number and BEG and
+END are positions where the line number begins and ends respectively."
   (save-excursion
     (goto-char (car bounds))
     (goto-char (compat-call pos-bol 2)) ; Since Emacs-29
@@ -992,10 +995,11 @@ and ends respectively."
               t)
         (let ((left (difftastic--parse-line-num 1 prev-num-left))
               (right (difftastic--parse-line-num
-                      (+ 2 (* 2 difftastic--line-num-digits)) prev-num-right)))
+                      (+ 2 (* 2 difftastic--line-num-digits)) prev-num-right))
+              (beg-end (list (compat-call pos-bol) (compat-call pos-eol)))) ; Since Emacs-29
           (setq prev-num-left (or (car left) prev-num-left)
                 prev-num-right (or (car right) prev-num-right))
-          (push (list left right) lines)))
+          (push (list beg-end left right) lines)))
       (nreverse lines))))
 
 ;; From `view-mode'

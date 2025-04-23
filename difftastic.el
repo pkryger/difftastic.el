@@ -899,20 +899,18 @@ number (as a number) and BEG and END are positions where the number
 begins and ends respectively.  LINE-NUM is extracted form a SUBEXP + M
 match in current match data, where M is the first non-nil match after
 the SUBEXP.  If no LINE-NUM can be extracted from SUBEXP + M match, then
-PREV is used instead.  If there's no SUBEXP + M match in match data,
-then SUBEXP is used for BEG and END."
+PREV is used instead."
   (let ((m 1)
         beg)
     (while (and (<= m (* 2 difftastic--line-num-digits))
                 (not (setq beg (match-beginning (+ subexp m)))))
       (cl-incf m))
-    (if beg
-        (let* ((end (match-end (+ subexp m)))
-               (num (buffer-substring beg end)))
-          (if (string-match-p (rx (one-or-more digit)) num)
-              (list (string-to-number num) beg end)
-            (list prev beg end)))
-      (list prev (match-beginning subexp) (match-end subexp)))))
+    (when beg
+      (let* ((end (match-end (+ subexp m)))
+             (num (buffer-substring beg end)))
+        (if (string-match-p (rx (one-or-more digit)) num)
+            (list (string-to-number num) beg end)
+          (list prev beg end))))))
 
 (defun difftastic--parse-side-by-side-chunk (bounds)
   "Parse a `side-by-side-column' chunk at BOUNDS.
@@ -949,28 +947,29 @@ and ends respectively."
           (push (list left rights) lines)))
       ;; find a common column accounting for missing line numbers
       (let (cols
-            prev-right)
+            prev-num-right)
         (dolist (line lines)
           (when-let* ((right-cols (mapcar (lambda (candidate)
                                             (car candidate))
                                           (cadr line))))
             (setq cols
                   (cl-intersection (or cols right-cols)
-                                   right-cols))))
+                                   (or right-cols cols)))))
         (setq lines (nreverse lines))
         ;; use the first common column that has been found,
         ;; also update missing line numbers in right
         (dolist (line lines)
           (setcdr line
                   (list
-                   (if-let* ((right (cdr (cl-find-if
-                                          (lambda (candidate)
-                                            (equal (car cols) (car candidate)))
-                                          (cadr line)))))
-                       (progn (setcar right (or (car right)
-                                                (car prev-right)))
-                              (setq prev-right right))
-                     prev-right))))
+                   (when-let* ((right (cdr (cl-find-if
+                                            (lambda (candidate)
+                                              (equal (car cols)
+                                                     (car candidate)))
+                                            (cadr line)))))
+                       (setcar right (or (car right)
+                                         prev-num-right))
+                       (setq prev-num-right (car right))
+                       right))))
         lines))))
 
 (defun difftastic--parse-single-column-chunk (bounds)

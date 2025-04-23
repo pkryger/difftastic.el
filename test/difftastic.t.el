@@ -1979,7 +1979,7 @@ test/difftastic.t.el --- Emacs Lisp
     (should (equal
              (difftastic--parse-side-by-side-chunk
               (cons (point-min) (point-max)))
-             '(((nil 14 21) (1 44 45))
+             '((nil         (1 44 45))
                ((1 58 59)   (2 88 89))
                ((2 102 103) (3 132 133)))))))
 
@@ -1997,7 +1997,7 @@ test/difftastic.t.el --- Emacs Lisp
              '(((nil 14 15) (1 44 45))
                ((1 58 59)   (2 88 89))
                ((2 102 103) (3 132 133))
-               ((3 146 147) (3 132 133)))))))
+               ((3 146 147) nil))))))
 
 (ert-deftest difftastic--parse-side-by-side-chunk:no-right-first ()
   (with-temp-buffer
@@ -2041,7 +2041,7 @@ test/difftastic.t.el --- Emacs Lisp
              '(((1 14 15)   (1 44 45))
                ((2 58 59)   (1 88 89))
                ((3 102 103) (2 132 133))
-               ((3 146 153) (3 176 177)))))))
+               (nil         (3 176 177)))))))
 
 (ert-deftest difftastic--parse-side-by-side-chunk:no-right-last ()
   (with-temp-buffer
@@ -2057,7 +2057,7 @@ test/difftastic.t.el --- Emacs Lisp
              '(((1 14 15)   (1 44 45))
                ((2 58 59)   (2 88 89))
                ((3 102 103) (3 132 133))
-               ((4 146 147) (3 132 133)))))))
+               ((4 146 147) nil))))))
 
 (ert-deftest difftastic--parse-side-by-side-chunk:no-middle-left ()
   (with-temp-buffer
@@ -2112,10 +2112,10 @@ test/difftastic.t.el --- Emacs Lisp
     (should (equal
              (difftastic--parse-single-column-chunk
               (cons (point-min) (point-max)))
-             '(((nil 14 16) (1 16 18))
-               ((1 30 31)   (2 32 34))
-               ((1 46 47)   (3 48 50))
-               ((2 62 63)   (4 64 66)))))))
+             '((nil         (1 16 17))
+               ((1 30 31)   (2 32 33))
+               ((1 46 47)   (3 48 49))
+               ((2 62 63)   (4 64 65)))))))
 
 (ert-deftest difftastic--parse-single-column-chunk:no-right-first ()
   (with-temp-buffer
@@ -2128,10 +2128,10 @@ test/difftastic.t.el --- Emacs Lisp
     (should (equal
              (difftastic--parse-single-column-chunk
               (cons (point-min) (point-max)))
-             '(((1 14 15) (nil 16 23))
-               ((2 30 31) (1 32 34))
-               ((3 46 47) (1 48 50))
-               ((4 62 63) (2 64 66)))))))
+             '(((1 14 15) nil)
+               ((2 30 31) (1 32 33))
+               ((3 46 47) (1 48 49))
+               ((4 62 63) (2 64 65)))))))
 
 (ert-deftest difftastic--parse-single-column-chunk:no-left-last ()
   (with-temp-buffer
@@ -2143,9 +2143,9 @@ test/difftastic.t.el --- Emacs Lisp
     (should (equal
              (difftastic--parse-single-column-chunk
               (cons (point-min) (point-max)))
-             '(((1 14 15) (1 16 18))
-               ((2 30 31) (2 32 34))
-               ((2 46 48) (3 48 50)))))))
+             '(((1 14 15) (1 16 17))
+               ((2 30 31) (2 32 33))
+               (nil       (3 48 49)))))))
 
 (ert-deftest difftastic--parse-single-column-chunk:no-right-last ()
   (with-temp-buffer
@@ -2157,9 +2157,9 @@ test/difftastic.t.el --- Emacs Lisp
     (should (equal
              (difftastic--parse-single-column-chunk
               (cons (point-min) (point-max)))
-             '(((1 14 15) (1 16 18))
-               ((2 30 31) (2 32 34))
-               ((3 46 47) (2 48 55)))))))
+             '(((1 14 15) (1 16 17))
+               ((2 30 31) (2 32 33))
+               ((3 46 47) nil))))))
 
 (ert-deftest difftastic--parse-single-column-chunk:different-line-num ()
   (with-temp-buffer

@@ -1007,7 +1007,7 @@ arguments, like in `make-process''s filter."
              difftastic-bright-colors-vector))
         (ignore ansi-color-normal-colors-vector
                 ansi-color-bright-colors-vector)
-        (if (fboundp 'ansi-color--face-vec-face) ;; since Emacs-29
+        (if (fboundp 'ansi-color--face-vec-face) ;; Since Emacs-29
             (difftastic--with-temp-advice
                 'ansi-color--face-vec-face
                 :around
@@ -1267,7 +1267,7 @@ when it is a temporary or nil otherwise."
    '("Text")
    (cl-remove-if (lambda (line)
                    (string-match-p "^ \\*" line))
-                 (compat-call ;; since Emacs-29
+                 (compat-call ;; Since Emacs-29
                   string-split
                   (shell-command-to-string
                    (concat difftastic-executable " --list-languages"))

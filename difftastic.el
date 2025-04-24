@@ -1002,6 +1002,33 @@ END are positions where the line number begins and ends respectively."
           (push (list beg-end left right) lines)))
       (nreverse lines))))
 
+(defun difftastic--chunk-file-at-point ()
+  "Return a chunk file at point.
+Chunk file is a list in a form of (FILE LINE-NUM SIDE), where FILE is
+the chunk file name, LINE-NUM is an optional line number within the FILE
+and SIDE is either `left' or `right'."
+  (when-let* ((bounds (difftastic--chunk-bounds))
+              (file (difftastic--chunk-file-name bounds))
+              (lines (pcase (difftastic--classify-chunk bounds)
+                       ('side-by-side
+                        (difftastic--parse-side-by-side-chunk bounds))
+                       ('single-column
+                        (difftastic--parse-single-column-chunk bounds))))
+              (point (point)))
+    (if (< point (caaar lines))
+        ; use right when point is in chunk header
+        (list file nil 'right)
+      (catch 'chunk-file
+        (while lines
+          (pcase-let* ((`((,bol ,eol) ,left ,right) (car lines)))
+            (when (and (<= bol point eol))
+              (if (and left
+                       (or (not right)
+                           (< point (cadr right))))
+                  (throw 'chunk-file (list file (car left) 'left))
+                (throw 'chunk-file (list file (car right) 'right))))
+            (setq lines (cdr lines))))))))
+
 ;; From `view-mode'
 
 ;; This is awful because it assumes that the selected window shows the

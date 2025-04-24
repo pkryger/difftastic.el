@@ -2175,6 +2175,531 @@ test/difftastic.t.el --- Emacs Lisp
                ((33 51) (10 33 35) (100 36 39))
                ((52 70) (11 52 54) (101 55 58)))))))
 
+(ert-deftest difftastic--chunk-file-at-point:side-by-side-no-right ()
+  (with-temp-buffer
+    (insert "foo --- Text
+ 7        bar
+ 8        bar                  99        baz
+ .        foo                  ..        foo
+ 9        bar                 100        baz
+10        bar
+")
+    (goto-char (point-min))
+    (should (equal (difftastic--chunk-file-at-point) '("foo" nil right)))
+    (goto-char (compat-call pos-eol)) ;  Since Emacs-29
+    (should (equal (difftastic--chunk-file-at-point) '("foo" nil right)))
+
+    (re-search-forward (rx line-start " 7"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 7 left)))
+    (goto-char (compat-call pos-bol)) ; Since Emacs-29
+    (should (equal (cons 'bol (difftastic--chunk-file-at-point))
+                   '(bol "foo" 7 left)))
+    (goto-char (compat-call pos-eol)) ; Since Emacs-29
+    (should (equal (cons 'eol (difftastic--chunk-file-at-point))
+                   '(eol "foo" 7 left)))
+
+    (re-search-forward (rx line-start " 8"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 8 left)))
+    (goto-char (compat-call pos-bol)) ; Since Emacs-29
+    (should (equal (cons 'bol (difftastic--chunk-file-at-point))
+                   '(bol "foo" 8 left)))
+    (re-search-forward (rx " 99"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 99 right)))
+    (re-search-backward (rx "99"))
+    (should (equal (cons 'line-num-beg (difftastic--chunk-file-at-point))
+                   '(line-num-beg "foo" 99 right)))
+    (goto-char (compat-call pos-eol)) ; Since Emacs-29
+    (should (equal (cons 'eol (difftastic--chunk-file-at-point))
+                   '(eol "foo" 99 right)))
+
+    (re-search-forward (rx line-start " ."))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 8 left)))
+    (goto-char (compat-call pos-bol)) ; Since Emacs-29
+    (should (equal (cons 'bol (difftastic--chunk-file-at-point))
+                   '(bol "foo" 8 left)))
+    (re-search-forward (rx " .."))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 99 right)))
+    (re-search-backward (rx ".."))
+    (should (equal (cons 'line-num-beg (difftastic--chunk-file-at-point))
+                   '(line-num-beg "foo" 99 right)))
+    (goto-char (compat-call pos-eol)) ; Since Emacs-29
+    (should (equal (cons 'eol (difftastic--chunk-file-at-point))
+                   '(eol "foo" 99 right)))
+
+    (re-search-forward (rx line-start " 9"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 9 left)))
+    (goto-char (compat-call pos-bol)) ; Since Emacs-29
+    (should (equal (cons 'bol (difftastic--chunk-file-at-point))
+                   '(bol "foo" 9 left)))
+    (re-search-forward (rx " 100"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 100 right)))
+    (re-search-backward (rx "100"))
+    (should (equal (cons 'line-num-beg (difftastic--chunk-file-at-point))
+                   '(line-num-beg "foo" 100 right)))
+    (goto-char (compat-call pos-eol)) ; Since Emacs-29
+    (should (equal (cons 'eol (difftastic--chunk-file-at-point))
+                   '(eol "foo" 100 right)))
+
+    (re-search-forward (rx line-start "10"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 10 left)))
+    (goto-char (compat-call pos-bol)) ; Since Emacs-29
+    (should (equal (cons 'bol (difftastic--chunk-file-at-point))
+                   '(bol "foo" 10 left)))
+    (goto-char (compat-call pos-eol)) ; Since Emacs-29
+    (should (equal (cons 'eol (difftastic--chunk-file-at-point))
+                   '(eol "foo" 10 left)))))
+
+(ert-deftest difftastic--chunk-file-at-point:side-by-side-dot-right ()
+  (with-temp-buffer
+    (insert "foo --- Text
+ 7        bar                  ..
+ 8        bar                  99        baz
+ .        foo                  ..        foo
+ 9        bar                 100        baz
+10        bar                 ...
+")
+    (goto-char (point-min))
+    (should (equal (difftastic--chunk-file-at-point) '("foo" nil right)))
+    (goto-char (compat-call pos-eol)) ;  Since Emacs-29
+    (should (equal (difftastic--chunk-file-at-point) '("foo" nil right)))
+
+    (re-search-forward (rx line-start " 7"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 7 left)))
+    (goto-char (compat-call pos-bol)) ; Since Emacs-29
+    (should (equal (cons 'bol (difftastic--chunk-file-at-point))
+                   '(bol "foo" 7 left)))
+    (re-search-forward (rx " .."))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" nil right)))
+    (re-search-backward (rx ".."))
+    (should (equal (cons 'line-num-beg (difftastic--chunk-file-at-point))
+                   '(line-num-beg "foo" nil right)))
+    (goto-char (compat-call pos-eol)) ; Since Emacs-29
+    (should (equal (cons 'eol (difftastic--chunk-file-at-point))
+                   '(eol "foo" nil right)))
+
+    (re-search-forward (rx line-start " 8"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 8 left)))
+    (goto-char (compat-call pos-bol)) ; Since Emacs-29
+    (should (equal (cons 'bol (difftastic--chunk-file-at-point))
+                   '(bol "foo" 8 left)))
+    (re-search-forward (rx " 99"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 99 right)))
+    (re-search-backward (rx "99"))
+    (should (equal (cons 'line-num-beg (difftastic--chunk-file-at-point))
+                   '(line-num-beg "foo" 99 right)))
+    (goto-char (compat-call pos-eol)) ; Since Emacs-29
+    (should (equal (cons 'eol (difftastic--chunk-file-at-point))
+                   '(eol "foo" 99 right)))
+
+    (re-search-forward (rx line-start " ."))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 8 left)))
+    (goto-char (compat-call pos-bol)) ; Since Emacs-29
+    (should (equal (cons 'bol (difftastic--chunk-file-at-point))
+                   '(bol "foo" 8 left)))
+    (re-search-forward (rx " .."))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 99 right)))
+    (re-search-backward (rx ".."))
+    (should (equal (cons 'line-num-beg (difftastic--chunk-file-at-point))
+                   '(line-num-beg "foo" 99 right)))
+    (goto-char (compat-call pos-eol)) ; Since Emacs-29
+    (should (equal (cons 'eol (difftastic--chunk-file-at-point))
+                   '(eol "foo" 99 right)))
+
+    (re-search-forward (rx line-start " 9"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 9 left)))
+    (goto-char (compat-call pos-bol)) ; Since Emacs-29
+    (should (equal (cons 'bol (difftastic--chunk-file-at-point))
+                   '(bol "foo" 9 left)))
+    (re-search-forward (rx " 100"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 100 right)))
+    (re-search-backward (rx "100"))
+    (should (equal (cons 'line-num-beg (difftastic--chunk-file-at-point))
+                   '(line-num-beg "foo" 100 right)))
+    (goto-char (compat-call pos-eol)) ; Since Emacs-29
+    (should (equal (cons 'eol (difftastic--chunk-file-at-point))
+                   '(eol "foo" 100 right)))
+
+    (re-search-forward (rx line-start "10"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 10 left)))
+    (goto-char (compat-call pos-bol)) ; Since Emacs-29
+    (should (equal (cons 'bol (difftastic--chunk-file-at-point))
+                   '(bol "foo" 10 left)))
+    (re-search-forward (rx " ..."))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 100 right)))
+    (re-search-backward (rx "..."))
+    (should (equal (cons 'line-num-beg (difftastic--chunk-file-at-point))
+                   '(line-num-beg "foo" 100 right)))
+    (goto-char (compat-call pos-eol)) ; Since Emacs-29
+    (should (equal (cons 'eol (difftastic--chunk-file-at-point))
+                   '(eol "foo" 100 right)))))
+
+(ert-deftest difftastic--chunk-file-at-point:side-by-side-no-left ()
+  (with-temp-buffer
+    (insert "foo --- Text
+                               98        bar
+ 8        bar                  99        baz
+ .        foo                  ..        foo
+ 9        bar                 100        baz
+                              101        bar
+")
+    (goto-char (point-min))
+    (should (equal (difftastic--chunk-file-at-point) '("foo" nil right)))
+    (goto-char (compat-call pos-eol)) ;  Since Emacs-29
+    (should (equal (difftastic--chunk-file-at-point) '("foo" nil right)))
+
+    (re-search-forward (rx " 98"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 98 right)))
+    (re-search-backward (rx "98"))
+    (should (equal (cons 'line-num-beg (difftastic--chunk-file-at-point))
+                   '(line-num-beg "foo" 98 right)))
+    (goto-char (compat-call pos-bol)) ; Since Emacs-29
+    (should (equal (cons 'bol (difftastic--chunk-file-at-point))
+                   '(bol "foo" 98 right)))
+    (goto-char (compat-call pos-eol)) ; Since Emacs-29
+    (should (equal (cons 'eol (difftastic--chunk-file-at-point))
+                   '(eol "foo" 98 right)))
+
+    (re-search-forward (rx line-start " 8"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 8 left)))
+    (goto-char (compat-call pos-bol)) ; Since Emacs-29
+    (should (equal (cons 'bol (difftastic--chunk-file-at-point))
+                   '(bol "foo" 8 left)))
+    (re-search-forward (rx " 99"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 99 right)))
+    (re-search-backward (rx "99"))
+    (should (equal (cons 'line-num-beg (difftastic--chunk-file-at-point))
+                   '(line-num-beg "foo" 99 right)))
+    (goto-char (compat-call pos-eol)) ; Since Emacs-29
+    (should (equal (cons 'eol (difftastic--chunk-file-at-point))
+                   '(eol "foo" 99 right)))
+
+    (re-search-forward (rx line-start " ."))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 8 left)))
+    (goto-char (compat-call pos-bol)) ; Since Emacs-29
+    (should (equal (cons 'bol (difftastic--chunk-file-at-point))
+                   '(bol "foo" 8 left)))
+    (re-search-forward (rx " .."))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 99 right)))
+    (re-search-backward (rx ".."))
+    (should (equal (cons 'line-num-beg (difftastic--chunk-file-at-point))
+                   '(line-num-beg "foo" 99 right)))
+    (goto-char (compat-call pos-eol)) ; Since Emacs-29
+    (should (equal (cons 'eol (difftastic--chunk-file-at-point))
+                   '(eol "foo" 99 right)))
+
+    (re-search-forward (rx line-start " 9"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 9 left)))
+    (goto-char (compat-call pos-bol)) ; Since Emacs-29
+    (should (equal (cons 'bol (difftastic--chunk-file-at-point))
+                   '(bol "foo" 9 left)))
+    (re-search-forward (rx " 100"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 100 right)))
+    (re-search-backward (rx "100"))
+    (should (equal (cons 'line-num-beg (difftastic--chunk-file-at-point))
+                   '(line-num-beg "foo" 100 right)))
+    (goto-char (compat-call pos-eol)) ; Since Emacs-29
+    (should (equal (cons 'eol (difftastic--chunk-file-at-point))
+                   '(eol "foo" 100 right)))
+
+    (re-search-forward (rx " 101"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 101 right)))
+    (re-search-backward (rx "101"))
+    (should (equal (cons 'line-num-beg (difftastic--chunk-file-at-point))
+                   '(line-num-beg "foo" 101 right)))
+    (goto-char (compat-call pos-bol)) ; Since Emacs-29
+    (should (equal (cons 'bol (difftastic--chunk-file-at-point))
+                   '(bol "foo" 101 right)))
+    (goto-char (compat-call pos-eol)) ; Since Emacs-29
+    (should (equal (cons 'eol (difftastic--chunk-file-at-point))
+                   '(eol "foo" 101 right)))))
+
+(ert-deftest difftastic--chunk-file-at-point:side-by-side-dot-left ()
+  (with-temp-buffer
+    (insert "foo --- Text
+ .                             98        bar
+ 8        bar                  99        baz
+ .        foo                  ..        foo
+ 9        bar                 100        baz
+ .                            101        bar
+")
+    (goto-char (point-min))
+    (should (equal (difftastic--chunk-file-at-point) '("foo" nil right)))
+    (goto-char (compat-call pos-eol)) ;  Since Emacs-29
+    (should (equal (difftastic--chunk-file-at-point) '("foo" nil right)))
+
+    (re-search-forward (rx line-start " ."))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" nil left)))
+    (re-search-backward (rx "."))
+    (should (equal (cons 'line-num-beg (difftastic--chunk-file-at-point))
+                   '(line-num-beg "foo" nil left)))
+    (goto-char (compat-call pos-bol)) ; Since Emacs-29
+    (should (equal (cons 'bol (difftastic--chunk-file-at-point))
+                   '(bol "foo" nil left)))
+    (re-search-forward (rx " 98"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 98 right)))
+    (re-search-backward (rx "98"))
+    (should (equal (cons 'line-num-beg (difftastic--chunk-file-at-point))
+                   '(line-num-beg "foo" 98 right)))
+    (goto-char (compat-call pos-eol)) ; Since Emacs-29
+    (should (equal (cons 'eol (difftastic--chunk-file-at-point))
+                   '(eol "foo" 98 right)))
+
+    (re-search-forward (rx line-start " 8"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 8 left)))
+    (goto-char (compat-call pos-bol)) ; Since Emacs-29
+    (should (equal (cons 'bol (difftastic--chunk-file-at-point))
+                   '(bol "foo" 8 left)))
+    (re-search-forward (rx " 99"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 99 right)))
+    (re-search-backward (rx "99"))
+    (should (equal (cons 'line-num-beg (difftastic--chunk-file-at-point))
+                   '(line-num-beg "foo" 99 right)))
+    (goto-char (compat-call pos-eol)) ; Since Emacs-29
+    (should (equal (cons 'eol (difftastic--chunk-file-at-point))
+                   '(eol "foo" 99 right)))
+
+    (re-search-forward (rx line-start " ."))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 8 left)))
+    (goto-char (compat-call pos-bol)) ; Since Emacs-29
+    (should (equal (cons 'bol (difftastic--chunk-file-at-point))
+                   '(bol "foo" 8 left)))
+    (re-search-forward (rx " .."))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 99 right)))
+    (re-search-backward (rx ".."))
+    (should (equal (cons 'line-num-beg (difftastic--chunk-file-at-point))
+                   '(line-num-beg "foo" 99 right)))
+    (goto-char (compat-call pos-eol)) ; Since Emacs-29
+    (should (equal (cons 'eol (difftastic--chunk-file-at-point))
+                   '(eol "foo" 99 right)))
+
+    (re-search-forward (rx line-start " 9"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 9 left)))
+    (goto-char (compat-call pos-bol)) ; Since Emacs-29
+    (should (equal (cons 'bol (difftastic--chunk-file-at-point))
+                   '(bol "foo" 9 left)))
+    (re-search-forward (rx " 100"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 100 right)))
+    (re-search-backward (rx "100"))
+    (should (equal (cons 'line-num-beg (difftastic--chunk-file-at-point))
+                   '(line-num-beg "foo" 100 right)))
+    (goto-char (compat-call pos-eol)) ; Since Emacs-29
+    (should (equal (cons 'eol (difftastic--chunk-file-at-point))
+                   '(eol "foo" 100 right)))
+
+    (re-search-forward (rx " 101"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 101 right)))
+    (re-search-backward (rx "101"))
+    (should (equal (cons 'line-num-beg (difftastic--chunk-file-at-point))
+                   '(line-num-beg "foo" 101 right)))
+    (goto-char (compat-call pos-bol)) ; Since Emacs-29
+    (should (equal (cons 'bol (difftastic--chunk-file-at-point))
+                   '(bol "foo" 9 left)))
+    (goto-char (compat-call pos-eol)) ; Since Emacs-29
+    (should (equal (cons 'eol (difftastic--chunk-file-at-point))
+                   '(eol "foo" 101 right)))))
+
+(ert-deftest difftastic--chunk-file-at-point:single-column-no-right ()
+  (with-temp-buffer
+    (insert "foo --- Text
+ 7            foo
+ 8  99        foo
+ .  ..        foo
+ 9 100        foo
+10            foo
+")
+    (goto-char (point-min))
+    (should (equal (difftastic--chunk-file-at-point) '("foo" nil right)))
+    (goto-char (compat-call pos-eol)) ;  Since Emacs-29
+    (should (equal (difftastic--chunk-file-at-point) '("foo" nil right)))
+
+    (re-search-forward (rx line-start " 7"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 7 left)))
+    (goto-char (compat-call pos-bol)) ; Since Emacs-29
+    (should (equal (cons 'bol (difftastic--chunk-file-at-point))
+                   '(bol "foo" 7 left)))
+    (goto-char (compat-call pos-eol)) ; Since Emacs-29
+    (should (equal (cons 'eol (difftastic--chunk-file-at-point))
+                   '(eol "foo" 7 left)))
+
+    (re-search-forward (rx line-start " 8"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 8 left)))
+    (goto-char (compat-call pos-bol)) ; Since Emacs-29
+    (should (equal (cons 'bol (difftastic--chunk-file-at-point))
+                   '(bol "foo" 8 left)))
+    (re-search-forward (rx " 99"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 99 right)))
+    (re-search-backward (rx "99"))
+    (should (equal (cons 'line-num-beg (difftastic--chunk-file-at-point))
+                   '(line-num-beg "foo" 99 right)))
+    (goto-char (compat-call pos-eol)) ; Since Emacs-29
+    (should (equal (cons 'eol (difftastic--chunk-file-at-point))
+                   '(eol "foo" 99 right)))
+
+    (re-search-forward (rx line-start " ."))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 8 left)))
+    (goto-char (compat-call pos-bol)) ; Since Emacs-29
+    (should (equal (cons 'bol (difftastic--chunk-file-at-point))
+                   '(bol "foo" 8 left)))
+    (re-search-forward (rx " .."))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 99 right)))
+    (re-search-backward (rx ".."))
+    (should (equal (cons 'line-num-beg (difftastic--chunk-file-at-point))
+                   '(line-num-beg "foo" 99 right)))
+    (goto-char (compat-call pos-eol)) ; Since Emacs-29
+    (should (equal (cons 'eol (difftastic--chunk-file-at-point))
+                   '(eol "foo" 99 right)))
+
+    (re-search-forward (rx line-start " 9"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 9 left)))
+    (goto-char (compat-call pos-bol)) ; Since Emacs-29
+    (should (equal (cons 'bol (difftastic--chunk-file-at-point))
+                   '(bol "foo" 9 left)))
+    (re-search-forward (rx " 100"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 100 right)))
+    (re-search-backward (rx "100"))
+    (should (equal (cons 'line-num-beg (difftastic--chunk-file-at-point))
+                   '(line-num-beg "foo" 100 right)))
+    (goto-char (compat-call pos-eol)) ; Since Emacs-29
+    (should (equal (cons 'eol (difftastic--chunk-file-at-point))
+                   '(eol "foo" 100 right)))
+
+    (re-search-forward (rx line-start "10"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 10 left)))
+    (goto-char (compat-call pos-bol)) ; Since Emacs-29
+    (should (equal (cons 'bol (difftastic--chunk-file-at-point))
+                   '(bol "foo" 10 left)))
+    (goto-char (compat-call pos-eol)) ; Since Emacs-29
+    (should (equal (cons 'eol (difftastic--chunk-file-at-point))
+                   '(eol "foo" 10 left)))))
+
+(ert-deftest difftastic--chunk-file-at-point:single-column-no-left ()
+  (with-temp-buffer
+    (insert "foo --- Text
+    98        foo
+ 8  99        foo
+ .  ..        foo
+ 9 100        foo
+   101        foo
+")
+    (goto-char (point-min))
+    (should (equal (difftastic--chunk-file-at-point) '("foo" nil right)))
+    (goto-char (compat-call pos-eol)) ;  Since Emacs-29
+    (should (equal (difftastic--chunk-file-at-point) '("foo" nil right)))
+
+    (re-search-forward (rx " 98"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 98 right)))
+    (goto-char (compat-call pos-bol)) ; Since Emacs-29
+    (should (equal (cons 'bol (difftastic--chunk-file-at-point))
+                   '(bol "foo" 98 right)))
+    (goto-char (compat-call pos-eol)) ; Since Emacs-29
+    (should (equal (cons 'eol (difftastic--chunk-file-at-point))
+                   '(eol "foo" 98 right)))
+
+    (re-search-forward (rx line-start " 8"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 8 left)))
+    (goto-char (compat-call pos-bol)) ; Since Emacs-29
+    (should (equal (cons 'bol (difftastic--chunk-file-at-point))
+                   '(bol "foo" 8 left)))
+    (re-search-forward (rx " 99"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 99 right)))
+    (re-search-backward (rx "99"))
+    (should (equal (cons 'line-num-beg (difftastic--chunk-file-at-point))
+                   '(line-num-beg "foo" 99 right)))
+    (goto-char (compat-call pos-eol)) ; Since Emacs-29
+    (should (equal (cons 'eol (difftastic--chunk-file-at-point))
+                   '(eol "foo" 99 right)))
+
+    (re-search-forward (rx line-start " ."))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 8 left)))
+    (goto-char (compat-call pos-bol)) ; Since Emacs-29
+    (should (equal (cons 'bol (difftastic--chunk-file-at-point))
+                   '(bol "foo" 8 left)))
+    (re-search-forward (rx " .."))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 99 right)))
+    (re-search-backward (rx ".."))
+    (should (equal (cons 'line-num-beg (difftastic--chunk-file-at-point))
+                   '(line-num-beg "foo" 99 right)))
+    (goto-char (compat-call pos-eol)) ; Since Emacs-29
+    (should (equal (cons 'eol (difftastic--chunk-file-at-point))
+                   '(eol "foo" 99 right)))
+
+    (re-search-forward (rx line-start " 9"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 9 left)))
+    (goto-char (compat-call pos-bol)) ; Since Emacs-29
+    (should (equal (cons 'bol (difftastic--chunk-file-at-point))
+                   '(bol "foo" 9 left)))
+    (re-search-forward (rx " 100"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 100 right)))
+    (re-search-backward (rx "100"))
+    (should (equal (cons 'line-num-beg (difftastic--chunk-file-at-point))
+                   '(line-num-beg "foo" 100 right)))
+    (goto-char (compat-call pos-eol)) ; Since Emacs-29
+    (should (equal (cons 'eol (difftastic--chunk-file-at-point))
+                   '(eol "foo" 100 right)))
+
+    (re-search-forward (rx " 101"))
+    (should (equal (cons 'line-num-end (difftastic--chunk-file-at-point))
+                   '(line-num-end "foo" 101 right)))
+    (re-search-backward (rx "101"))
+    (should (equal (cons 'line-num-beg (difftastic--chunk-file-at-point))
+                   '(line-num-beg "foo" 101 right)))
+    (goto-char (compat-call pos-bol)) ; Since Emacs-29
+    (should (equal (cons 'bol (difftastic--chunk-file-at-point))
+                   '(bol "foo" 101 right)))
+    (goto-char (compat-call pos-eol)) ; Since Emacs-29
+    (should (equal (cons 'eol (difftastic--chunk-file-at-point))
+                   '(eol "foo" 101 right)))))
+
 (ert-deftest difftastic--get-languages:parse-output ()
   (let ((file "difft--list-languages.out")
         out)

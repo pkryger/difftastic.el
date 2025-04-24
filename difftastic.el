@@ -885,9 +885,7 @@ The value of 6 allows for line numbers of up to 999,999.")
          ((looking-at (rx line-start
                           difftastic--line-num-or-spaces-rx
                           difftastic--line-num-or-spaces-rx))
-          (cl-incf single-column))
-         (t
-          (cl-incf side-by-side))))
+          (cl-incf single-column))))
       (if (< side-by-side single-column)
           'single-column
         'side-by-side))))

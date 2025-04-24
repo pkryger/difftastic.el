@@ -925,11 +925,10 @@ END are positions where the line number begins and ends respectively."
     (let (lines
           prev-num-left)
       (while (re-search-forward
-              (rx line-start
-                  (group difftastic--line-num-or-spaces-rx))
+              (rx line-start difftastic--line-num-or-spaces-rx)
               (cdr bounds)
               t)
-        (let ((left (difftastic--parse-line-num 1 prev-num-left))
+        (let ((left (difftastic--parse-line-num 0 prev-num-left))
               (beg-end (list (compat-call pos-bol) (compat-call pos-eol))) ; Since Emacs-29
               rights)
           ;; collect candidates for a right line number
@@ -989,13 +988,14 @@ END are positions where the line number begins and ends respectively."
           prev-num-right)
       (while (re-search-forward
               (rx line-start
-                  (group difftastic--line-num-or-spaces-rx)
-                  (group difftastic--line-num-or-spaces-rx))
+                  difftastic--line-num-or-spaces-rx
+                  difftastic--line-num-or-spaces-rx)
               (cdr bounds)
               t)
-        (let ((left (difftastic--parse-line-num 1 prev-num-left))
+        (let ((left (difftastic--parse-line-num 0 prev-num-left))
               (right (difftastic--parse-line-num
-                      (+ 2 (* 2 difftastic--line-num-digits)) prev-num-right))
+                      (* 2 difftastic--line-num-digits)
+                      prev-num-right))
               (beg-end (list (compat-call pos-bol) (compat-call pos-eol)))) ; Since Emacs-29
           (setq prev-num-left (or (car left) prev-num-left)
                 prev-num-right (or (car right) prev-num-right))

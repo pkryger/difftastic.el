@@ -1013,11 +1013,12 @@ END are positions where the line number begins and ends respectively."
           (push (list beg-end left right) lines)))
       (nreverse lines))))
 
-(defun difftastic--chunk-file-at-point ()
+(defun difftastic--chunk-file-at-point (&optional force-right)
   "Return a chunk file at point.
 Chunk file is a list in a form of (FILE LINE-NUM SIDE), where FILE is
 the chunk file name, LINE-NUM is an optional line number within the FILE
-and SIDE is either `left' or `right'."
+and SIDE is either `left' or `right' depending on the point location in
+the buffer.  When FORCE-RIGHT is non-nil side is always `right'"
   (when-let* ((bounds (difftastic--chunk-bounds))
               (file (difftastic--chunk-file-name bounds))
               (lines (pcase (difftastic--classify-chunk bounds)
@@ -1033,19 +1034,13 @@ and SIDE is either `left' or `right'."
         (while lines
           (pcase-let* ((`((,bol ,eol) ,left ,right) (car lines)))
             (when (and (<= bol point eol))
-              (if (and left
+              (if (and (not force-right)
+                       left
                        (or (not right)
                            (< point (cadr right))))
                   (throw 'chunk-file (list file (car left) 'left))
                 (throw 'chunk-file (list file (car right) 'right))))
             (setq lines (cdr lines))))))))
-
-(defun difftastic--chunk-worktree-file-at-point ()
-  "Return a chunk file at point.
-Like `difftastic--chunk-file-at-point', but SIDE is always `right'."
-  (when-let* ((file (difftastic--chunk-file-at-point)))
-    (setcdr (cdr file) (list 'right))
-    file))
 
 (defun difftastic--diff-visit-file (chunk-file fn)
   "From a diff visit the appropriate version of CHUNK-FILE.
@@ -1129,7 +1124,7 @@ In the file-visiting buffer also go to the line that corresponds
 to the line that point is on in the diff.  Lines that were added
 or removed in the working tree, the index and other commits in
 between are automatically accounted for."
-  (interactive (list (difftastic--chunk-worktree-file-at-point)
+  (interactive (list (difftastic--chunk-file-at-point t)
                      current-prefix-arg))
   (difftastic--diff-visit-file chunk-file (if other-window
                                               #'switch-to-buffer-other-window
@@ -1139,14 +1134,14 @@ between are automatically accounted for."
   "From a diff visit the worktree version of CHUNK-FILE in other window.
 Like `difftastic-diff-visit-worktree-file' but use
 `switch-to-buffer-other-window'."
-    (interactive (list (difftastic--chunk-worktree-file-at-point)))
+    (interactive (list (difftastic--chunk-file-at-point t)))
   (difftastic--diff-visit-file chunk-file #'switch-to-buffer-other-window))
 
 (defun difftastic-diff-visit-worktree-file-other-frame (chunk-file)
   "From a diff visit the worktree version of CHUNK-FILE in other frame.
 Like `difftastic-diff-visit-worktree-file' but use
 `switch-to-buffer-other-frame'."
-    (interactive (list (difftastic--chunk-worktree-file-at-point)))
+    (interactive (list (difftastic--chunk-file-at-point t)))
   (difftastic--diff-visit-file chunk-file #'switch-to-buffer-other-frame))
 
 ;; From `view-mode'

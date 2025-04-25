@@ -1185,7 +1185,7 @@ Utilise `difftastic--ansi-color-add-background-cache' to cache
             difftastic--ansi-color-add-background-cache)
       face)))
 
-(defvar-local difftastic--rerun-alist nil)
+(defvar-local difftastic--metadata nil)
 
 (defun difftastic--build-git-process-environment (requested-width
                                                   &optional difftastic-args)
@@ -1218,7 +1218,7 @@ The DIFFTASTIC-ARGS is a list of extra arguments to pass to
      buffer
      command
      (lambda ()
-       (setq difftastic--rerun-alist
+       (setq difftastic--metadata
              `((default-directory . ,default-directory)
                (git-command . ,command)
                (difftastic-args . ,difftastic-args)))
@@ -1555,7 +1555,7 @@ argument."
                                       requested-width
                                       lang-override)
      (lambda ()
-       (setq difftastic--rerun-alist
+       (setq difftastic--metadata
              `((default-directory . ,default-directory)
                (lang-override . ,lang-override)
                (file-buf-A . ,file-buf-A)
@@ -1746,7 +1746,7 @@ temporary file or nil otherwise."
                                         ; checkdoc-params: (lang-override)
   "Implementation for `difftastic-rerun', which see."
   (if-let* (((eq major-mode 'difftastic-mode))
-            (rerun-alist (copy-tree difftastic--rerun-alist)))
+            (rerun-alist (copy-tree difftastic--metadata)))
       (let-alist rerun-alist
         (difftastic--with-file-bufs ((file-buf-A (difftastic--rerun-file-buf
                                                   "A" .file-buf-A rerun-alist))
@@ -1779,7 +1779,7 @@ temporary file or nil otherwise."
              buffer
              command
              (lambda ()
-               (setq difftastic--rerun-alist rerun-alist)
+               (setq difftastic--metadata rerun-alist)
                (difftastic--delete-temp-file-buf file-buf-A)
                (difftastic--delete-temp-file-buf file-buf-B))))))
     (user-error "Nothing to rerun")))

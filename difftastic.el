@@ -1204,9 +1204,10 @@ The DIFFTASTIC-ARGS is a list of extra arguments to pass to
            ""))
         process-environment))
 
-(defun difftastic--git-with-difftastic (buffer command
+(defun difftastic--git-with-difftastic (buffer command rev-or-range
                                                &optional difftastic-args)
   "Run COMMAND with GIT_EXTERNAL_DIFF then show result in BUFFER.
+REV-OR-RANGE is the current git revision or range used by the COMMAND.
 The DIFFTASTIC-ARGS is a list of extra arguments to pass to
 `difftastic-executable'."
   (let* ((requested-width (funcall difftastic-requested-window-width-function))
@@ -1220,6 +1221,7 @@ The DIFFTASTIC-ARGS is a list of extra arguments to pass to
      (lambda ()
        (setq difftastic--metadata
              `((default-directory . ,default-directory)
+               (rev-or-range . ,rev-or-range)
                (git-command . ,command)
                (difftastic-args . ,difftastic-args)))
        (funcall difftastic-display-buffer-function buffer requested-width)))))
@@ -1362,6 +1364,7 @@ to difftastic."
        ,@(when git-args git-args)
        ,@(when rev-or-range (list rev-or-range))
        ,@(when files (cons "--" files)))
+     rev-or-range
      difftastic-args)))
 
 ;;;###autoload
@@ -1436,7 +1439,8 @@ The meaning of REV-OR-RANGE, ARGS, and FILES is like in
       (user-error "No revision specified")
     (difftastic--git-with-difftastic
      (get-buffer-create (concat "*difftastic git show " rev "*"))
-     (list "git" "--no-pager" "show" "--ext-diff" rev))))
+     (list "git" "--no-pager" "show" "--ext-diff" rev)
+     rev)))
 
 ;;;###autoload
 (defun difftastic-magit-show (rev)

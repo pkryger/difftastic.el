@@ -4185,6 +4185,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
 
 (ert-deftest difftastic--git-with-difftastic:basic ()
   (let ((rerun-alist '((default-directory . "test-default-directory")
+                       (rev-or-range . "test-rev-or-range")
                        (git-command . "test-command")
                        (difftastic-args . "test-difftastic-args")))
         (default-directory "test-default-directory")
@@ -4215,6 +4216,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
                   ,(cl-incf run-command-call-count))
               (difftastic--git-with-difftastic ,(current-buffer)
                                                "test-command"
+                                               "test-rev-or-range"
                                                "test-difftastic-args")))))
       (should (eq run-command-call-count 1))
       (should (eq display-buffer-call-count 1))
@@ -4230,7 +4232,8 @@ This only happens when `noninteractive' to avoid messing up with faces."
              => "test-buffer")
             ((difftastic--git-with-difftastic
               "test-buffer"
-              '("git" "--no-pager" "show" "--ext-diff" "test-rev"))))
+              '("git" "--no-pager" "show" "--ext-diff" "test-rev")
+              "test-rev")))
     (difftastic--magit-show "test-rev")))
 
 (ert-deftest difftastic-magit-show:no-prefix-no-thing-no-branch ()
@@ -4267,6 +4270,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
             ((difftastic--git-with-difftastic
               "test-buffer"
               '("git" "--no-pager" "diff" "--ext-diff")
+              nil
               nil)))
     (difftastic--git-diff-range nil nil nil)))
 
@@ -4278,6 +4282,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
               "test-buffer"
               '("git" "--no-pager" "diff" "--ext-diff" "--ignore-submodules=all"
                 "test-rev-or-range" "--" "test-path")
+              "test-rev-or-range"
               '("--context 42"))))
     (difftastic--git-diff-range "test-rev-or-range"
                                 '("--ignore-submodules=all" "-U42")

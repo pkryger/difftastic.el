@@ -240,6 +240,18 @@ parenthesis).
   point.  The point has to be in a chunk header.  When called with a prefix all
   file chunks from the header to the end of the file.  See also
   =difftastic-hide-chunk= and =difftastic=show-chunk=.
+- =difftastic-diff-visit-file= (~RET~),
+  =difftastic-diff-visit-file-other-window=,
+  =difftastic-diff-visit-file-other-frame= - from a diff visit appropriate
+  version of a chunk file.  This has been modeled after
+  =magit-diff-visit-file=, but there are some differences, please see
+  documentation for =difftastic-diff-visit-file=.
+- =difftastic-diff-visit-worktree-file= (~C-RET~, ~C-j~),
+  =difftastic-diff-visit-worktree-file-other-window=,
+  =difftastic-diff-visit-worktree-file-other-frame= - from a diff visit
+  appropriate version of a chunk file.  This has been modeled after
+  =magit-diff-visit-worktree-file=, but there are some differences, please see
+  documentation for =difftastic-diff-visit-worktree-file=.
 - =difftastic-git-diff-range= - transform =ARGS= for difftastic and show the
   result of =git diff ARGS REV-OR-RANGE -- FILES= with =difftastic=.
 

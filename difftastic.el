@@ -256,6 +256,18 @@
 ;;   at point.  The point has to be in a chunk header.  When called with a
 ;;   prefix all file chunks from the header to the end of the file.  See also
 ;;   `difftastic-hide-chunk' and `difftastic=show-chunk'.
+;; - `difftastic-diff-visit-file' (`RET'),
+;;   `difftastic-diff-visit-file-other-window',
+;;   `difftastic-diff-visit-file-other-frame' - from a diff visit appropriate
+;;   version of a chunk file.  This has been modeled after
+;;   `magit-diff-visit-file', but there are some differences, please see
+;;   documentation for `difftastic-diff-visit-file'.
+;; - `difftastic-diff-visit-worktree-file' (`C-RET', `C-j'),
+;;   `difftastic-diff-visit-worktree-file-other-window',
+;;   `difftastic-diff-visit-worktree-file-other-frame' - from a diff visit
+;;   appropriate version of a chunk file.  This has been modeled after
+;;   `magit-diff-visit-worktree-file', but there are some differences, please
+;;   see documentation for `difftastic-diff-visit-worktree-file'.
 ;; - `difftastic-git-diff-range' - transform `ARGS' for difftastic and show
 ;;   the result of `git diff ARGS REV-OR-RANGE -- FILES' with `difftastic'.
 ;;
@@ -577,6 +589,9 @@ See `advice-add' for explanation of SYMBOL, HOW, and FUNCTION arguments."
  "P"     #'difftastic-previous-file
  "g"     #'difftastic-rerun
  "TAB"   #'difftastic-toggle-chunk
+ "RET"   #'difftastic-diff-visit-file
+ "C-<return>" #'difftastic-diff-visit-worktree-file
+ "C-j"   #'difftastic-diff-visit-worktree-file
  ;; some keys from `view-mode'
  "C"     #'difftastic-quit-all
  "c"     #'difftastic-leave
@@ -598,8 +613,6 @@ See `advice-add' for explanation of SYMBOL, HOW, and FUNCTION arguments."
  "="     #'what-line
  "F"     #'View-revert-buffer-scroll-page-forward
  "y"     #'View-scroll-line-backward
- "C-j"   #'View-scroll-line-forward
- "RET"   #'View-scroll-line-forward
  "u"     #'View-scroll-half-page-backward
  "d"     #'View-scroll-half-page-forward
  "z"     #'View-scroll-page-forward-set-page-size

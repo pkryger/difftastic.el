@@ -2778,7 +2778,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
 (ert-deftest difftastic--rerun:no-rerun-alist-mode-error-signaled ()
   (with-temp-buffer
     (difftastic-mode)
-    (setq difftastic--rerun-alist nil)
+    (setq difftastic--metadata nil)
     (let ((data (cadr (should-error (difftastic--rerun nil)
                                     :type 'user-error))))
       (should (equal data "Nothing to rerun")))))
@@ -2793,7 +2793,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
         (run-command-call-count 0))
     (with-temp-buffer
       (difftastic-mode)
-      (setq difftastic--rerun-alist rerun-alist)
+      (setq difftastic--metadata rerun-alist)
       (mocklet (((difftastic--build-git-process-environment
                   "test-difftastic-width" '("test-difftastic-args"))
                  => "test-process-environment"))
@@ -2811,8 +2811,8 @@ This only happens when `noninteractive' to avoid messing up with faces."
                 ,(cl-incf run-command-call-count))
             (difftastic--rerun nil))))
       (should (eq run-command-call-count 1))
-      (should-not (eq difftastic--rerun-alist rerun-alist))
-      (should (equal difftastic--rerun-alist rerun-alist)))))
+      (should-not (eq difftastic--metadata rerun-alist))
+      (should (equal difftastic--metadata rerun-alist)))))
 
 (ert-deftest difftastic--rerun:git-command-requested-width ()
   (let ((rerun-alist '((default-directory . "test-default-directory")
@@ -2825,7 +2825,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
         (run-command-call-count 0))
     (with-temp-buffer
       (difftastic-mode)
-      (setq difftastic--rerun-alist rerun-alist)
+      (setq difftastic--metadata rerun-alist)
       (mocklet (((difftastic--build-git-process-environment
                   "test-difftastic-width" '("test-difftastic-args"))
                  => "test-process-environment"))
@@ -2843,8 +2843,8 @@ This only happens when `noninteractive' to avoid messing up with faces."
                 ,(cl-incf run-command-call-count))
             (difftastic--rerun nil))))
       (should (eq run-command-call-count 1))
-      (should-not (eq difftastic--rerun-alist rerun-alist))
-      (should (equal difftastic--rerun-alist rerun-alist)))))
+      (should-not (eq difftastic--metadata rerun-alist))
+      (should (equal difftastic--metadata rerun-alist)))))
 
 (ert-deftest difftastic--rerun:git-command-with-lang-override ()
   (let ((rerun-alist '((default-directory . "test-default-directory")
@@ -2856,7 +2856,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
         (run-command-call-count 0))
     (with-temp-buffer
       (difftastic-mode)
-      (setq difftastic--rerun-alist rerun-alist)
+      (setq difftastic--metadata rerun-alist)
       (mocklet (((difftastic--build-git-process-environment
                   "test-difftastic-width" '("test-difftastic-args"
                                             "--override"
@@ -2876,8 +2876,8 @@ This only happens when `noninteractive' to avoid messing up with faces."
                 ,(cl-incf run-command-call-count))
             (difftastic--rerun "test-lang-override"))))
       (should (eq run-command-call-count 1))
-      (should-not (eq difftastic--rerun-alist rerun-alist))
-      (should (equal difftastic--rerun-alist rerun-alist)))))
+      (should-not (eq difftastic--metadata rerun-alist))
+      (should (equal difftastic--metadata rerun-alist)))))
 
 (ert-deftest difftastic--rerun:files-command-rerun-requested-width ()
   (let ((rerun-alist '((default-directory . "test-default-directory")
@@ -2890,7 +2890,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
         (run-command-call-count 0))
     (with-temp-buffer
       (difftastic-mode)
-      (setq difftastic--rerun-alist rerun-alist)
+      (setq difftastic--metadata rerun-alist)
       (mocklet (((difftastic--build-files-command
                   '("test-file-buf-A" . nil) '("test-file-buf-B". nil)
                   "test-difftastic-width" "test-lang-override")
@@ -2908,8 +2908,8 @@ This only happens when `noninteractive' to avoid messing up with faces."
                 ,(cl-incf run-command-call-count))
             (difftastic--rerun nil))))
       (should (eq run-command-call-count 1))
-      (should-not (eq difftastic--rerun-alist rerun-alist))
-      (should (equal difftastic--rerun-alist rerun-alist)))))
+      (should-not (eq difftastic--metadata rerun-alist))
+      (should (equal difftastic--metadata rerun-alist)))))
 
 (ert-deftest difftastic--rerun:files-command-requested-width ()
   (let ((rerun-alist '((default-directory . "test-default-directory")
@@ -2923,7 +2923,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
         (run-command-call-count 0))
     (with-temp-buffer
       (difftastic-mode)
-      (setq difftastic--rerun-alist rerun-alist)
+      (setq difftastic--metadata rerun-alist)
       (mocklet (((difftastic--build-files-command
                   '("test-file-buf-A" . nil) '("test-file-buf-B". nil)
                   "test-difftastic-width" "test-lang-override")
@@ -2941,8 +2941,8 @@ This only happens when `noninteractive' to avoid messing up with faces."
                 ,(cl-incf run-command-call-count))
             (difftastic--rerun nil))))
       (should (eq run-command-call-count 1))
-      (should-not (eq difftastic--rerun-alist rerun-alist))
-      (should (equal difftastic--rerun-alist rerun-alist)))))
+      (should-not (eq difftastic--metadata rerun-alist))
+      (should (equal difftastic--metadata rerun-alist)))))
 
 (ert-deftest difftastic--rerun:files-command-with-lang-override ()
   (let ((rerun-alist '((default-directory . "test-default-directory")
@@ -2955,7 +2955,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
         (run-command-call-count 0))
     (with-temp-buffer
       (difftastic-mode)
-      (setq difftastic--rerun-alist rerun-alist)
+      (setq difftastic--metadata rerun-alist)
       (mocklet (((difftastic--build-files-command
                   '("test-file-buf-A" . nil) '("test-file-buf-B". nil)
                   "test-difftastic-width" "test-lang-override")
@@ -2973,8 +2973,8 @@ This only happens when `noninteractive' to avoid messing up with faces."
                 ,(cl-incf run-command-call-count))
             (difftastic--rerun "test-lang-override"))))
       (should (eq run-command-call-count 1))
-      (should-not (eq difftastic--rerun-alist rerun-alist))
-      (should (equal difftastic--rerun-alist rerun-alist)))))
+      (should-not (eq difftastic--metadata rerun-alist))
+      (should (equal difftastic--metadata rerun-alist)))))
 
 (ert-deftest difftastic-rerun:no-prefix ()
   (mocklet (((difftastic--rerun nil)))
@@ -3022,7 +3022,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
                                                "test-difftastic-args")))))
       (should (eq run-command-call-count 1))
       (should (eq display-buffer-call-count 1))
-      (should (equal difftastic--rerun-alist rerun-alist)))))
+      (should (equal difftastic--metadata rerun-alist)))))
 
 (ert-deftest difftastic--magit-show:nil-error-signaled ()
   (let ((data (cadr (should-error (difftastic--magit-show nil)
@@ -3484,13 +3484,13 @@ This only happens when `noninteractive' to avoid messing up with faces."
                                (ert-fail "timeout"))
                   (while (accept-process-output process))))
               (should (equal (buffer-string) "test output"))
-              (should (equal (alist-get 'default-directory difftastic--rerun-alist)
+              (should (equal (alist-get 'default-directory difftastic--metadata)
                              default-directory))
-              (should (equal (alist-get 'lang-override difftastic--rerun-alist)
+              (should (equal (alist-get 'lang-override difftastic--metadata)
                              "test-lang"))
-              (should (equal (alist-get 'file-buf-A difftastic--rerun-alist)
+              (should (equal (alist-get 'file-buf-A difftastic--metadata)
                              ',file-buf-A))
-              (should (equal (alist-get 'file-buf-B difftastic--rerun-alist)
+              (should (equal (alist-get 'file-buf-B difftastic--metadata)
                              ',file-buf-B))
               (should-not (file-exists-p (car ',file-buf-A)))
               (should-not (file-exists-p (car ',file-buf-B)))))

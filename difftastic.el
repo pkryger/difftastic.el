@@ -1027,6 +1027,115 @@ and SIDE is either `left' or `right'."
                 (throw 'chunk-file (list file (car right) 'right))))
             (setq lines (cdr lines))))))))
 
+(defun difftastic--chunk-worktree-file-at-point ()
+  "Return a chunk file at point.
+Like `difftastic--chunk-file-at-point', but SIDE is always `right'."
+  (when-let* ((file (difftastic--chunk-file-at-point)))
+    (setcdr (cdr file) (list 'right))
+    file))
+
+(defun difftastic--diff-visit-file (chunk-file fn)
+  "From a diff visit the appropriate version of CHUNK-FILE.
+The CHUNK-FILE is a list in a form of (FILE LINE-NUM SIDE), where FILE
+is the chunk file name, LINE-NUM is an optional line number within the
+FILE and SIDE is either `left' or `right'.  Use FN to display the buffer
+in some window."
+  (cons chunk-file fn))
+
+(defun difftastic-diff-visit-file (chunk-file &optional other-window)
+  "From a diff visit the appropriate version CHUNK-FILE.
+The CHUNK-FILE is a list in a form of (FILE LINE-NUM SIDE), where FILE is
+the chunk file name, LINE-NUM is an optional line number within the FILE
+and SIDE is either `left' or `right'.
+
+Display the buffer in the selected window.  With a prefix argument
+OTHER-WINDOW display the buffer in another window instead.
+
+TODO: rephrase
+Visit the worktree version of the appropriate file.  The location
+of point inside the diff determines which file is being visited.
+The visited version depends on what changes the diff is about.
+
+1. If the diff shows uncommitted changes (i.e., stage or unstaged
+   changes), then visit the file in the working tree (i.e., the
+   same \"real\" file that `find-file' would visit).  In all
+   other cases visit a \"blob\" (i.e., the version of a file as
+   stored in some commit).
+
+2. If point is on a removed line, then visit the blob for the
+   first parent of the commit that removed that line, i.e., the
+   last commit where that line still exists.
+
+3. If point is on an added or context line, then visit the blob
+   that adds that line, or if the diff shows from more than a
+   single commit, then visit the blob from the last of these
+   commits.
+
+In the file-visiting buffer also go to the line that corresponds
+to the line that point is on in the diff.
+
+Note that this command only works if point is inside a diff."
+  (interactive (list (difftastic--chunk-file-at-point)
+                     current-prefix-arg))
+  (difftastic--diff-visit-file chunk-file (if other-window
+                                              #'switch-to-buffer-other-window
+                                            #'pop-to-buffer-same-window)))
+
+(defun difftastic-diff-visit-file-other-window (chunk-file)
+  "From a diff visit the appropriate version CHUNK-FILE in other window.
+Like `difftastic-diff-visit-file' but use
+`switch-to-buffer-other-window'."
+  (interactive (list (difftastic--chunk-file-at-point)))
+  (difftastic--diff-visit-file chunk-file #'switch-to-buffer-other-window))
+
+(defun difftastic-diff-visit-file-other-frame (chunk-file)
+  "From a diff visit the appropriate version CHUNK-FILE in other frame.
+Like `difftastic-diff-visit-file' but use
+`switch-to-buffer-other-frame'."
+  (interactive (list (difftastic--chunk-file-at-point)))
+  (difftastic--diff-visit-file chunk-file #'switch-to-buffer-other-frame))
+
+(defun difftastic-diff-visit-worktree-file (chunk-file &optional other-window)
+  "From a diff visit the worktree version of CHUNK-FILE.
+The CHUNK-FILE is a list in a form of (FILE LINE-NUM SIDE), where FILE is
+the chunk file name, LINE-NUM is an optional line number within the FILE
+and SIDE is either `left' or `right'.
+
+Display the buffer in the selected window.  With a prefix
+argument OTHER-WINDOW display the buffer in another window
+instead.
+
+TODO: rephrase
+Visit the worktree version of the appropriate file.  The location
+of point inside the diff determines which file is being visited.
+
+Unlike `difftastic-diff-visit-file' always visits the `right' file in
+the working tree, i.e the \"current version\" of the file.
+
+In the file-visiting buffer also go to the line that corresponds
+to the line that point is on in the diff.  Lines that were added
+or removed in the working tree, the index and other commits in
+between are automatically accounted for."
+  (interactive (list (difftastic--chunk-worktree-file-at-point)
+                     current-prefix-arg))
+  (difftastic--diff-visit-file chunk-file (if other-window
+                                              #'switch-to-buffer-other-window
+                                            #'pop-to-buffer-same-window)))
+
+(defun difftastic-diff-visit-worktree-file-other-window (chunk-file)
+  "From a diff visit the worktree version of CHUNK-FILE in other window.
+Like `difftastic-diff-visit-worktree-file' but use
+`switch-to-buffer-other-window'."
+    (interactive (list (difftastic--chunk-worktree-file-at-point)))
+  (difftastic--diff-visit-file chunk-file #'switch-to-buffer-other-window))
+
+(defun difftastic-diff-visit-worktree-file-other-frame (chunk-file)
+  "From a diff visit the worktree version of CHUNK-FILE in other frame.
+Like `difftastic-diff-visit-worktree-file' but use
+`switch-to-buffer-other-frame'."
+    (interactive (list (difftastic--chunk-worktree-file-at-point)))
+  (difftastic--diff-visit-file chunk-file #'switch-to-buffer-other-frame))
+
 ;; From `view-mode'
 
 ;; This is awful because it assumes that the selected window shows the

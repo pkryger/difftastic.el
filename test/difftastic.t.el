@@ -2700,6 +2700,70 @@ test/difftastic.t.el --- Emacs Lisp
     (should (equal (cons 'eol (difftastic--chunk-file-at-point))
                    '(eol "foo" 101 right)))))
 
+(ert-deftest difftastic--chunk-worktree-file-at-point:left ()
+  (mocklet (((difftastic--chunk-file-at-point) => '("foo" 42 'left)))
+    (should (equal (difftastic--chunk-worktree-file-at-point)
+                   '("foo" 42 right)))))
+
+(ert-deftest difftastic--chunk-worktree-file-at-point:right ()
+  (mocklet (((difftastic--chunk-file-at-point) => '("foo" 42 'right)))
+    (should (equal (difftastic--chunk-worktree-file-at-point)
+                   '("foo" 42 right)))))
+
+(ert-deftest difftastic--chunk-worktree-file-at-point:nil ()
+  (mocklet (((difftastic--chunk-file-at-point)))
+    (should-not (difftastic--chunk-worktree-file-at-point))))
+
+(ert-deftest difftastic-diff-visit-file:basic ()
+  (mocklet (((difftastic--chunk-file-at-point) => "test-chunk-file")
+            ((difftastic--diff-visit-file
+              "test-chunk-file" #'pop-to-buffer-same-window)))
+    (call-interactively #'difftastic-diff-visit-file)))
+
+(ert-deftest difftastic-diff-visit-file:prefix-arg ()
+  (mocklet (((difftastic--chunk-file-at-point) => "test-chunk-file")
+            ((difftastic--diff-visit-file
+              "test-chunk-file" #'switch-to-buffer-other-window)))
+    (let ((current-prefix-arg 4))
+      (call-interactively #'difftastic-diff-visit-file))))
+
+(ert-deftest difftastic-diff-visit-file-other-window:basic ()
+  (mocklet (((difftastic--chunk-file-at-point) => "test-chunk-file")
+            ((difftastic--diff-visit-file
+              "test-chunk-file" #'switch-to-buffer-other-window)))
+    (call-interactively #'difftastic-diff-visit-file-other-window)))
+
+(ert-deftest difftastic-diff-visit-file-other-frame:basic ()
+  (mocklet (((difftastic--chunk-file-at-point) => "test-chunk-file")
+            ((difftastic--diff-visit-file
+              "test-chunk-file" #'switch-to-buffer-other-frame)))
+    (call-interactively #'difftastic-diff-visit-file-other-frame)))
+
+(ert-deftest difftastic-diff-visit-worktree-file:basic ()
+  (mocklet (((difftastic--chunk-worktree-file-at-point) => "test-chunk-file")
+            ((difftastic--diff-visit-file
+              "test-chunk-file" #'pop-to-buffer-same-window)))
+    (call-interactively #'difftastic-diff-visit-worktree-file)))
+
+(ert-deftest difftastic-diff-visit-worktree-file:prefix-arg ()
+  (mocklet (((difftastic--chunk-worktree-file-at-point) => "test-chunk-file")
+            ((difftastic--diff-visit-file
+              "test-chunk-file" #'switch-to-buffer-other-window)))
+    (let ((current-prefix-arg 4))
+      (call-interactively #'difftastic-diff-visit-worktree-file))))
+
+(ert-deftest difftastic-diff-visit-worktree-file-other-window:basic ()
+  (mocklet (((difftastic--chunk-worktree-file-at-point) => "test-chunk-file")
+            ((difftastic--diff-visit-file
+              "test-chunk-file" #'switch-to-buffer-other-window)))
+    (call-interactively #'difftastic-diff-visit-worktree-file-other-window)))
+
+(ert-deftest difftastic-diff-visit-worktree-file-other-frame:basic ()
+  (mocklet (((difftastic--chunk-worktree-file-at-point) => "test-chunk-file")
+            ((difftastic--diff-visit-file
+              "test-chunk-file" #'switch-to-buffer-other-frame)))
+    (call-interactively #'difftastic-diff-visit-worktree-file-other-frame)))
+
 (ert-deftest difftastic--get-languages:parse-output ()
   (let ((file "difft--list-languages.out")
         out)

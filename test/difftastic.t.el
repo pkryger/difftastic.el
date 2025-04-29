@@ -5097,7 +5097,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
               ((magit-diff--dwim) => 'unstaged))
       (difftastic--with-temp-advice 'difftastic-git-diff-range
           :override (lambda (&optional rev-or-range args files)
-                      (should-not rev-or-range)
+                      (should (equal 'unstaged rev-or-range))
                       (should (equal args "test-args"))
                       (should (equal files "test-files"))
                       (should (equal default-directory "magit-toplevel"))
@@ -5145,7 +5145,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
               (magit--merge-range not-called))
       (difftastic--with-temp-advice 'difftastic-git-diff-range
           :override (lambda (&optional rev-or-range args files)
-                      (should-not rev-or-range)
+                      (should (equal 'staged rev-or-range))
                       (should (equal args '("--cached" "test-args")))
                       (should (equal files "test-files"))
                       (should (equal default-directory "magit-toplevel"))
@@ -5163,7 +5163,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
               (magit--merge-range not-called))
       (difftastic--with-temp-advice 'difftastic-git-diff-range
           :override (lambda (&optional rev-or-range args files)
-                      (should-not rev-or-range)
+                      (should (equal 'staged rev-or-range))
                       (should (equal args '("test-args" "--cached")))
                       (should (equal files "test-files"))
                       (should (equal default-directory "magit-toplevel"))
@@ -5181,7 +5181,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
               (magit--merge-range not-called))
       (difftastic--with-temp-advice 'difftastic-git-diff-range
           :override (lambda (&optional rev-or-range args files)
-                      (should-not rev-or-range)
+                      (should (equal 'staged rev-or-range))
                       (should (equal args '("--cached" "test-args")))
                       (should (equal files "test-files"))
                       (should (equal default-directory "magit-toplevel"))
@@ -5199,7 +5199,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
               (magit--merge-range not-called))
       (difftastic--with-temp-advice 'difftastic-git-diff-range
           :override (lambda (&optional rev-or-range args files)
-                      (should-not rev-or-range)
+                      (should (equal 'staged rev-or-range))
                       (should (equal args '("test-args" "--cached")))
                       (should (equal files "test-files"))
                       (should (equal default-directory "magit-toplevel"))

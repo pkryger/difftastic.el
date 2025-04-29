@@ -2700,6 +2700,18 @@ test/difftastic.t.el --- Emacs Lisp
     (should (equal (cons 'eol (difftastic--chunk-file-at-point))
                    '(eol "foo" 101 right)))))
 
+(ert-deftest difftastic--diff-visit-file:git-file ()
+  (mocklet (((difftastic--diff-visit-git-file "test-chunk-file" #'ignore t))
+            (difftastic--diff-visit-file-or-buffer not-called))
+    (let ((difftastic--metadata '((git-command "test-git-command"))))
+      (difftastic--diff-visit-file "test-chunk-file" #'ignore t))))
+
+(ert-deftest difftastic--diff-visit-file:git-file ()
+  (mocklet ((difftastic--diff-visit-git-file not-called)
+            ((difftastic--diff-visit-file-or-buffer "test-chunk-file" #'ignore)))
+    (let (difftastic--metadata )
+      (difftastic--diff-visit-file-or-buffer "test-chunk-file" #'ignore))))
+
 (ert-deftest difftastic-diff-visit-file:basic ()
   (mocklet (((difftastic--chunk-file-at-point) => "test-chunk-file")
             ((difftastic--diff-visit-file

@@ -2824,6 +2824,538 @@ test/difftastic.t.el --- Emacs Lisp
                           '("foo" 2 right) #'fn)))
           (should (equal (point) ,pos)))))))
 
+(ert-deftest difftastic--diff-visit-git-file:left-revision ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (pos (point))
+           (difftastic--metadata '((rev-or-range . "test-rev"))))
+      (insert "bar")
+      (eval
+       `(mocklet (((magit-find-file-noselect "test-rev^" "test-file") => ,buffer)
+                  ((fn ,buffer))
+                  ((magit-diff-visit-file--setup ,buffer ,pos)))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-git-file
+                          '("test-file" 2 left) #'fn)))
+          (should (equal (point) ,pos)))))))
+
+(ert-deftest difftastic--diff-visit-git-file:right-revision ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (pos (point))
+           (difftastic--metadata '((rev-or-range . "test-rev"))))
+      (insert "bar")
+      (eval
+       `(mocklet (((magit-find-file-noselect "test-rev" "test-file") => ,buffer)
+                  ((fn ,buffer))
+                  ((magit-diff-visit-file--setup ,buffer ,pos)))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-git-file
+                          '("test-file" 2 right) #'fn)))
+          (should (equal (point) ,pos)))))))
+
+(ert-deftest difftastic--diff-visit-git-file:left-range ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (pos (point))
+           (difftastic--metadata '((rev-or-range . "test-range-from..test-range-to"))))
+      (insert "bar")
+      (eval
+       `(mocklet (((magit-find-file-noselect "test-range-from" "test-file") => ,buffer)
+                  ((fn ,buffer))
+                  ((magit-diff-visit-file--setup ,buffer ,pos)))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-git-file
+                          '("test-file" 2 left) #'fn)))
+          (should (equal (point) ,pos)))))))
+
+(ert-deftest difftastic--diff-visit-git-file:right-range ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (pos (point))
+           (difftastic--metadata '((rev-or-range . "test-range-from..test-range-to"))))
+      (insert "bar")
+      (eval
+       `(mocklet (((magit-find-file-noselect "test-range-to" "test-file") => ,buffer)
+                  ((fn ,buffer))
+                  ((magit-diff-visit-file--setup ,buffer ,pos)))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-git-file
+                          '("test-file" 2 right) #'fn)))
+          (should (equal (point) ,pos)))))))
+
+(ert-deftest difftastic--diff-visit-git-file:left-staged ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (difftastic--metadata '((rev-or-range . staged))))
+      (insert "bar")
+      (eval
+       `(mocklet (((magit-find-file-noselect "HEAD" "test-file") => ,buffer)
+                  ((magit-diff-visit--offset "test-file" nil 2) => 3)
+                  ((fn ,buffer))
+                  ((magit-diff-visit-file--setup ,buffer (point-max))))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-git-file
+                          '("test-file" 2 left) #'fn)))
+          (should (equal (point) (point-max))))))))
+
+(ert-deftest difftastic--diff-visit-git-file:right-staged ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (difftastic--metadata '((rev-or-range . staged))))
+      (insert "bar")
+      (eval
+       `(mocklet (((magit-find-file-noselect "HEAD" "test-file") => ,buffer)
+                  ((fn ,buffer))
+                  ((magit-diff-visit--offset "test-file" nil 2) => 3)
+                  ((magit-diff-visit-file--setup ,buffer (point-max))))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-git-file
+                          '("test-file" 2 right) #'fn)))
+          (should (equal (point) (point-max))))))))
+
+(ert-deftest difftastic--diff-visit-git-file:left-staged-avoid-head-blob-visiting ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (difftastic--metadata '((rev-or-range . staged)))
+           (difftastic-diff-visit-avoid-head-blob t))
+      (insert "bar")
+      (eval
+       `(mocklet (((get-file-buffer "test-file") => ,buffer)
+                  ((magit-diff-visit--offset "test-file" nil 2) => 3)
+                  ((fn ,buffer))
+                  ((magit-diff-visit-file--setup ,buffer (point-max))))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-git-file
+                          '("test-file" 2 left) #'fn)))
+          (should (equal (point) (point-max))))))))
+
+(ert-deftest difftastic--diff-visit-git-file:right-staged-avoid-head-blob-visiting ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (difftastic--metadata '((rev-or-range . staged)))
+           (difftastic-diff-visit-avoid-head-blob t))
+      (insert "bar")
+      (eval
+       `(mocklet (((get-file-buffer "test-file") => ,buffer)
+                  ((magit-diff-visit--offset "test-file" nil 2) => 3)
+                  ((fn ,buffer))
+                  ((magit-diff-visit-file--setup ,buffer (point-max))))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-git-file
+                          '("test-file" 2 right) #'fn)))
+          (should (equal (point) (point-max))))))))
+
+(ert-deftest difftastic--diff-visit-git-file:left-staged-avoid-head-blob-not-visiting ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (difftastic--metadata '((rev-or-range . staged)))
+           (difftastic-diff-visit-avoid-head-blob t))
+      (insert "bar")
+      (eval
+       `(mocklet (((get-file-buffer "test-file"))
+                  ((find-file-noselect "test-file") => ,buffer)
+                  ((magit-diff-visit--offset "test-file" nil 2) => 3)
+                  ((fn ,buffer))
+                  ((magit-diff-visit-file--setup ,buffer (point-max))))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-git-file
+                          '("test-file" 2 left) #'fn)))
+          (should (equal (point) (point-max))))))))
+
+(ert-deftest difftastic--diff-visit-git-file:right-staged-avoid-head-blob-not-visiting ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (difftastic--metadata '((rev-or-range . staged)))
+           (difftastic-diff-visit-avoid-head-blob t))
+      (insert "bar")
+      (eval
+       `(mocklet (((get-file-buffer "test-file"))
+                  ((find-file-noselect "test-file") => ,buffer)
+                  ((magit-diff-visit--offset "test-file" nil 2) => 3)
+                  ((fn ,buffer))
+                  ((magit-diff-visit-file--setup ,buffer (point-max))))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-git-file
+                          '("test-file" 2 right) #'fn)))
+          (should (equal (point) (point-max))))))))
+
+(ert-deftest difftastic--diff-visit-git-file:left-unstaged ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (pos (point))
+           (difftastic--metadata '((rev-or-range . unstaged))))
+      (insert "bar")
+      (eval
+       `(mocklet (((magit-find-file-noselect "HEAD" "test-file") => ,buffer)
+                  ((fn ,buffer))
+                  ((magit-diff-visit-file--setup ,buffer ,pos)))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-git-file
+                          '("test-file" 2 left) #'fn)))
+          (should (equal (point) ,pos)))))))
+
+(ert-deftest difftastic--diff-visit-git-file:right-unstaged ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (pos (point))
+           (difftastic--metadata '((rev-or-range . unstaged))))
+      (insert "bar")
+      (eval
+       `(mocklet (((magit-find-file-noselect "HEAD" "test-file") => ,buffer)
+                  ((fn ,buffer))
+                  ((magit-diff-visit-file--setup ,buffer ,pos)))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-git-file
+                          '("test-file" 2 right) #'fn)))
+          (should (equal (point) ,pos)))))))
+
+(ert-deftest difftastic--diff-visit-git-file:left-unstaged-avoid-head-blob-visiting ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (pos (point))
+           (difftastic--metadata '((rev-or-range . unstaged)))
+           (difftastic-diff-visit-avoid-head-blob t))
+      (insert "bar")
+      (eval
+       `(mocklet (((get-file-buffer "test-file") => ,buffer)
+                  ((fn ,buffer))
+                  ((magit-diff-visit-file--setup ,buffer ,pos)))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-git-file
+                          '("test-file" 2 left) #'fn)))
+          (should (equal (point) ,pos)))))))
+
+(ert-deftest difftastic--diff-visit-git-file:right-unstaged-avoid-head-blob-visiting ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (pos (point))
+           (difftastic--metadata '((rev-or-range . unstaged)))
+           (difftastic-diff-visit-avoid-head-blob t))
+      (insert "bar")
+      (eval
+       `(mocklet (((get-file-buffer "test-file") => ,buffer)
+                  ((fn ,buffer))
+                  ((magit-diff-visit-file--setup ,buffer ,pos)))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-git-file
+                          '("test-file" 2 right) #'fn)))
+          (should (equal (point) ,pos)))))))
+
+(ert-deftest difftastic--diff-visit-git-file:left-unstaged-avoid-head-blob-not-visiting ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (pos (point))
+           (difftastic--metadata '((rev-or-range . unstaged)))
+           (difftastic-diff-visit-avoid-head-blob t))
+      (insert "bar")
+      (eval
+       `(mocklet (((get-file-buffer "test-file"))
+                  ((find-file-noselect "test-file") => ,buffer)
+                  ((fn ,buffer))
+                  ((magit-diff-visit-file--setup ,buffer ,pos)))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-git-file
+                          '("test-file" 2 left) #'fn)))
+          (should (equal (point) ,pos)))))))
+
+(ert-deftest difftastic--diff-visit-git-file:right-unstaged-avoid-head-blob-not-visiting ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (pos (point))
+           (difftastic--metadata '((rev-or-range . unstaged)))
+           (difftastic-diff-visit-avoid-head-blob t))
+      (insert "bar")
+      (eval
+       `(mocklet (((get-file-buffer "test-file"))
+                  ((find-file-noselect "test-file") => ,buffer)
+                  ((fn ,buffer))
+                  ((magit-diff-visit-file--setup ,buffer ,pos)))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-git-file
+                          '("test-file" 2 right) #'fn)))
+          (should (equal (point) ,pos)))))))
+
+(ert-deftest difftastic--diff-visit-git-file:left-revision-force-worktree-visiting ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (difftastic--metadata '((rev-or-range . "test-rev"))))
+      (insert "bar")
+      (eval
+       `(mocklet (((get-file-buffer "test-file") => ,buffer)
+                  ((magit-diff-visit--offset "test-file" "test-rev^" 2) => 3)
+                  ((fn ,buffer))
+                  ((magit-diff-visit-file--setup ,buffer (point-max))))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-git-file
+                          '("test-file" 2 left) #'fn t)))
+          (should (equal (point) (point-max))))))))
+
+(ert-deftest difftastic--diff-visit-git-file:right-revision-force-worktree-visiting ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (difftastic--metadata '((rev-or-range . "test-rev"))))
+      (insert "bar")
+      (eval
+       `(mocklet (((get-file-buffer "test-file") => ,buffer)
+                  ((magit-diff-visit--offset "test-file" "test-rev" 2) => 3)
+                  ((fn ,buffer))
+                  ((magit-diff-visit-file--setup ,buffer (point-max))))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-git-file
+                          '("test-file" 2 right) #'fn t)))
+          (should (equal (point) (point-max))))))))
+
+(ert-deftest difftastic--diff-visit-git-file:left-revision-force-worktree-not-visiting ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (difftastic--metadata '((rev-or-range . "test-rev"))))
+      (insert "bar")
+      (eval
+       `(mocklet (((get-file-buffer "test-file"))
+                  ((find-file-noselect "test-file") => ,buffer)
+                  ((magit-diff-visit--offset "test-file" "test-rev^" 2) => 3)
+                  ((fn ,buffer))
+                  ((magit-diff-visit-file--setup ,buffer (point-max))))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-git-file
+                          '("test-file" 2 left) #'fn t)))
+          (should (equal (point) (point-max))))))))
+
+(ert-deftest difftastic--diff-visit-git-file:right-revision-force-worktree-not-visiting ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (difftastic--metadata '((rev-or-range . "test-rev"))))
+      (insert "bar")
+      (eval
+       `(mocklet (((get-file-buffer "test-file"))
+                  ((find-file-noselect "test-file") => ,buffer)
+                  ((magit-diff-visit--offset "test-file" "test-rev" 2) => 3)
+                  ((fn ,buffer))
+                  ((magit-diff-visit-file--setup ,buffer (point-max))))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-git-file
+                          '("test-file" 2 right) #'fn t)))
+          (should (equal (point) (point-max))))))))
+
+(ert-deftest difftastic--diff-visit-git-file:left-range-force-worktree-visiting ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (difftastic--metadata '((rev-or-range . "test-range-from..test-range-to"))))
+      (insert "bar")
+      (eval
+       `(mocklet (((get-file-buffer "test-file") => ,buffer)
+                  ((magit-diff-visit--offset "test-file" "test-range-from" 2) => 3)
+                  ((fn ,buffer))
+                  ((magit-diff-visit-file--setup ,buffer (point-max))))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-git-file
+                          '("test-file" 2 left) #'fn t)))
+          (should (equal (point) (point-max))))))))
+
+(ert-deftest difftastic--diff-visit-git-file:right-range-force-worktree-visiting ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (difftastic--metadata '((rev-or-range . "test-range-from..test-range-to"))))
+      (insert "bar")
+      (eval
+       `(mocklet (((get-file-buffer "test-file") => ,buffer)
+                  ((magit-diff-visit--offset "test-file" "test-range-to" 2) => 3)
+                  ((fn ,buffer))
+                  ((magit-diff-visit-file--setup ,buffer (point-max))))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-git-file
+                          '("test-file" 2 right) #'fn t)))
+          (should (equal (point) (point-max))))))))
+
+(ert-deftest difftastic--diff-visit-git-file:left-range-force-worktree-not-visiting ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (difftastic--metadata '((rev-or-range . "test-range-from..test-range-to"))))
+      (insert "bar")
+      (eval
+       `(mocklet (((get-file-buffer "test-file"))
+                  ((find-file-noselect "test-file") => ,buffer)
+                  ((magit-diff-visit--offset "test-file" "test-range-from" 2) => 3)
+                  ((fn ,buffer))
+                  ((magit-diff-visit-file--setup ,buffer (point-max))))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-git-file
+                          '("test-file" 2 left) #'fn t)))
+          (should (equal (point) (point-max))))))))
+
+(ert-deftest difftastic--diff-visit-git-file:right-range-force-worktree-not-visiting ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (difftastic--metadata '((rev-or-range . "test-range-from..test-range-to"))))
+      (insert "bar")
+      (eval
+       `(mocklet (((get-file-buffer "test-file"))
+                  ((find-file-noselect "test-file") => ,buffer)
+                  ((magit-diff-visit--offset "test-file" "test-range-to" 2) => 3)
+                  ((fn ,buffer))
+                  ((magit-diff-visit-file--setup ,buffer (point-max))))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-git-file
+                          '("test-file" 2 right) #'fn t)))
+          (should (equal (point) (point-max))))))))
+
+(ert-deftest difftastic--diff-visit-git-file:left-staged-force-worktree-visiting ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (difftastic--metadata '((rev-or-range . staged))))
+      (insert "bar")
+      (eval
+       `(mocklet (((get-file-buffer "test-file") => ,buffer)
+                  ((magit-diff-visit--offset "test-file" nil 2) => 3)
+                  ((fn ,buffer))
+                  ((magit-diff-visit-file--setup ,buffer (point-max))))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-git-file
+                          '("test-file" 2 left) #'fn t)))
+          (should (equal (point) (point-max))))))))
+
+(ert-deftest difftastic--diff-visit-git-file:right-staged-force-worktree-visiting ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (difftastic--metadata '((rev-or-range . staged))))
+      (insert "bar")
+      (eval
+       `(mocklet (((get-file-buffer "test-file") => ,buffer)
+                  ((magit-diff-visit--offset "test-file" nil 2) => 3)
+                  ((fn ,buffer))
+                  ((magit-diff-visit-file--setup ,buffer (point-max))))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-git-file
+                          '("test-file" 2 right) #'fn t)))
+          (should (equal (point) (point-max))))))))
+
+(ert-deftest difftastic--diff-visit-git-file:left-staged-force-worktree-not-visiting ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (difftastic--metadata '((rev-or-range . staged))))
+      (insert "bar")
+      (eval
+       `(mocklet (((get-file-buffer "test-file"))
+                  ((find-file-noselect "test-file") => ,buffer)
+                  ((magit-diff-visit--offset "test-file" nil 2) => 3)
+                  ((fn ,buffer))
+                  ((magit-diff-visit-file--setup ,buffer (point-max))))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-git-file
+                          '("test-file" 2 left) #'fn t)))
+          (should (equal (point) (point-max))))))))
+
+(ert-deftest difftastic--diff-visit-git-file:right-staged-force-worktree-not-visiting ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (difftastic--metadata '((rev-or-range . staged))))
+      (insert "bar")
+      (eval
+       `(mocklet (((get-file-buffer "test-file"))
+                  ((find-file-noselect "test-file") => ,buffer)
+                  ((magit-diff-visit--offset "test-file" nil 2) => 3)
+                  ((fn ,buffer))
+                  ((magit-diff-visit-file--setup ,buffer (point-max))))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-git-file
+                          '("test-file" 2 right) #'fn t)))
+          (should (equal (point) (point-max))))))))
+
+(ert-deftest difftastic--diff-visit-git-file:left-unstaged-froce-worktree-visiting ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (pos (point))
+           (difftastic--metadata '((rev-or-range . unstaged))))
+      (insert "bar")
+      (eval
+       `(mocklet (((get-file-buffer "test-file") => ,buffer)
+                  ((fn ,buffer))
+                  ((magit-diff-visit-file--setup ,buffer ,pos)))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-git-file
+                          '("test-file" 2 left) #'fn t)))
+          (should (equal (point) ,pos)))))))
+
+(ert-deftest difftastic--diff-visit-git-file:right-unstaged-froce-worktree-visiting ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (pos (point))
+           (difftastic--metadata '((rev-or-range . unstaged))))
+      (insert "bar")
+      (eval
+       `(mocklet (((get-file-buffer "test-file") => ,buffer)
+                  ((fn ,buffer))
+                  ((magit-diff-visit-file--setup ,buffer ,pos)))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-git-file
+                          '("test-file" 2 right) #'fn t)))
+          (should (equal (point) ,pos)))))))
+
+(ert-deftest difftastic--diff-visit-git-file:left-unstaged-froce-worktree-notvisiting ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (pos (point))
+           (difftastic--metadata '((rev-or-range . unstaged))))
+      (insert "bar")
+      (eval
+       `(mocklet (((get-file-buffer "test-file"))
+                  ((find-file-noselect "test-file") => ,buffer)
+                  ((fn ,buffer))
+                  ((magit-diff-visit-file--setup ,buffer ,pos)))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-git-file
+                          '("test-file" 2 left) #'fn t)))
+          (should (equal (point) ,pos)))))))
+
+(ert-deftest difftastic--diff-visit-git-file:right-unstaged-froce-worktree-notvisiting ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (pos (point))
+           (difftastic--metadata '((rev-or-range . unstaged))))
+      (insert "bar")
+      (eval
+       `(mocklet (((get-file-buffer "test-file"))
+                  ((find-file-noselect "test-file") => ,buffer)
+                  ((fn ,buffer))
+                  ((magit-diff-visit-file--setup ,buffer ,pos)))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-git-file
+                          '("test-file" 2 right) #'fn t)))
+          (should (equal (point) ,pos)))))))
+
 (ert-deftest difftastic--diff-visit-file:git-file ()
   (mocklet (((difftastic--diff-visit-git-file "test-chunk-file" #'ignore t))
             (difftastic--diff-visit-file-or-buffer not-called))

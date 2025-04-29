@@ -1121,8 +1121,8 @@ either `left' or `right'.  Use FN to display the buffer in some window."
                                  difftastic-diff-visit-avoid-head-blob))
                         (or (get-file-buffer file)
                             (find-file-noselect file))
-                 (magit-find-file-noselect (if (stringp rev) rev "HEAD")
-                                           file)))
+                      (magit-find-file-noselect (if (stringp rev) rev "HEAD")
+                                                file)))
                (pos (when line
                       (with-current-buffer buf
                         (cond ((eq rev 'staged)

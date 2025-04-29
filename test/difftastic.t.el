@@ -2790,12 +2790,6 @@ test/difftastic.t.el --- Emacs Lisp
                           '("foo" 2 right) #'fn)))
           (should (equal (point) ,pos)))))))
 
-(ert-deftest difftastic--diff-visit-file:git-file ()
-  (mocklet (((difftastic--diff-visit-git-file "test-chunk-file" #'ignore t))
-            (difftastic--diff-visit-file-or-buffer not-called))
-    (let ((difftastic--metadata '((git-command "test-git-command"))))
-      (difftastic--diff-visit-file "test-chunk-file" #'ignore t))))
-
 (ert-deftest difftastic--diff-visit-file-or-buffer:left-not-visiting ()
   (with-temp-buffer
     (insert "foo\n")
@@ -2831,6 +2825,12 @@ test/difftastic.t.el --- Emacs Lisp
           (should (equal (point) ,pos)))))))
 
 (ert-deftest difftastic--diff-visit-file:git-file ()
+  (mocklet (((difftastic--diff-visit-git-file "test-chunk-file" #'ignore t))
+            (difftastic--diff-visit-file-or-buffer not-called))
+    (let ((difftastic--metadata '((git-command "test-git-command"))))
+      (difftastic--diff-visit-file "test-chunk-file" #'ignore t))))
+
+(ert-deftest difftastic--diff-visit-file:file-or-buffer ()
   (mocklet ((difftastic--diff-visit-git-file not-called)
             ((difftastic--diff-visit-file-or-buffer "test-chunk-file" #'ignore)))
     (let (difftastic--metadata )

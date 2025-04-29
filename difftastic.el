@@ -1076,11 +1076,11 @@ in some window."
                                       'file-buf-B)
                                     difftastic--metadata))
                (file (car file-buf))
-               (buf (or (if-let* ((buf (cdr file-buf))
-                                  ((buffer-live-p buf)))
-                            buf
-                          (user-error "Buffer %s [%s] doesn't exist anymore"
-                                      (if (eq side 'left) "A" "B") buf))
+               (buf (or (when-let* ((buf (cdr file-buf)))
+                          (if (buffer-live-p buf)
+                              buf
+                            (user-error "Buffer %s [%s] doesn't exist anymore"
+                                        (if (eq side 'left) "A" "B") buf)))
                         (get-file-buffer file)
                         (find-file-noselect file))))
     (with-current-buffer buf
@@ -1088,8 +1088,7 @@ in some window."
         (widen)
         (goto-char (point-min))
         (goto-char
-         (compat-call pos-bol line)) ; Since Emacs-29
-        (point)))
+         (compat-call pos-bol line)))) ; Since Emacs-29
     (funcall fn buf)
     buf))
 

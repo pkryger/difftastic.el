@@ -2700,11 +2700,135 @@ test/difftastic.t.el --- Emacs Lisp
     (should (equal (cons 'eol (difftastic--chunk-file-at-point))
                    '(eol "foo" 101 right)))))
 
+(ert-deftest difftastic--diff-visit-file-or-buffer:left-buffer ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (pos (point))
+           (difftastic--metadata `((file-buf-A . ("test-file-A" . ,buffer))
+                                   (file-buf-B . ("test-file-B" . "test-buf-B")))))
+      (insert "bar")
+      (eval
+       `(mocklet (((fn ,buffer)))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-file-or-buffer
+                          '("foo" 2 left) #'fn)))
+          (should (equal (point) ,pos)))))))
+
+(ert-deftest difftastic--diff-visit-file-or-buffer:right-buffer ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (pos (point))
+           (difftastic--metadata `((file-buf-A . ("test-file-A" . "test-buf-A"))
+                                   (file-buf-B . ("test-file-B" . ,buffer)))))
+      (insert "bar")
+      (eval
+       `(mocklet (((fn ,buffer)))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-file-or-buffer
+                          '("foo" 2 right) #'fn)))
+          (should (equal (point) ,pos)))))))
+
+(ert-deftest difftastic--diff-visit-file-or-buffer:left-buffer-not-live ()
+  (let (buffer
+        (text-quoting-style 'straight))
+    (with-temp-buffer
+      (setq buffer (current-buffer)))
+    (let ((difftastic--metadata `((file-buf-A . ("test-file-A" . ,buffer))
+                                  (file-buf-B . ("test-file-B" . "test-buf-B")))))
+      (eval `(mocklet ((fn not-called))
+        (let ((data (cadr
+                     (should-error (difftastic--diff-visit-file-or-buffer
+                                    '("foo" 2 left) #'fn)))))
+          (should (equal data
+                         "Buffer A [#<killed buffer>] doesn't exist anymore"))))))))
+
+(ert-deftest difftastic--diff-visit-file-or-buffer:right-buffer-not-live ()
+  (let (buffer
+        (text-quoting-style 'straight))
+    (with-temp-buffer
+      (setq buffer (current-buffer)))
+    (let ((difftastic--metadata `((file-buf-A . ("test-file-A" . "test-buf-A"))
+                                  (file-buf-B . ("test-file-B" . ,buffer)))))
+      (eval `(mocklet ((fn not-called))
+        (let ((data (cadr
+                     (should-error (difftastic--diff-visit-file-or-buffer
+                                    '("foo" 2 right) #'fn)))))
+          (should (equal data
+                         "Buffer B [#<killed buffer>] doesn't exist anymore"))))))))
+
+(ert-deftest difftastic--diff-visit-file-or-buffer:left-visiting ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (pos (point))
+           (difftastic--metadata '((file-buf-A . ("test-file-A" . nil))
+                                   (file-buf-B . ("test-file-B" . nil)))))
+      (insert "bar")
+      (eval
+       `(mocklet (((get-file-buffer "test-file-A") => ,buffer)
+                  ((fn ,buffer)))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-file-or-buffer
+                          '("foo" 2 left) #'fn)))
+          (should (equal (point) ,pos)))))))
+
+(ert-deftest difftastic--diff-visit-file-or-buffer:right-visiting ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (pos (point))
+           (difftastic--metadata '((file-buf-A . ("test-file-A" . nil))
+                                   (file-buf-B . ("test-file-B" . nil)))))
+      (insert "bar")
+      (eval
+       `(mocklet (((get-file-buffer "test-file-B") => ,buffer)
+                  ((fn ,buffer)))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-file-or-buffer
+                          '("foo" 2 right) #'fn)))
+          (should (equal (point) ,pos)))))))
+
 (ert-deftest difftastic--diff-visit-file:git-file ()
   (mocklet (((difftastic--diff-visit-git-file "test-chunk-file" #'ignore t))
             (difftastic--diff-visit-file-or-buffer not-called))
     (let ((difftastic--metadata '((git-command "test-git-command"))))
       (difftastic--diff-visit-file "test-chunk-file" #'ignore t))))
+
+(ert-deftest difftastic--diff-visit-file-or-buffer:left-not-visiting ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (pos (point))
+           (difftastic--metadata '((file-buf-A . ("test-file-A" . nil))
+                                   (file-buf-B . ("test-file-B" . nil)))))
+      (insert "bar")
+      (eval
+       `(mocklet (((get-file-buffer "test-file-A"))
+                  ((find-file-noselect "test-file-A") => ,buffer)
+                  ((fn ,buffer)))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-file-or-buffer
+                          '("foo" 2 left) #'fn)))
+          (should (equal (point) ,pos)))))))
+
+(ert-deftest difftastic--diff-visit-file-or-buffer:right-not-visiting ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (pos (point))
+           (difftastic--metadata '((file-buf-A . ("test-file-A" . nil))
+                                   (file-buf-B . ("test-file-B" . nil)))))
+      (insert "bar")
+      (eval
+       `(mocklet (((get-file-buffer "test-file-B"))
+                  ((find-file-noselect "test-file-B") => ,buffer)
+                  ((fn ,buffer)))
+          (should (equal ,buffer
+                         (difftastic--diff-visit-file-or-buffer
+                          '("foo" 2 right) #'fn)))
+          (should (equal (point) ,pos)))))))
 
 (ert-deftest difftastic--diff-visit-file:git-file ()
   (mocklet ((difftastic--diff-visit-git-file not-called)

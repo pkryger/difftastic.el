@@ -1059,8 +1059,7 @@ and SIDE is either `left' or `right'.
 Display the buffer in the selected window.  With a prefix argument
 OTHER-WINDOW display the buffer in another window instead.
 
-TODO: rephrase
-Visit the worktree version of the appropriate file.  The location
+When the difftastic buffer displays a git diff, the location
 of point inside the diff determines which file is being visited.
 The visited version depends on what changes the diff is about.
 
@@ -1113,7 +1112,6 @@ Display the buffer in the selected window.  With a prefix
 argument OTHER-WINDOW display the buffer in another window
 instead.
 
-TODO: rephrase
 Visit the worktree version of the appropriate file.  The location
 of point inside the diff determines which file is being visited.
 

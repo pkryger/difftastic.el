@@ -318,6 +318,13 @@ interaction with =difft=:
   call to =difft=.  It is meant to select an appropriate Emacs mechanism to
   display the =difft= output.
 
+*** =difftastic-mode= behavior
+:PROPERTIES:
+:CUSTOM_ID: difftastic-mode-behavior
+:END:
+- =difftastic-diff-visit-avoid-head-blob= - controls whether to avoid visiting
+  blob of a =HEAD= revision when visiting file form a =difftastic-mode= buffer.
+
 ** Contributing
 :PROPERTIES:
 :CUSTOM_ID: contributing

@@ -4324,7 +4324,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
               nil)))
     (difftastic--git-diff-range nil nil nil)))
 
-(ert-deftest difftastic--git-diff-range:with-args ()
+(ert-deftest difftastic--git-diff-range:with-args-string-rev-or-range ()
   (mocklet (((get-buffer-create
               "*difftastic git diff --ignore-submodules=all test-rev-or-range -- test-path*")
              => "test-buffer")
@@ -4335,6 +4335,20 @@ This only happens when `noninteractive' to avoid messing up with faces."
               "test-rev-or-range"
               '("--context 42"))))
     (difftastic--git-diff-range "test-rev-or-range"
+                                '("--ignore-submodules=all" "-U42")
+                                '("test-path"))))
+
+(ert-deftest difftastic--git-diff-range:with-args-symbol-rev-or-range ()
+  (mocklet (((get-buffer-create
+              "*difftastic git diff --ignore-submodules=all test-rev-or-range -- test-path*")
+             => "test-buffer")
+            ((difftastic--git-with-difftastic
+              "test-buffer"
+              '("git" "--no-pager" "diff" "--ext-diff" "--ignore-submodules=all"
+                "--" "test-path")
+              'test-rev-or-range
+              '("--context 42"))))
+    (difftastic--git-diff-range 'test-rev-or-range
                                 '("--ignore-submodules=all" "-U42")
                                 '("test-path"))))
 

@@ -333,6 +333,14 @@
 ;;   mechanism to display the `difft' output.
 ;;
 ;;
+;; `difftastic-mode' behavior
+;; ~~~~~~~~~~~~~~~~~~~~~~~~~~
+;;
+;; - `difftastic-diff-visit-avoid-head-blob' - controls whether to avoid
+;;   visiting blob of a `HEAD' revision when visiting file form a
+;;   `difftastic-mode' buffer.
+;;
+;;
 ;; Contributing
 ;; ============
 ;;
@@ -531,6 +539,21 @@ the selected window is considered for restoring."
   :type 'boolean
   :group 'difftastic)
 
+(defcustom difftastic-diff-visit-avoid-head-blob nil
+  "Whether `difftastic-diff-visit-file' avoids visiting a blob from `HEAD'.
+
+By default `difftastic-diff-visit-file' always visits the blob that
+modified the current line (or is a context line of current
+modification), while `difftastic-diff-visit-worktree-file' visits the
+respective file in the working tree.  When the value of this option is
+non-nil, then for the `HEAD' commit, the former command visits the
+worktree file too, but that renders visiting a blob from `HEAD'
+impossible.
+
+This is similar to `magit-diff-visit-avoid-head-blob', which see."
+  :type 'boolean
+  :group 'difftastic)
+
 (defcustom difftastic-use-last-dir ediff-use-last-dir
   "When non-nil difftastic will use previous directory when reading file name.
 Like `ediff-use-last-dir', which see."
@@ -539,6 +562,7 @@ Like `ediff-use-last-dir', which see."
 
 (defvar difftastic--last-dir-A nil)
 (defvar difftastic--last-dir-B nil)
+(defvar-local difftastic--metadata nil)
 
 (defmacro difftastic--with-temp-advice (symbol how function &rest body)
   ;; checkdoc-params: (symbol how function)
@@ -1040,6 +1064,85 @@ and SIDE is either `left' or `right'."
                 (throw 'chunk-file (list file (car right) 'right))))
             (setq lines (cdr lines))))))))
 
+(defun difftastic--diff-visit-file-or-buffer (chunk-file fn)
+  "From a diff visit the appropriate file or buffer CHUNK-FILE.
+The CHUNK-FILE is a list in a form of (FILE LINE-NUM SIDE), where FILE
+is the chunk file name, LINE-NUM is an optional line number within the
+FILE and SIDE is either `left' or `right'.  Use FN to display the buffer
+in some window."
+  (pcase-let* ((`(,_ ,line ,side) chunk-file)
+               (file-buf (alist-get (if (eq side 'left)
+                                        'file-buf-A
+                                      'file-buf-B)
+                                    difftastic--metadata))
+               (file (car file-buf))
+               (buf (or (if-let* ((buf (cdr file-buf))
+                                  ((buffer-live-p buf)))
+                            buf
+                          (user-error "Buffer %s [%s] doesn't exist anymore"
+                                      (if (eq side 'left) "A" "B") buf))
+                        (get-file-buffer file)
+                        (find-file-noselect file))))
+    (with-current-buffer buf
+      (save-restriction
+        (widen)
+        (goto-char (point-min))
+        (goto-char
+         (compat-call pos-bol line)) ; Since Emacs-29
+        (point)))
+    (funcall fn buf)
+    buf))
+
+(defun difftastic--diff-visit-git-file (chunk-file fn &optional force-worktree)
+  "From a diff visit the appropriate version of CHUNK-FILE in git repository.
+If FORCE-WORKTREE is non-nil, then visit the worktree version of the
+file, even if the diff is about a committed change.  The CHUNK-FILE is a
+list in a form of (FILE LINE-NUM SIDE), where FILE is the chunk file
+name, LINE-NUM is an optional line number within the FILE and SIDE is
+either `left' or `right'.  Use FN to display the buffer in some window."
+  (pcase-let* ((`(,file ,line ,side) chunk-file)
+               (default-directory (alist-get 'default-directory
+                                             difftastic--metadata))
+               (rev (if-let* ((rev-or-range (alist-get 'rev-or-range
+                                                       difftastic--metadata))
+                              (range (cond
+                                      ((and
+                                        (stringp rev-or-range)
+                                        (string-match-p (rx "..") rev-or-range))
+                                       (string-split rev-or-range (rx "..")))
+                                      ((stringp rev-or-range)
+                                       (list (concat rev-or-range "^")
+                                             rev-or-range)))))
+                        (if (eq side 'left)
+                            (car range)
+                          (cadr range))
+                      rev-or-range))
+               (buf (if (or force-worktree
+                            (and (not (stringp rev))
+                                 difftastic-diff-visit-avoid-head-blob))
+                        (or (get-file-buffer file)
+                            (find-file-noselect file))
+                 (magit-find-file-noselect (if (stringp rev) rev "HEAD")
+                                           file)))
+               (pos (when line
+                      (with-current-buffer buf
+                        (cond ((eq rev 'staged)
+                               (setq line
+                                     (magit-diff-visit--offset file nil line)))
+                              ((and force-worktree
+                                    (stringp rev))
+                               (setq line
+                                     (magit-diff-visit--offset file rev line))))
+                        (save-restriction
+                          (widen)
+                          (goto-char (point-min))
+                          (goto-char
+                           (compat-call pos-bol line)) ; Since Emacs-29
+                          (point))))))
+    (funcall fn buf)
+    (magit-diff-visit-file--setup buf pos)
+    buf))
+
 (defun difftastic--diff-visit-file (chunk-file fn &optional force-worktree)
   "From a diff visit the appropriate version of CHUNK-FILE.
 If FORCE-WORKTREE is non-nil, then visit the worktree version of the
@@ -1047,7 +1150,9 @@ file, even if the diff is about a committed change.  The CHUNK-FILE is a
 list in a form of (FILE LINE-NUM SIDE), where FILE is the chunk file
 name, LINE-NUM is an optional line number within the FILE and SIDE is
 either `left' or `right'.  Use FN to display the buffer in some window."
-  (list chunk-file fn force-worktree))
+  (if (assq 'git-command difftastic--metadata)
+      (difftastic--diff-visit-git-file chunk-file fn force-worktree)
+    (difftastic--diff-visit-file-or-buffer chunk-file fn)))
 
 (defun difftastic-diff-visit-file (chunk-file &optional other-window)
   "From a diff visit the appropriate version CHUNK-FILE.
@@ -1058,11 +1163,12 @@ and SIDE is either `left' or `right'.
 Display the buffer in the selected window.  With a prefix argument
 OTHER-WINDOW display the buffer in another window instead.
 
+TODO: describe how it works...
 When the difftastic buffer displays a git diff, the location
 of point inside the diff determines which file is being visited.
 The visited version depends on what changes the diff is about.
 
-1. If the diff shows uncommitted changes (i.e., stage or unstaged
+1. If the diff shows uncommitted changes (i.e., staged or unstaged
    changes), then visit the file in the working tree (i.e., the
    same \"real\" file that `find-file' would visit).  In all
    other cases visit a \"blob\" (i.e., the version of a file as
@@ -1301,8 +1407,6 @@ Utilise `difftastic--ansi-color-add-background-cache' to cache
             difftastic--ansi-color-add-background-cache)
       face)))
 
-(defvar-local difftastic--metadata nil)
-
 (defun difftastic--build-git-process-environment (requested-width
                                                   &optional difftastic-args)
   "Build a difftastic git command with REQUESTED-WIDTH.
@@ -1468,7 +1572,7 @@ to difftastic."
                  (if git-args
                      (mapconcat #'identity (cons "" git-args) " ")
                    "")
-                 (if rev-or-range (concat " " rev-or-range)
+                 (if rev-or-range (format " %s" rev-or-range)
                    "")
                  (if files
                      (mapconcat #'identity (cons " --" files) " ")
@@ -1478,7 +1582,7 @@ to difftastic."
      (get-buffer-create buffer-name)
      `("git" "--no-pager" "diff" "--ext-diff"
        ,@(when git-args git-args)
-       ,@(when rev-or-range (list rev-or-range))
+       ,@(when (stringp rev-or-range) (list rev-or-range))
        ,@(when files (cons "--" files)))
      rev-or-range
      difftastic-args)))
@@ -1518,7 +1622,7 @@ The meaning of REV-OR-RANGE, ARGS, and FILES is like in
            (user-error "No merge is in progress"))
          (difftastic-git-diff-range (magit--merge-range) args files))
         ('unstaged
-         (difftastic-git-diff-range nil args files))
+         (difftastic-git-diff-range 'unstaged args files))
         ('staged
          (let ((file (magit-file-at-point)))
            (if (and file (equal (cddr (car (magit-file-status file)))
@@ -1530,7 +1634,7 @@ The meaning of REV-OR-RANGE, ARGS, and FILES is like in
                  (difftastic-git-diff-range
                   (magit--merge-range) args (list file)))
              (difftastic-git-diff-range
-              nil (cl-pushnew "--cached" args :test #'string=) files))))
+              'staged (cl-pushnew "--cached" args :test #'string=) files))))
         (`(stash . ,value)
          ;; ATM, `magit-diff--dwim' evaluates to `commit' when point is on stash
          ;; section

@@ -996,7 +996,7 @@ END are positions where the line number begins and ends respectively."
                                           (caddr line))))
             (setq cols
                   (cl-intersection (or cols right-cols)
-                                   (or right-cols cols)))))
+                                   right-cols))))
         (setq lines (nreverse lines))
         ;; use the first common column that has been found,
         ;; also update missing line numbers in right

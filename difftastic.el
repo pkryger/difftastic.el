@@ -223,8 +223,6 @@
 ;; =====
 ;;
 ;; The following commands are meant to help to interact with `difftastic'.
-;; Commands are followed by their default keybindings in `difftastic-mode' (in
-;; parenthesis).
 ;;
 ;; - `difftastic-magit-diff' - show the result of `git diff ARGS -- FILES'
 ;;   with `difftastic'.  This is the main entry point for DWIM action, so it
@@ -240,6 +238,16 @@
 ;;   argument it will ask for language to use.
 ;; - `difftastic-dired-diff' - same as `dired-diff', but with
 ;;   `difftastic-files' instead of the built-in `diff'.
+;; - `difftastic-git-diff-range' - transform `ARGS' for difftastic and show
+;;   the result of `git diff ARGS REV-OR-RANGE -- FILES' with `difftastic'.
+;;
+;;
+;; `difftastic-mode' commands
+;; ~~~~~~~~~~~~~~~~~~~~~~~~~~
+;;
+;; When a buffer shows `difftastic' output the following commands can be used.
+;; Commands are followed by their default keybindings (in parenthesis).
+;;
 ;; - `difftastic-rerun' (`g') - rerun difftastic for the current buffer.  It
 ;;   runs difftastic again in the current buffer, but respects the window
 ;;   configuration.  It uses
@@ -254,8 +262,8 @@
 ;;   move point to a previous logical chunk or a previous file respectively.
 ;; - `difftastic-toggle-chunk' (`TAB' or `C-i') - toggle visibility of a chunk
 ;;   at point.  The point has to be in a chunk header.  When called with a
-;;   prefix all file chunks from the header to the end of the file.  See also
-;;   `difftastic-hide-chunk' and `difftastic=show-chunk'.
+;;   prefix toggle all file chunks from the header to the end of the file.
+;;   See also `difftastic-hide-chunk' and `difftastic=show-chunk'.
 ;; - `difftastic-diff-visit-file' (`RET'),
 ;;   `difftastic-diff-visit-file-other-window',
 ;;   `difftastic-diff-visit-file-other-frame' - from a diff visit appropriate
@@ -268,8 +276,6 @@
 ;;   appropriate version of a chunk file.  This has been modeled after
 ;;   `magit-diff-visit-worktree-file', but there are some differences, please
 ;;   see documentation for `difftastic-diff-visit-worktree-file'.
-;; - `difftastic-git-diff-range' - transform `ARGS' for difftastic and show
-;;   the result of `git diff ARGS REV-OR-RANGE -- FILES' with `difftastic'.
 ;;
 ;;
 ;; Customization

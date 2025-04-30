@@ -1066,8 +1066,9 @@ and SIDE is either `left' or `right'."
 
 (defun difftastic--diff-visit-file-setup (buffer line col)
   "Setup the BUFFER after visiting it.
-Go to LINE and COL, in the BUFFER, widening it if necessary.  After that
-start a smerge session and run `difftastic-diff-visit-file-hook'."
+Go to LINE and COL in the BUFFER, widening it if necessary.  After that
+start a smerge session (if there are unmerged changes) and run
+`difftastic-diff-visit-file-hook'."
   (if-let* ((win (get-buffer-window buffer 'visible)))
       (let ((pos (save-restriction
                    (widen)
@@ -1090,7 +1091,8 @@ start a smerge session and run `difftastic-diff-visit-file-hook'."
 The CHUNK-FILE is a list in a form of (FILE LINE-NUM SIDE), where FILE
 is the chunk file name, LINE-NUM is an optional line number within the
 FILE and SIDE is either `left' or `right'.  Use FN to display the buffer
-in some window."
+in some window.  After visiting the FILE start a smerge session (if
+there are unmerged changes) and run `difftastic-diff-visit-file-hook'."
   (pcase-let* ((`(,_ ,line ,side) chunk-file)
                (file-buf (alist-get (if (eq side 'left)
                                         'file-buf-A
@@ -1114,7 +1116,9 @@ If FORCE-WORKTREE is non-nil, then visit the worktree version of the
 file, even if the diff is about a committed change.  The CHUNK-FILE is a
 list in a form of (FILE LINE-NUM SIDE), where FILE is the chunk file
 name, LINE-NUM is an optional line number within the FILE and SIDE is
-either `left' or `right'.  Use FN to display the buffer in some window."
+either `left' or `right'.  Use FN to display the buffer in some window.
+After visiting the FILE start a smerge session (if there are unmerged
+changes) and run `difftastic-diff-visit-file-hook'."
   (pcase-let* ((`(,file ,line ,side) chunk-file)
                (default-directory (alist-get 'default-directory
                                              difftastic--metadata))
@@ -1159,7 +1163,9 @@ If FORCE-WORKTREE is non-nil, then visit the worktree version of the
 file, even if the diff is about a committed change.  The CHUNK-FILE is a
 list in a form of (FILE LINE-NUM SIDE), where FILE is the chunk file
 name, LINE-NUM is an optional line number within the FILE and SIDE is
-either `left' or `right'.  Use FN to display the buffer in some window."
+either `left' or `right'.  Use FN to display the buffer in some window.
+After visiting the FILE start a smerge session (if there are unmerged
+changes) and run `difftastic-diff-visit-file-hook'."
   (if (assq 'git-command difftastic--metadata)
       (difftastic--diff-visit-git-file chunk-file fn force-worktree)
     (difftastic--diff-visit-file-or-buffer chunk-file fn)))
@@ -1173,28 +1179,45 @@ and SIDE is either `left' or `right'.
 Display the buffer in the selected window.  With a prefix argument
 OTHER-WINDOW display the buffer in another window instead.
 
-TODO: describe how it works...
-When the difftastic buffer displays a git diff, the location
-of point inside the diff determines which file is being visited.
-The visited version depends on what changes the diff is about.
+The point location inside the diff determines which file (at which
+version) or buffer is being visited.
 
-1. If the diff shows uncommitted changes (i.e., staged or unstaged
-   changes), then visit the file in the working tree (i.e., the
-   same \"real\" file that `find-file' would visit).  In all
-   other cases visit a \"blob\" (i.e., the version of a file as
+1. If the diff shows differeces between files or buffers, for example a
+   result of `difftastic-files' or `difftastic-buffers' then:
+   a.  If the diff is a side-by-side diff (two columns) then:
+       i.   if point is in the \"left\" column then visit the first file
+            or the first buffer,
+       ii.  if point is in the \"right\" column then visit the second
+            file or the second buffer.
+   b.  If the diff is a single column diff, then:
+       i.   if point is at the first line number (\"left\") then visit
+            the first file or the first buffer,
+       ii.  if point is at the second number (\"right\") or in the diff
+            content then visit the second file or the second buffer.
+
+2. If the diff shows uncommitted changes (i.e., staged or unstaged
+   changes), and point is in the \"right\" column (or at \"right\" line
+   number) or `difftastic-diff-visit-avoid-head-blob' is non-nil then
+   visit the file in the working tree (i.e., the same \"real\" file that
+   `find-file' would visit).
+
+3. In all other cases visit a \"blob\" (i.e., the version of a file as
    stored in some commit).
+   a.  If the diff is a side-by-side diff (two columns) then:
+       i.   if point is in the \"left\" column then visit the blob at
+            the \"from\" endpoint,
+       ii.  if point is in the \"right\" column then visit the blob at
+            the \"to\" endpoint.
+   b.  If the diff is a single column diff, then:
+       i.   if point is at the first line number (\"left\") then visit
+            the blob at the \"from\" endpoint,
+       ii.  if point is at the second number (\"right\") or in the diff
+            content then visit the blob the \"to\" endpoint.
 
-2. If point is on a removed line, then visit the blob for the
-   first parent of the commit that removed that line, i.e., the
-   last commit where that line still exists.
-
-3. If point is on an added or context line, then visit the blob
-   that adds that line, or if the diff shows from more than a
-   single commit, then visit the blob from the last of these
-   commits.
-
-In the file-visiting buffer also go to the line that corresponds
-to the line that point is on in the diff.
+In the file-visiting buffer also go to the line that corresponds to the
+line that point is on in the diff.  After visiting the FILE start a
+smerge session (if there are unmerged changes) and run
+`difftastic-diff-visit-file-hook'.
 
 Note that this command only works if point is inside a diff."
   (interactive (list (difftastic--chunk-file-at-point)
@@ -2036,6 +2059,8 @@ the latter is set to nil the call is made to
                                    (difftastic--get-languages) nil t)))
                difftastic-mode)
   (difftastic--rerun lang-override))
+
+;;; LocalWords: unmerged unstaged smerge
 
 (provide 'difftastic)
 ;;; difftastic.el ends here

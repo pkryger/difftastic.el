@@ -1185,34 +1185,34 @@ version) or buffer is being visited.
 1. If the diff shows differeces between files or buffers, for example a
    result of `difftastic-files' or `difftastic-buffers' then:
    a.  If the diff is a side-by-side diff (two columns) then:
-       i.   if point is in the \"left\" column then visit the first file
-            or the first buffer,
-       ii.  if point is in the \"right\" column then visit the second
-            file or the second buffer.
-   b.  If the diff is a single column diff, then:
-       i.   if point is at the first line number (\"left\") then visit
-            the first file or the first buffer,
-       ii.  if point is at the second number (\"right\") or in the diff
-            content then visit the second file or the second buffer.
+       i.   if point is in \"left\" column then visit first file
+            or first buffer,
+       ii.  if point is in \"right\" column then visit second
+            file or second buffer.
+   b.  If the diff is a single column diff then:
+       i.   if point is at first line number (\"left\") then visit
+            first file or first buffer,
+       ii.  if point is at second number (\"right\") or in diff
+            content then visit second file or second buffer.
 
 2. If the diff shows uncommitted changes (i.e., staged or unstaged
    changes), and point is in the \"right\" column (or at \"right\" line
    number) or `difftastic-diff-visit-avoid-head-blob' is non-nil then
-   visit the file in the working tree (i.e., the same \"real\" file that
+   visit file in the working tree (i.e., the same \"real\" file that
    `find-file' would visit).
 
 3. In all other cases visit a \"blob\" (i.e., the version of a file as
    stored in some commit).
    a.  If the diff is a side-by-side diff (two columns) then:
-       i.   if point is in the \"left\" column then visit the blob at
-            the \"from\" endpoint,
-       ii.  if point is in the \"right\" column then visit the blob at
-            the \"to\" endpoint.
-   b.  If the diff is a single column diff, then:
-       i.   if point is at the first line number (\"left\") then visit
-            the blob at the \"from\" endpoint,
-       ii.  if point is at the second number (\"right\") or in the diff
-            content then visit the blob the \"to\" endpoint.
+       i.   if point is in \"left\" column then visit blob at
+            \"from\" endpoint,
+       ii.  if point is in \"right\" column then visit blob at
+            \"to\" endpoint.
+   b.  If the diff is a single column diff then:
+       i.   if point is at first line number (\"left\") then visit
+            blob at \"from\" endpoint,
+       ii.  if point is at second number (\"right\") or in the diff
+            content then visit the blob \"to\" endpoint.
 
 In the file-visiting buffer also go to the line that corresponds to the
 line that point is on in the diff.  After visiting the FILE start a
@@ -1228,20 +1228,20 @@ Note that this command only works if point is inside a diff."
 
 (defun difftastic-diff-visit-file-other-window (chunk-file)
   "From a diff visit the appropriate version CHUNK-FILE in other window.
-Like `difftastic-diff-visit-file' but use
+Like `difftastic-diff-visit-file', which see, but use
 `switch-to-buffer-other-window'."
   (interactive (list (difftastic--chunk-file-at-point)))
   (difftastic--diff-visit-file chunk-file #'switch-to-buffer-other-window))
 
 (defun difftastic-diff-visit-file-other-frame (chunk-file)
   "From a diff visit the appropriate version CHUNK-FILE in other frame.
-Like `difftastic-diff-visit-file' but use
+Like `difftastic-diff-visit-file', which see, but use
 `switch-to-buffer-other-frame'."
   (interactive (list (difftastic--chunk-file-at-point)))
   (difftastic--diff-visit-file chunk-file #'switch-to-buffer-other-frame))
 
 (defun difftastic-diff-visit-worktree-file (chunk-file &optional other-window)
-  "From a diff visit the worktree version of CHUNK-FILE.
+  "From a diff visit worktree version of CHUNK-FILE.
 The CHUNK-FILE is a list in a form of (FILE LINE-NUM SIDE), where FILE is
 the chunk file name, LINE-NUM is an optional line number within the FILE
 and SIDE is either `left' or `right'.
@@ -1250,11 +1250,10 @@ Display the buffer in the selected window.  With a prefix
 argument OTHER-WINDOW display the buffer in another window
 instead.
 
-Visit the worktree version of the appropriate file.  The location
-of point inside the diff determines which file is being visited.
-
-Unlike `difftastic-diff-visit-file' always visits the `right' file in
-the working tree, i.e the \"current version\" of the file.
+Visit worktree version of the appropriate file.  The location of point
+inside the diff determines which file is being visited.  This is similar
+to `difftastic-diff-visit-file', which see, but always use the \"real\"
+file when diff shows version control changes.
 
 In the file-visiting buffer also go to the line that corresponds
 to the line that point is on in the diff.  Lines that were added
@@ -1270,14 +1269,14 @@ between are automatically accounted for."
 
 (defun difftastic-diff-visit-worktree-file-other-window (chunk-file)
   "From a diff visit the worktree version of CHUNK-FILE in other window.
-Like `difftastic-diff-visit-worktree-file' but use
+Like `difftastic-diff-visit-worktree-file', which see, but use
 `switch-to-buffer-other-window'."
     (interactive (list (difftastic--chunk-file-at-point)))
   (difftastic--diff-visit-file chunk-file #'switch-to-buffer-other-window t))
 
 (defun difftastic-diff-visit-worktree-file-other-frame (chunk-file)
   "From a diff visit the worktree version of CHUNK-FILE in other frame.
-Like `difftastic-diff-visit-worktree-file' but use
+Like `difftastic-diff-visit-worktree-file', which see, but use
 `switch-to-buffer-other-frame'."
     (interactive (list (difftastic--chunk-file-at-point)))
   (difftastic--diff-visit-file chunk-file #'switch-to-buffer-other-frame t))

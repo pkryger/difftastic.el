@@ -2760,6 +2760,34 @@ test/difftastic.t.el --- Emacs Lisp
             (difftastic--diff-visit-file-setup ,buffer 1 0)
             (should (equal (point) 1))))))))
 
+(ert-deftest difftastic-diff-visit-file-setup:widen ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window))))
+      (insert "bar")
+      (narrow-to-region 2 4)
+      (eval
+       `(mocklet (((get-buffer-window ,buffer 'visible) => ,win))
+          (difftastic--diff-visit-file-setup ,buffer 2 0)
+          (should (equal (point) 5))
+          (should (equal (point-min) 1))
+          (should (equal (point-max) 8)))))))
+
+(ert-deftest difftastic-diff-visit-file-setup:no-window-error ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer)))
+      (insert "bar")
+      (eval
+       `(mocklet (((get-buffer-window ,buffer 'visible)))
+          (let ((data (cadr
+                       (should-error
+                        (difftastic--diff-visit-file-setup ,buffer 2 0)))))
+            (should (equal "File buffer is not visible" data))))))))
+
 (ert-deftest difftastic--diff-visit-file-or-buffer:left-buffer ()
   (with-temp-buffer
     (insert "foo\n")

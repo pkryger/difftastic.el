@@ -1064,6 +1064,27 @@ and SIDE is either `left' or `right'."
                 (throw 'chunk-file (list file (car right) 'right))))
             (setq lines (cdr lines))))))))
 
+(defun difftastic--diff-visit-file-setup (buffer line col)
+  "Setup the BUFFER after visiting it.
+Go to LINE and COL, in the BUFFER, widening it if necessary.  After that
+start a smerge session and run `difftastic-diff-visit-file-hook'."
+  (if-let* ((win (get-buffer-window buffer 'visible)))
+      (let ((pos (save-restriction
+                   (widen)
+                   (goto-char (point-min))
+                   (min (+ (compat-call pos-bol (or line 1)) ; Since Emacs-29
+                           col)
+                        (compat-call pos-eol (or line 1)))))) ; Since Emacs-29
+        (with-selected-window win
+          (unless (<= (point-min) pos (point-max))
+            (widen))
+          (goto-char pos))
+        (when (and buffer-file-name
+                   (magit-anything-unmerged-p buffer-file-name))
+          (smerge-start-session))
+        (run-hooks 'difftastic-diff-visit-file-hook))
+    (error "File buffer is not visible")))
+
 (defun difftastic--diff-visit-file-or-buffer (chunk-file fn)
   "From a diff visit the appropriate file or buffer CHUNK-FILE.
 The CHUNK-FILE is a list in a form of (FILE LINE-NUM SIDE), where FILE
@@ -1083,13 +1104,8 @@ in some window."
                                         (if (eq side 'left) "A" "B") buf)))
                         (get-file-buffer file)
                         (find-file-noselect file))))
-    (with-current-buffer buf
-      (save-restriction
-        (widen)
-        (goto-char (point-min))
-        (goto-char
-         (compat-call pos-bol line)))) ; Since Emacs-29
     (funcall fn buf)
+    (difftastic--diff-visit-file-setup buf line 0)
     buf))
 
 (defun difftastic--diff-visit-git-file (chunk-file fn &optional force-worktree)
@@ -1122,24 +1138,18 @@ either `left' or `right'.  Use FN to display the buffer in some window."
                         (or (get-file-buffer file)
                             (find-file-noselect file))
                       (magit-find-file-noselect (if (stringp rev) rev "HEAD")
-                                                file)))
-               (pos (when line
-                      (with-current-buffer buf
-                        (cond ((eq rev 'staged)
-                               (setq line
-                                     (magit-diff-visit--offset file nil line)))
-                              ((and force-worktree
-                                    (stringp rev))
-                               (setq line
-                                     (magit-diff-visit--offset file rev line))))
-                        (save-restriction
-                          (widen)
-                          (goto-char (point-min))
-                          (goto-char
-                           (compat-call pos-bol line)) ; Since Emacs-29
-                          (point))))))
+                                           file))))
+    (when line
+      (with-current-buffer buf
+        (cond ((eq rev 'staged)
+               (setq line
+                     (magit-diff-visit--offset file nil line)))
+              ((and force-worktree
+                    (stringp rev))
+               (setq line
+                     (magit-diff-visit--offset file rev line))))))
     (funcall fn buf)
-    (magit-diff-visit-file--setup buf pos)
+    (difftastic--diff-visit-file-setup buf line 0)
     buf))
 
 (defun difftastic--diff-visit-file (chunk-file fn &optional force-worktree)

@@ -2700,16 +2700,80 @@ test/difftastic.t.el --- Emacs Lisp
     (should (equal (cons 'eol (difftastic--chunk-file-at-point))
                    '(eol "foo" 101 right)))))
 
+(ert-deftest difftastic-diff-visit-file-setup:goto-line-col ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window))))
+      (insert "bar")
+      (eval
+       `(mocklet (((get-buffer-window ,buffer 'visible) => ,win))
+          (difftastic--diff-visit-file-setup ,buffer 1 0)
+          (should (equal (point) 1))
+          (difftastic--diff-visit-file-setup ,buffer 1 2)
+          (should (equal (point) 3))
+          (difftastic--diff-visit-file-setup ,buffer 2 0)
+          (should (equal (point) 5))
+          (difftastic--diff-visit-file-setup ,buffer 2 2)
+          (should (equal (point) 7))
+          (difftastic--diff-visit-file-setup ,buffer nil 0)
+          (should (equal (point) 1))
+          (difftastic--diff-visit-file-setup ,buffer nil 2)
+          (should (equal (point) 3))
+          (difftastic--diff-visit-file-setup ,buffer 1 7)
+          (should (equal (point) 4))
+          (difftastic--diff-visit-file-setup ,buffer 2 7)
+          (should (equal (point) 8))
+          (difftastic--diff-visit-file-setup ,buffer nil 7)
+          (should (equal (point) 4)))))))
+
+(ert-deftest difftastic-diff-visit-file-setup:start-smerge ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
+           (buffer-file-name "test-file"))
+      (insert "bar")
+      (eval
+       `(mocklet (((get-buffer-window ,buffer 'visible) => ,win)
+                  ((magit-anything-unmerged-p "test-file") => t)
+                  ((smerge-start-session)))
+          (difftastic--diff-visit-file-setup ,buffer 1 0)
+          (should (equal (point) 1)))))))
+
+(ert-deftest difftastic-diff-visit-file-setup:run-hooks ()
+  (with-temp-buffer
+    (insert "foo\n")
+    (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window))))
+      (insert "bar")
+      (eval
+       `(mocklet (((get-buffer-window ,buffer 'visible) => ,win)
+                  ((test-hook)))
+          (let ((difftastic-diff-visit-file-hook '(test-hook)))
+            (difftastic--diff-visit-file-setup ,buffer 1 0)
+            (should (equal (point) 1))))))))
+
 (ert-deftest difftastic--diff-visit-file-or-buffer:left-buffer ()
   (with-temp-buffer
     (insert "foo\n")
     (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
            (pos (point))
            (difftastic--metadata `((file-buf-A . ("test-file-A" . ,buffer))
                                    (file-buf-B . ("test-file-B" . "test-buf-B")))))
       (insert "bar")
       (eval
-       `(mocklet (((fn ,buffer)))
+       `(mocklet (((fn ,buffer))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
           (should (equal ,buffer
                          (difftastic--diff-visit-file-or-buffer
                           '("foo" 2 left) #'fn)))
@@ -2719,12 +2783,16 @@ test/difftastic.t.el --- Emacs Lisp
   (with-temp-buffer
     (insert "foo\n")
     (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
            (pos (point))
            (difftastic--metadata `((file-buf-A . ("test-file-A" . "test-buf-A"))
                                    (file-buf-B . ("test-file-B" . ,buffer)))))
       (insert "bar")
       (eval
-       `(mocklet (((fn ,buffer)))
+       `(mocklet (((fn ,buffer))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
           (should (equal ,buffer
                          (difftastic--diff-visit-file-or-buffer
                           '("foo" 2 right) #'fn)))
@@ -2762,13 +2830,17 @@ test/difftastic.t.el --- Emacs Lisp
   (with-temp-buffer
     (insert "foo\n")
     (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
            (pos (point))
            (difftastic--metadata '((file-buf-A . ("test-file-A" . nil))
                                    (file-buf-B . ("test-file-B" . nil)))))
       (insert "bar")
       (eval
        `(mocklet (((get-file-buffer "test-file-A") => ,buffer)
-                  ((fn ,buffer)))
+                  ((fn ,buffer))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
           (should (equal ,buffer
                          (difftastic--diff-visit-file-or-buffer
                           '("foo" 2 left) #'fn)))
@@ -2778,13 +2850,17 @@ test/difftastic.t.el --- Emacs Lisp
   (with-temp-buffer
     (insert "foo\n")
     (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
            (pos (point))
            (difftastic--metadata '((file-buf-A . ("test-file-A" . nil))
                                    (file-buf-B . ("test-file-B" . nil)))))
       (insert "bar")
       (eval
        `(mocklet (((get-file-buffer "test-file-B") => ,buffer)
-                  ((fn ,buffer)))
+                  ((fn ,buffer))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
           (should (equal ,buffer
                          (difftastic--diff-visit-file-or-buffer
                           '("foo" 2 right) #'fn)))
@@ -2794,6 +2870,9 @@ test/difftastic.t.el --- Emacs Lisp
   (with-temp-buffer
     (insert "foo\n")
     (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
            (pos (point))
            (difftastic--metadata '((file-buf-A . ("test-file-A" . nil))
                                    (file-buf-B . ("test-file-B" . nil)))))
@@ -2801,7 +2880,8 @@ test/difftastic.t.el --- Emacs Lisp
       (eval
        `(mocklet (((get-file-buffer "test-file-A"))
                   ((find-file-noselect "test-file-A") => ,buffer)
-                  ((fn ,buffer)))
+                  ((fn ,buffer))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
           (should (equal ,buffer
                          (difftastic--diff-visit-file-or-buffer
                           '("foo" 2 left) #'fn)))
@@ -2811,6 +2891,9 @@ test/difftastic.t.el --- Emacs Lisp
   (with-temp-buffer
     (insert "foo\n")
     (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
            (pos (point))
            (difftastic--metadata '((file-buf-A . ("test-file-A" . nil))
                                    (file-buf-B . ("test-file-B" . nil)))))
@@ -2818,7 +2901,8 @@ test/difftastic.t.el --- Emacs Lisp
       (eval
        `(mocklet (((get-file-buffer "test-file-B"))
                   ((find-file-noselect "test-file-B") => ,buffer)
-                  ((fn ,buffer)))
+                  ((fn ,buffer))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
           (should (equal ,buffer
                          (difftastic--diff-visit-file-or-buffer
                           '("foo" 2 right) #'fn)))
@@ -2828,13 +2912,16 @@ test/difftastic.t.el --- Emacs Lisp
   (with-temp-buffer
     (insert "foo\n")
     (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
            (pos (point))
            (difftastic--metadata '((rev-or-range . "test-rev"))))
       (insert "bar")
       (eval
        `(mocklet (((magit-find-file-noselect "test-rev^" "test-file") => ,buffer)
                   ((fn ,buffer))
-                  ((magit-diff-visit-file--setup ,buffer ,pos)))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
           (should (equal ,buffer
                          (difftastic--diff-visit-git-file
                           '("test-file" 2 left) #'fn)))
@@ -2844,13 +2931,16 @@ test/difftastic.t.el --- Emacs Lisp
   (with-temp-buffer
     (insert "foo\n")
     (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
            (pos (point))
            (difftastic--metadata '((rev-or-range . "test-rev"))))
       (insert "bar")
       (eval
        `(mocklet (((magit-find-file-noselect "test-rev" "test-file") => ,buffer)
                   ((fn ,buffer))
-                  ((magit-diff-visit-file--setup ,buffer ,pos)))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
           (should (equal ,buffer
                          (difftastic--diff-visit-git-file
                           '("test-file" 2 right) #'fn)))
@@ -2860,13 +2950,16 @@ test/difftastic.t.el --- Emacs Lisp
   (with-temp-buffer
     (insert "foo\n")
     (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
            (pos (point))
            (difftastic--metadata '((rev-or-range . "test-range-from..test-range-to"))))
       (insert "bar")
       (eval
        `(mocklet (((magit-find-file-noselect "test-range-from" "test-file") => ,buffer)
                   ((fn ,buffer))
-                  ((magit-diff-visit-file--setup ,buffer ,pos)))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
           (should (equal ,buffer
                          (difftastic--diff-visit-git-file
                           '("test-file" 2 left) #'fn)))
@@ -2876,13 +2969,16 @@ test/difftastic.t.el --- Emacs Lisp
   (with-temp-buffer
     (insert "foo\n")
     (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
            (pos (point))
            (difftastic--metadata '((rev-or-range . "test-range-from..test-range-to"))))
       (insert "bar")
       (eval
        `(mocklet (((magit-find-file-noselect "test-range-to" "test-file") => ,buffer)
                   ((fn ,buffer))
-                  ((magit-diff-visit-file--setup ,buffer ,pos)))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
           (should (equal ,buffer
                          (difftastic--diff-visit-git-file
                           '("test-file" 2 right) #'fn)))
@@ -2892,13 +2988,16 @@ test/difftastic.t.el --- Emacs Lisp
   (with-temp-buffer
     (insert "foo\n")
     (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
            (difftastic--metadata '((rev-or-range . staged))))
       (insert "bar")
       (eval
        `(mocklet (((magit-find-file-noselect "HEAD" "test-file") => ,buffer)
                   ((magit-diff-visit--offset "test-file" nil 2) => 3)
                   ((fn ,buffer))
-                  ((magit-diff-visit-file--setup ,buffer (point-max))))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
           (should (equal ,buffer
                          (difftastic--diff-visit-git-file
                           '("test-file" 2 left) #'fn)))
@@ -2908,13 +3007,16 @@ test/difftastic.t.el --- Emacs Lisp
   (with-temp-buffer
     (insert "foo\n")
     (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
            (difftastic--metadata '((rev-or-range . staged))))
       (insert "bar")
       (eval
        `(mocklet (((magit-find-file-noselect "HEAD" "test-file") => ,buffer)
                   ((fn ,buffer))
                   ((magit-diff-visit--offset "test-file" nil 2) => 3)
-                  ((magit-diff-visit-file--setup ,buffer (point-max))))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
           (should (equal ,buffer
                          (difftastic--diff-visit-git-file
                           '("test-file" 2 right) #'fn)))
@@ -2924,6 +3026,9 @@ test/difftastic.t.el --- Emacs Lisp
   (with-temp-buffer
     (insert "foo\n")
     (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
            (difftastic--metadata '((rev-or-range . staged)))
            (difftastic-diff-visit-avoid-head-blob t))
       (insert "bar")
@@ -2931,7 +3036,7 @@ test/difftastic.t.el --- Emacs Lisp
        `(mocklet (((get-file-buffer "test-file") => ,buffer)
                   ((magit-diff-visit--offset "test-file" nil 2) => 3)
                   ((fn ,buffer))
-                  ((magit-diff-visit-file--setup ,buffer (point-max))))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
           (should (equal ,buffer
                          (difftastic--diff-visit-git-file
                           '("test-file" 2 left) #'fn)))
@@ -2941,6 +3046,9 @@ test/difftastic.t.el --- Emacs Lisp
   (with-temp-buffer
     (insert "foo\n")
     (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
            (difftastic--metadata '((rev-or-range . staged)))
            (difftastic-diff-visit-avoid-head-blob t))
       (insert "bar")
@@ -2948,7 +3056,7 @@ test/difftastic.t.el --- Emacs Lisp
        `(mocklet (((get-file-buffer "test-file") => ,buffer)
                   ((magit-diff-visit--offset "test-file" nil 2) => 3)
                   ((fn ,buffer))
-                  ((magit-diff-visit-file--setup ,buffer (point-max))))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
           (should (equal ,buffer
                          (difftastic--diff-visit-git-file
                           '("test-file" 2 right) #'fn)))
@@ -2958,6 +3066,9 @@ test/difftastic.t.el --- Emacs Lisp
   (with-temp-buffer
     (insert "foo\n")
     (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
            (difftastic--metadata '((rev-or-range . staged)))
            (difftastic-diff-visit-avoid-head-blob t))
       (insert "bar")
@@ -2966,7 +3077,7 @@ test/difftastic.t.el --- Emacs Lisp
                   ((find-file-noselect "test-file") => ,buffer)
                   ((magit-diff-visit--offset "test-file" nil 2) => 3)
                   ((fn ,buffer))
-                  ((magit-diff-visit-file--setup ,buffer (point-max))))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
           (should (equal ,buffer
                          (difftastic--diff-visit-git-file
                           '("test-file" 2 left) #'fn)))
@@ -2976,6 +3087,9 @@ test/difftastic.t.el --- Emacs Lisp
   (with-temp-buffer
     (insert "foo\n")
     (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
            (difftastic--metadata '((rev-or-range . staged)))
            (difftastic-diff-visit-avoid-head-blob t))
       (insert "bar")
@@ -2984,7 +3098,7 @@ test/difftastic.t.el --- Emacs Lisp
                   ((find-file-noselect "test-file") => ,buffer)
                   ((magit-diff-visit--offset "test-file" nil 2) => 3)
                   ((fn ,buffer))
-                  ((magit-diff-visit-file--setup ,buffer (point-max))))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
           (should (equal ,buffer
                          (difftastic--diff-visit-git-file
                           '("test-file" 2 right) #'fn)))
@@ -2994,13 +3108,16 @@ test/difftastic.t.el --- Emacs Lisp
   (with-temp-buffer
     (insert "foo\n")
     (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
            (pos (point))
            (difftastic--metadata '((rev-or-range . unstaged))))
       (insert "bar")
       (eval
        `(mocklet (((magit-find-file-noselect "HEAD" "test-file") => ,buffer)
                   ((fn ,buffer))
-                  ((magit-diff-visit-file--setup ,buffer ,pos)))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
           (should (equal ,buffer
                          (difftastic--diff-visit-git-file
                           '("test-file" 2 left) #'fn)))
@@ -3010,13 +3127,16 @@ test/difftastic.t.el --- Emacs Lisp
   (with-temp-buffer
     (insert "foo\n")
     (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
            (pos (point))
            (difftastic--metadata '((rev-or-range . unstaged))))
       (insert "bar")
       (eval
        `(mocklet (((magit-find-file-noselect "HEAD" "test-file") => ,buffer)
                   ((fn ,buffer))
-                  ((magit-diff-visit-file--setup ,buffer ,pos)))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
           (should (equal ,buffer
                          (difftastic--diff-visit-git-file
                           '("test-file" 2 right) #'fn)))
@@ -3026,6 +3146,9 @@ test/difftastic.t.el --- Emacs Lisp
   (with-temp-buffer
     (insert "foo\n")
     (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
            (pos (point))
            (difftastic--metadata '((rev-or-range . unstaged)))
            (difftastic-diff-visit-avoid-head-blob t))
@@ -3033,7 +3156,7 @@ test/difftastic.t.el --- Emacs Lisp
       (eval
        `(mocklet (((get-file-buffer "test-file") => ,buffer)
                   ((fn ,buffer))
-                  ((magit-diff-visit-file--setup ,buffer ,pos)))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
           (should (equal ,buffer
                          (difftastic--diff-visit-git-file
                           '("test-file" 2 left) #'fn)))
@@ -3043,6 +3166,9 @@ test/difftastic.t.el --- Emacs Lisp
   (with-temp-buffer
     (insert "foo\n")
     (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
            (pos (point))
            (difftastic--metadata '((rev-or-range . unstaged)))
            (difftastic-diff-visit-avoid-head-blob t))
@@ -3050,7 +3176,7 @@ test/difftastic.t.el --- Emacs Lisp
       (eval
        `(mocklet (((get-file-buffer "test-file") => ,buffer)
                   ((fn ,buffer))
-                  ((magit-diff-visit-file--setup ,buffer ,pos)))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
           (should (equal ,buffer
                          (difftastic--diff-visit-git-file
                           '("test-file" 2 right) #'fn)))
@@ -3060,6 +3186,9 @@ test/difftastic.t.el --- Emacs Lisp
   (with-temp-buffer
     (insert "foo\n")
     (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
            (pos (point))
            (difftastic--metadata '((rev-or-range . unstaged)))
            (difftastic-diff-visit-avoid-head-blob t))
@@ -3068,7 +3197,7 @@ test/difftastic.t.el --- Emacs Lisp
        `(mocklet (((get-file-buffer "test-file"))
                   ((find-file-noselect "test-file") => ,buffer)
                   ((fn ,buffer))
-                  ((magit-diff-visit-file--setup ,buffer ,pos)))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
           (should (equal ,buffer
                          (difftastic--diff-visit-git-file
                           '("test-file" 2 left) #'fn)))
@@ -3078,6 +3207,9 @@ test/difftastic.t.el --- Emacs Lisp
   (with-temp-buffer
     (insert "foo\n")
     (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
            (pos (point))
            (difftastic--metadata '((rev-or-range . unstaged)))
            (difftastic-diff-visit-avoid-head-blob t))
@@ -3086,7 +3218,7 @@ test/difftastic.t.el --- Emacs Lisp
        `(mocklet (((get-file-buffer "test-file"))
                   ((find-file-noselect "test-file") => ,buffer)
                   ((fn ,buffer))
-                  ((magit-diff-visit-file--setup ,buffer ,pos)))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
           (should (equal ,buffer
                          (difftastic--diff-visit-git-file
                           '("test-file" 2 right) #'fn)))
@@ -3096,13 +3228,16 @@ test/difftastic.t.el --- Emacs Lisp
   (with-temp-buffer
     (insert "foo\n")
     (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
            (difftastic--metadata '((rev-or-range . "test-rev"))))
       (insert "bar")
       (eval
        `(mocklet (((get-file-buffer "test-file") => ,buffer)
                   ((magit-diff-visit--offset "test-file" "test-rev^" 2) => 3)
                   ((fn ,buffer))
-                  ((magit-diff-visit-file--setup ,buffer (point-max))))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
           (should (equal ,buffer
                          (difftastic--diff-visit-git-file
                           '("test-file" 2 left) #'fn t)))
@@ -3112,13 +3247,16 @@ test/difftastic.t.el --- Emacs Lisp
   (with-temp-buffer
     (insert "foo\n")
     (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
            (difftastic--metadata '((rev-or-range . "test-rev"))))
       (insert "bar")
       (eval
        `(mocklet (((get-file-buffer "test-file") => ,buffer)
                   ((magit-diff-visit--offset "test-file" "test-rev" 2) => 3)
                   ((fn ,buffer))
-                  ((magit-diff-visit-file--setup ,buffer (point-max))))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
           (should (equal ,buffer
                          (difftastic--diff-visit-git-file
                           '("test-file" 2 right) #'fn t)))
@@ -3128,6 +3266,9 @@ test/difftastic.t.el --- Emacs Lisp
   (with-temp-buffer
     (insert "foo\n")
     (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
            (difftastic--metadata '((rev-or-range . "test-rev"))))
       (insert "bar")
       (eval
@@ -3135,7 +3276,7 @@ test/difftastic.t.el --- Emacs Lisp
                   ((find-file-noselect "test-file") => ,buffer)
                   ((magit-diff-visit--offset "test-file" "test-rev^" 2) => 3)
                   ((fn ,buffer))
-                  ((magit-diff-visit-file--setup ,buffer (point-max))))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
           (should (equal ,buffer
                          (difftastic--diff-visit-git-file
                           '("test-file" 2 left) #'fn t)))
@@ -3145,6 +3286,9 @@ test/difftastic.t.el --- Emacs Lisp
   (with-temp-buffer
     (insert "foo\n")
     (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
            (difftastic--metadata '((rev-or-range . "test-rev"))))
       (insert "bar")
       (eval
@@ -3152,7 +3296,7 @@ test/difftastic.t.el --- Emacs Lisp
                   ((find-file-noselect "test-file") => ,buffer)
                   ((magit-diff-visit--offset "test-file" "test-rev" 2) => 3)
                   ((fn ,buffer))
-                  ((magit-diff-visit-file--setup ,buffer (point-max))))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
           (should (equal ,buffer
                          (difftastic--diff-visit-git-file
                           '("test-file" 2 right) #'fn t)))
@@ -3162,13 +3306,16 @@ test/difftastic.t.el --- Emacs Lisp
   (with-temp-buffer
     (insert "foo\n")
     (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
            (difftastic--metadata '((rev-or-range . "test-range-from..test-range-to"))))
       (insert "bar")
       (eval
        `(mocklet (((get-file-buffer "test-file") => ,buffer)
                   ((magit-diff-visit--offset "test-file" "test-range-from" 2) => 3)
                   ((fn ,buffer))
-                  ((magit-diff-visit-file--setup ,buffer (point-max))))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
           (should (equal ,buffer
                          (difftastic--diff-visit-git-file
                           '("test-file" 2 left) #'fn t)))
@@ -3178,13 +3325,16 @@ test/difftastic.t.el --- Emacs Lisp
   (with-temp-buffer
     (insert "foo\n")
     (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
            (difftastic--metadata '((rev-or-range . "test-range-from..test-range-to"))))
       (insert "bar")
       (eval
        `(mocklet (((get-file-buffer "test-file") => ,buffer)
                   ((magit-diff-visit--offset "test-file" "test-range-to" 2) => 3)
                   ((fn ,buffer))
-                  ((magit-diff-visit-file--setup ,buffer (point-max))))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
           (should (equal ,buffer
                          (difftastic--diff-visit-git-file
                           '("test-file" 2 right) #'fn t)))
@@ -3194,6 +3344,9 @@ test/difftastic.t.el --- Emacs Lisp
   (with-temp-buffer
     (insert "foo\n")
     (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
            (difftastic--metadata '((rev-or-range . "test-range-from..test-range-to"))))
       (insert "bar")
       (eval
@@ -3201,7 +3354,7 @@ test/difftastic.t.el --- Emacs Lisp
                   ((find-file-noselect "test-file") => ,buffer)
                   ((magit-diff-visit--offset "test-file" "test-range-from" 2) => 3)
                   ((fn ,buffer))
-                  ((magit-diff-visit-file--setup ,buffer (point-max))))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
           (should (equal ,buffer
                          (difftastic--diff-visit-git-file
                           '("test-file" 2 left) #'fn t)))
@@ -3211,6 +3364,9 @@ test/difftastic.t.el --- Emacs Lisp
   (with-temp-buffer
     (insert "foo\n")
     (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
            (difftastic--metadata '((rev-or-range . "test-range-from..test-range-to"))))
       (insert "bar")
       (eval
@@ -3218,7 +3374,7 @@ test/difftastic.t.el --- Emacs Lisp
                   ((find-file-noselect "test-file") => ,buffer)
                   ((magit-diff-visit--offset "test-file" "test-range-to" 2) => 3)
                   ((fn ,buffer))
-                  ((magit-diff-visit-file--setup ,buffer (point-max))))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
           (should (equal ,buffer
                          (difftastic--diff-visit-git-file
                           '("test-file" 2 right) #'fn t)))
@@ -3228,13 +3384,16 @@ test/difftastic.t.el --- Emacs Lisp
   (with-temp-buffer
     (insert "foo\n")
     (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
            (difftastic--metadata '((rev-or-range . staged))))
       (insert "bar")
       (eval
        `(mocklet (((get-file-buffer "test-file") => ,buffer)
                   ((magit-diff-visit--offset "test-file" nil 2) => 3)
                   ((fn ,buffer))
-                  ((magit-diff-visit-file--setup ,buffer (point-max))))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
           (should (equal ,buffer
                          (difftastic--diff-visit-git-file
                           '("test-file" 2 left) #'fn t)))
@@ -3244,13 +3403,16 @@ test/difftastic.t.el --- Emacs Lisp
   (with-temp-buffer
     (insert "foo\n")
     (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
            (difftastic--metadata '((rev-or-range . staged))))
       (insert "bar")
       (eval
        `(mocklet (((get-file-buffer "test-file") => ,buffer)
                   ((magit-diff-visit--offset "test-file" nil 2) => 3)
                   ((fn ,buffer))
-                  ((magit-diff-visit-file--setup ,buffer (point-max))))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
           (should (equal ,buffer
                          (difftastic--diff-visit-git-file
                           '("test-file" 2 right) #'fn t)))
@@ -3260,6 +3422,9 @@ test/difftastic.t.el --- Emacs Lisp
   (with-temp-buffer
     (insert "foo\n")
     (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
            (difftastic--metadata '((rev-or-range . staged))))
       (insert "bar")
       (eval
@@ -3267,7 +3432,7 @@ test/difftastic.t.el --- Emacs Lisp
                   ((find-file-noselect "test-file") => ,buffer)
                   ((magit-diff-visit--offset "test-file" nil 2) => 3)
                   ((fn ,buffer))
-                  ((magit-diff-visit-file--setup ,buffer (point-max))))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
           (should (equal ,buffer
                          (difftastic--diff-visit-git-file
                           '("test-file" 2 left) #'fn t)))
@@ -3277,6 +3442,9 @@ test/difftastic.t.el --- Emacs Lisp
   (with-temp-buffer
     (insert "foo\n")
     (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
            (difftastic--metadata '((rev-or-range . staged))))
       (insert "bar")
       (eval
@@ -3284,7 +3452,7 @@ test/difftastic.t.el --- Emacs Lisp
                   ((find-file-noselect "test-file") => ,buffer)
                   ((magit-diff-visit--offset "test-file" nil 2) => 3)
                   ((fn ,buffer))
-                  ((magit-diff-visit-file--setup ,buffer (point-max))))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
           (should (equal ,buffer
                          (difftastic--diff-visit-git-file
                           '("test-file" 2 right) #'fn t)))
@@ -3294,13 +3462,16 @@ test/difftastic.t.el --- Emacs Lisp
   (with-temp-buffer
     (insert "foo\n")
     (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
            (pos (point))
            (difftastic--metadata '((rev-or-range . unstaged))))
       (insert "bar")
       (eval
        `(mocklet (((get-file-buffer "test-file") => ,buffer)
                   ((fn ,buffer))
-                  ((magit-diff-visit-file--setup ,buffer ,pos)))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
           (should (equal ,buffer
                          (difftastic--diff-visit-git-file
                           '("test-file" 2 left) #'fn t)))
@@ -3310,13 +3481,16 @@ test/difftastic.t.el --- Emacs Lisp
   (with-temp-buffer
     (insert "foo\n")
     (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
            (pos (point))
            (difftastic--metadata '((rev-or-range . unstaged))))
       (insert "bar")
       (eval
        `(mocklet (((get-file-buffer "test-file") => ,buffer)
                   ((fn ,buffer))
-                  ((magit-diff-visit-file--setup ,buffer ,pos)))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
           (should (equal ,buffer
                          (difftastic--diff-visit-git-file
                           '("test-file" 2 right) #'fn t)))
@@ -3326,6 +3500,9 @@ test/difftastic.t.el --- Emacs Lisp
   (with-temp-buffer
     (insert "foo\n")
     (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
            (pos (point))
            (difftastic--metadata '((rev-or-range . unstaged))))
       (insert "bar")
@@ -3333,7 +3510,7 @@ test/difftastic.t.el --- Emacs Lisp
        `(mocklet (((get-file-buffer "test-file"))
                   ((find-file-noselect "test-file") => ,buffer)
                   ((fn ,buffer))
-                  ((magit-diff-visit-file--setup ,buffer ,pos)))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
           (should (equal ,buffer
                          (difftastic--diff-visit-git-file
                           '("test-file" 2 left) #'fn t)))
@@ -3343,6 +3520,9 @@ test/difftastic.t.el --- Emacs Lisp
   (with-temp-buffer
     (insert "foo\n")
     (let* ((buffer (current-buffer))
+           (win (progn
+                  (switch-to-buffer buffer)
+                  (selected-window)))
            (pos (point))
            (difftastic--metadata '((rev-or-range . unstaged))))
       (insert "bar")
@@ -3350,7 +3530,7 @@ test/difftastic.t.el --- Emacs Lisp
        `(mocklet (((get-file-buffer "test-file"))
                   ((find-file-noselect "test-file") => ,buffer)
                   ((fn ,buffer))
-                  ((magit-diff-visit-file--setup ,buffer ,pos)))
+                  ((get-buffer-window ,buffer 'visible) => ,win))
           (should (equal ,buffer
                          (difftastic--diff-visit-git-file
                           '("test-file" 2 right) #'fn t)))

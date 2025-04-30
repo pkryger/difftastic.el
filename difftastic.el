@@ -1134,7 +1134,8 @@ either `left' or `right'.  Use FN to display the buffer in some window."
                       rev-or-range))
                (buf (if (or force-worktree
                             (and (not (stringp rev))
-                                 difftastic-diff-visit-avoid-head-blob))
+                                 (or (eq side 'right)
+                                     difftastic-diff-visit-avoid-head-blob)))
                         (or (get-file-buffer file)
                             (find-file-noselect file))
                       (magit-find-file-noselect (if (stringp rev) rev "HEAD")

@@ -1172,9 +1172,11 @@ name, LINE-NUM is an optional line number within the FILE and SIDE is
 either `left' or `right'.  Use FN to display the buffer in some window.
 After visiting the FILE start a smerge session (if there are unmerged
 changes) and run `difftastic-diff-visit-file-hook'."
-  (if (assq 'git-command difftastic--metadata)
-      (difftastic--diff-visit-git-file chunk-file fn force-worktree)
-    (difftastic--diff-visit-file-or-buffer chunk-file fn)))
+  (if chunk-file
+      (if (assq 'git-command difftastic--metadata)
+          (difftastic--diff-visit-git-file chunk-file fn force-worktree)
+        (difftastic--diff-visit-file-or-buffer chunk-file fn))
+    (user-error "No chunk file at point")))
 
 (defun difftastic-diff-visit-file (chunk-file &optional other-window)
   "From a diff visit the appropriate version CHUNK-FILE.

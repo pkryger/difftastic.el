@@ -3617,6 +3617,14 @@ test/difftastic.t.el --- Emacs Lisp
     (let (difftastic--metadata )
       (difftastic--diff-visit-file-or-buffer "test-chunk-file" #'ignore))))
 
+(ert-deftest difftastic--diff-visit-file:no-file ()
+  (mocklet ((difftastic--diff-visit-git-file not-called)
+            (difftastic--diff-visit-file-or-buffer not-called))
+      (let ((data (cadr
+                   (should-error
+                    (difftastic--diff-visit-file nil #'ignore t)))))
+        (should (equal data "No chunk file at point")))))
+
 (ert-deftest difftastic-diff-visit-file:basic ()
   (mocklet (((difftastic--chunk-file-at-point) => "test-chunk-file")
             ((difftastic--diff-visit-file

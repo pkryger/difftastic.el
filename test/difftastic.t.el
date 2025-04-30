@@ -7,6 +7,7 @@
                                           buffer-file-name))))
   (load-file (file-name-concat dir "undercover-init.el")))
 
+(require 'ert)
 (require 'difftastic)
 (require 'el-mock)
 (require 'org)

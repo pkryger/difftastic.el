@@ -1221,7 +1221,8 @@ smerge session (if there are unmerged changes) and run
 
 Note that this command only works if point is inside a diff."
   (interactive (list (difftastic--chunk-file-at-point)
-                     current-prefix-arg))
+                     current-prefix-arg)
+               difftastic-mode)
   (difftastic--diff-visit-file chunk-file (if other-window
                                               #'switch-to-buffer-other-window
                                             #'pop-to-buffer-same-window)))
@@ -1230,14 +1231,16 @@ Note that this command only works if point is inside a diff."
   "From a diff visit the appropriate version CHUNK-FILE in other window.
 Like `difftastic-diff-visit-file', which see, but use
 `switch-to-buffer-other-window'."
-  (interactive (list (difftastic--chunk-file-at-point)))
+  (interactive (list (difftastic--chunk-file-at-point))
+               difftastic-mode)
   (difftastic--diff-visit-file chunk-file #'switch-to-buffer-other-window))
 
 (defun difftastic-diff-visit-file-other-frame (chunk-file)
   "From a diff visit the appropriate version CHUNK-FILE in other frame.
 Like `difftastic-diff-visit-file', which see, but use
 `switch-to-buffer-other-frame'."
-  (interactive (list (difftastic--chunk-file-at-point)))
+  (interactive (list (difftastic--chunk-file-at-point))
+               difftastic-mode)
   (difftastic--diff-visit-file chunk-file #'switch-to-buffer-other-frame))
 
 (defun difftastic-diff-visit-worktree-file (chunk-file &optional other-window)
@@ -1260,7 +1263,8 @@ to the line that point is on in the diff.  Lines that were added
 or removed in the working tree, the index and other commits in
 between are automatically accounted for."
   (interactive (list (difftastic--chunk-file-at-point)
-                     current-prefix-arg))
+                     current-prefix-arg)
+               difftastic-mode)
   (difftastic--diff-visit-file chunk-file
                                (if other-window
                                    #'switch-to-buffer-other-window
@@ -1271,14 +1275,16 @@ between are automatically accounted for."
   "From a diff visit the worktree version of CHUNK-FILE in other window.
 Like `difftastic-diff-visit-worktree-file', which see, but use
 `switch-to-buffer-other-window'."
-    (interactive (list (difftastic--chunk-file-at-point)))
+    (interactive (list (difftastic--chunk-file-at-point))
+                 difftastic-mode)
   (difftastic--diff-visit-file chunk-file #'switch-to-buffer-other-window t))
 
 (defun difftastic-diff-visit-worktree-file-other-frame (chunk-file)
   "From a diff visit the worktree version of CHUNK-FILE in other frame.
 Like `difftastic-diff-visit-worktree-file', which see, but use
 `switch-to-buffer-other-frame'."
-    (interactive (list (difftastic--chunk-file-at-point)))
+    (interactive (list (difftastic--chunk-file-at-point))
+                 difftastic-mode)
   (difftastic--diff-visit-file chunk-file #'switch-to-buffer-other-frame t))
 
 ;; From `view-mode'

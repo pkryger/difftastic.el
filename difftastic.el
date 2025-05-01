@@ -1701,12 +1701,12 @@ The meaning of REV-OR-RANGE, ARGS, and FILES is like in
 (defun difftastic--magit-show (rev)
                                         ; checkdoc-params: (rev)
   "Implementation for `difftastic-magit-show', which see."
-  (if (not rev)
-      (user-error "No revision specified")
-    (difftastic--git-with-difftastic
-     (get-buffer-create (concat "*difftastic git show " rev "*"))
-     (list "git" "--no-pager" "show" "--ext-diff" rev)
-     rev)))
+  (if rev
+      (difftastic--git-with-difftastic
+       (get-buffer-create (concat "*difftastic git show " rev "*"))
+       (list "git" "--no-pager" "show" "--ext-diff" rev)
+       rev)
+    (user-error "No revision specified")))
 
 ;;;###autoload
 (defun difftastic-magit-show (rev)

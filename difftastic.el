@@ -230,6 +230,10 @@
 ;; - `difftastic-magit-show' - show the result of `git show ARG' with
 ;;   `difftastic'.  It tries to guess `ARG', and ask for it when can't. When
 ;;   called with prefix argument it will ask for `ARG'.
+;; - `difftastic-magit-diff-buffer-file' - show diff for the blob or file
+;;   visited in the current buffer with `difftastic'.  When the buffer visits
+;;   a blob, then show the respective commit.  When the buffer visits a file,
+;;   then show the differences between `HEAD' and the working tree.
 ;; - `difftastic-files' - show the result of `difft FILE-A FILE-B'.  When
 ;;   called with prefix argument it will ask for language to use, instead of
 ;;   relaying on `difftastic''s detection mechanism.
@@ -1471,11 +1475,12 @@ The DIFFTASTIC-ARGS is a list of extra arguments to pass to
         process-environment))
 
 (defun difftastic--git-with-difftastic (buffer command rev-or-range
-                                               &optional difftastic-args)
+                                               &optional difftastic-args action)
   "Run COMMAND with GIT_EXTERNAL_DIFF then show result in BUFFER.
 REV-OR-RANGE is the current git revision or range used by the COMMAND.
 The DIFFTASTIC-ARGS is a list of extra arguments to pass to
-`difftastic-executable'."
+`difftastic-executable'.  When ACTION is non-nil, it is exectued in
+process sentinel."
   (let* ((requested-width (funcall difftastic-requested-window-width-function))
          (process-environment (difftastic--build-git-process-environment
                                requested-width
@@ -1490,6 +1495,7 @@ The DIFFTASTIC-ARGS is a list of extra arguments to pass to
                (rev-or-range . ,rev-or-range)
                (git-command . ,command)
                (difftastic-args . ,difftastic-args)))
+       (when action (funcall action))
        (funcall difftastic-display-buffer-function buffer requested-width)))))
 
 (defun difftastic--run-command-filter (process string)
@@ -1722,6 +1728,56 @@ When REV couldn't be guessed or called with prefix arg ask for REV."
           ;; Otherwise, query the user.
           (magit-read-branch-or-commit "Revision"))))
   (difftastic--magit-show rev))
+
+(defun difftastic--goto-line-col-in-chunk (line col)
+  "Goto LINE and COLUMN in a `difftastic' buffer.
+LINE is the line in right side of a chunk (if exists), not the line in
+the buffer.  COL is is column in right side of the chunk."
+  (let ((line (if (numberp line)
+                  (format "%d" line)
+                line)))
+    (when (re-search-forward
+           (rx-to-string `(seq line-start
+                               difftastic--line-num-or-spaces-rx
+                               (zero-or-one (seq (+? not-newline) " "))
+                               ,line (or " " line-end)))
+           nil t)
+      (goto-char (min (compat-call pos-eol) ; Since Emacs-29
+                      (+ (point) col))))))
+
+(defun difftastic--magit-diff-buffer-file ()
+  "Implementation for `difftastic-magit-diff-buffer-file'."
+  (if-let* ((default-directory (magit-toplevel))
+            (file (magit-file-relative-name)))
+      (if-let* ((rev magit-buffer-refname))
+          (difftastic--git-with-difftastic
+           (get-buffer-create
+            (concat "*difftastic git show " rev "*"))
+           (list "git" "--no-pager" "show" "--ext-diff" rev "--" file)
+           rev)
+        (save-buffer)
+        (let ((line (line-number-at-pos))
+              (col (current-column)))
+          (difftastic--git-with-difftastic
+           (get-buffer-create
+            "*difftastic git diff unstaged*")
+           (list "git" "--no-pager" "diff" "--ext-diff"
+                 (or (magit-get-current-branch) "HEAD")
+                 "--" file)
+           'unstaged
+           nil
+           (lambda ()
+             (difftastic--goto-line-col-in-chunk line col)))))
+    (user-error "Buffer isn't visiting a file")))
+
+;;;###autoload
+(defun difftastic-magit-diff-buffer-file ()
+  "Show diff for the blob or file visited in the current buffer.
+When the buffer visits a blob, then show the respective commit.  When
+the buffer visits a file, then show the differences between `HEAD' and
+the working tree.  In both cases limit the diff to the file or blob."
+  (interactive)
+  (difftastic--magit-diff-buffer-file))
 
 (defun difftastic--make-temp-file (prefix buffer)
   "Make a temporary file for BUFFER content with PREFIX included in file name."

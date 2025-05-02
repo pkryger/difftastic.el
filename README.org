@@ -215,6 +215,10 @@ The following commands are meant to help to interact with =difftastic=.
 - =difftastic-magit-show= - show the result of =git show ARG= with
   =difftastic=.  It tries to guess =ARG=, and ask for it when can't. When
   called with prefix argument it will ask for =ARG=.
+- =difftastic-magit-diff-buffer-file= - show diff for the blob or file visited
+  in the current buffer with =difftastic=.  When the buffer visits a blob, then
+  show the respective commit.  When the buffer visits a file, then show the
+  differences between ~HEAD~ and the working tree.
 - =difftastic-files= - show the result of =difft FILE-A FILE-B=.  When called
   with prefix argument it will ask for language to use, instead of relaying on
   =difftastic='s detection mechanism.

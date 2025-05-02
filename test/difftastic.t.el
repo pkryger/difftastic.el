@@ -5173,7 +5173,8 @@ This only happens when `noninteractive' to avoid messing up with faces."
       (eval
        `(mocklet (((difftastic--build-git-process-environment
                     "test-difftastic-width" "test-difftastic-args")
-                   => "test-process-environment"))
+                   => "test-process-environment")
+                  ((test-action)))
           (let ((difftastic-display-buffer-function
                  (lambda (buffer requested-width)
                    (should (equal buffer ,(current-buffer)))
@@ -5192,7 +5193,8 @@ This only happens when `noninteractive' to avoid messing up with faces."
               (difftastic--git-with-difftastic ,(current-buffer)
                                                "test-command"
                                                "test-rev-or-range"
-                                               "test-difftastic-args")))))
+                                               "test-difftastic-args"
+                                               #'test-action)))))
       (should (eq run-command-call-count 1))
       (should (eq display-buffer-call-count 1))
       (should (equal difftastic--metadata rerun-alist)))))
@@ -5239,6 +5241,134 @@ This only happens when `noninteractive' to avoid messing up with faces."
             ((difftastic--magit-show "test-rev")))
     (let ((current-prefix-arg 4))
       (call-interactively #'difftastic-magit-show))))
+
+(ert-deftest difftastic--goto-line-col-in-chunk:single-column ()
+  (with-temp-buffer
+    (insert "1 1 foo
+2 2 barbaz
+3 3 qux
+")
+    (goto-char (point-min))
+    (difftastic--goto-line-col-in-chunk 2 2)
+    (should (equal 15 (point)))))
+
+(ert-deftest difftastic--goto-line-col-in-chunk:single-column-no-column ()
+  (with-temp-buffer
+    (insert "1 1 foo
+2 2 barbaz
+3 3 qux
+")
+    (goto-char (point-min))
+    (difftastic--goto-line-col-in-chunk 2 20)
+    (should (equal 19 (point)))))
+
+(ert-deftest difftastic--goto-line-col-in-chunk:single-column-no-line ()
+  (with-temp-buffer
+    (insert "1 1 foo
+2 2 barbaz
+3 3 qux
+")
+    (goto-char (point-min))
+    (difftastic--goto-line-col-in-chunk 7 0)
+    (should (equal 1 (point)))))
+
+(ert-deftest difftastic--goto-line-col-in-chunk:side-by-side ()
+  (with-temp-buffer
+    (insert "1 foo    1 foo
+2 barbaz 2 barbaz
+3        3 qux
+")
+    (goto-char (point-min))
+    (difftastic--goto-line-col-in-chunk 2 2)
+    (should (equal 29 (point)))))
+
+(ert-deftest difftastic--goto-line-col-in-chunk:side-by-side-column-no-column ()
+  (with-temp-buffer
+    (insert "1 foo    1 foo
+2 barbaz 2 barbaz
+3        3 qux
+")
+    (goto-char (point-min))
+    (difftastic--goto-line-col-in-chunk 2 20)
+    (should (equal 33 (point)))))
+
+(ert-deftest difftastic--goto-line-col-in-chunk:side-by-side-no-line ()
+  (with-temp-buffer
+    (insert "1 foo    1 foo
+2 barbaz 2 barbaz
+3        3 qux
+")
+    (goto-char (point-min))
+    (difftastic--goto-line-col-in-chunk 7 0)
+    (should (equal 1 (point)))))
+
+(ert-deftest difftastic--magit-diff-buffer-file:blob ()
+  (let ((magit-buffer-refname "test-rev"))
+    (mocklet (((magit-file-relative-name) => "test-file")
+              ((magit-toplevel) => "test-toplevel")
+              ((get-buffer-create "*difftastic git show test-rev*") => "test-buffer")
+              ((difftastic--git-with-difftastic
+                "test-buffer"
+                '("git" "--no-pager" "show" "--ext-diff" "test-rev" "--" "test-file")
+                "test-rev")))
+      (difftastic--magit-diff-buffer-file))))
+
+(ert-deftest difftastic--magit-diff-buffer-file:file-on-branch ()
+  (cl-letf* ((call-count 0)
+             ((symbol-function #'difftastic--git-with-difftastic)
+              (lambda (buffer command rev-or-range &optional difftastic-args action)
+                (should (equal buffer "test-buffer"))
+                (should (equal command
+                               '("git" "--no-pager" "diff" "--ext-diff" "test-branch" "--" "test-file")))
+                (should (equal rev-or-range 'unstaged))
+                (should-not difftastic-args)
+                (should (functionp action))
+                (funcall action)
+                (cl-incf call-count)))
+             (magit-buffer-refname nil))
+    (mocklet (((magit-file-relative-name) => "test-file")
+              ((magit-toplevel) => "test-toplevel")
+              ((get-buffer-create "*difftastic git diff unstaged*")  => "test-buffer")
+              ((line-number-at-pos) => 42)
+              ((current-column) => 17)
+              ((magit-get-current-branch) => "test-branch")
+              ((difftastic--goto-line-col-in-chunk 42 17)))
+      (difftastic--magit-diff-buffer-file)
+      (should (equal 1 call-count)))))
+
+(ert-deftest difftastic--magit-diff-buffer-file:file ()
+  (cl-letf* ((call-count 0)
+             ((symbol-function #'difftastic--git-with-difftastic)
+              (lambda (buffer command rev-or-range &optional difftastic-args action)
+                (should (equal buffer "test-buffer"))
+                (should (equal command
+                               '("git" "--no-pager" "diff" "--ext-diff" "HEAD" "--" "test-file")))
+                (should (equal rev-or-range 'unstaged))
+                (should-not difftastic-args)
+                (should (functionp action))
+                (funcall action)
+                (cl-incf call-count)))
+             (magit-buffer-refname nil))
+    (mocklet (((magit-file-relative-name) => "test-file")
+              ((magit-toplevel) => "test-toplevel")
+              ((get-buffer-create "*difftastic git diff unstaged*")  => "test-buffer")
+              ((line-number-at-pos) => 42)
+              ((current-column) => 17)
+              ((magit-get-current-branch))
+              ((difftastic--goto-line-col-in-chunk 42 17)))
+      (difftastic--magit-diff-buffer-file)
+      (should (equal 1 call-count)))))
+
+(ert-deftest difftastic--magit-diff-buffer-file:no-file ()
+  (mocklet (((magit-file-relative-name)))
+    (let* ((text-quoting-style 'straight)
+           (data
+            (cadr (should-error (difftastic--magit-diff-buffer-file)))))
+      (should (equal data "Buffer isn't visiting a file")))))
+
+(ert-deftest difftastic-magit-diff-buffer-file:basic ()
+  (mocklet ((difftastic--magit-diff-buffer-file))
+    (call-interactively #'difftastic-magit-diff-buffer-file)))
 
 (ert-deftest difftastic--git-diff-range:no-args ()
   (mocklet (((get-buffer-create "*difftastic git diff*") => "test-buffer")

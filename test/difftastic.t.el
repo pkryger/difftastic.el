@@ -3615,7 +3615,7 @@ test/difftastic.t.el --- Emacs Lisp
 (ert-deftest difftastic--diff-visit-file:file-or-buffer ()
   (mocklet ((difftastic--diff-visit-git-file not-called)
             ((difftastic--diff-visit-file-or-buffer "test-chunk-file" #'ignore)))
-    (let (difftastic--metadata )
+    (let (difftastic--metadata)
       (difftastic--diff-visit-file-or-buffer "test-chunk-file" #'ignore))))
 
 (ert-deftest difftastic--diff-visit-file:no-file ()

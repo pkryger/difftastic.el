@@ -6138,15 +6138,23 @@ This only happens when `noninteractive' to avoid messing up with faces."
                     (should (equal (car file-name-history)
                                    "/last-dir-B/file-A"))) ; [sic!]
                   (car current)))))
-    (should (equal (difftastic--files-args)
-                   (list "/last-dir-A/file-A"
-                         "/last-dir-B/file-B"
-                         nil)))
-    (should (equal file-name-history orig-file-name-history))
-    (should (equal difftastic--last-dir-A "/last-dir-A/"))
-    (should (equal difftastic--last-dir-B "/last-dir-B/"))
-    (should (equal ediff-read-file-name-called 2))
-    (should (equal ediff-get-default-file-name-called 2))))
+    (unwind-protect
+        (progn
+          (should (equal (difftastic--files-args)
+                         (list "/last-dir-A/file-A"
+                               "/last-dir-B/file-B"
+                               nil)))
+          (should-not (cl-set-exclusive-or
+                       (cl-subseq file-name-history 0 2)
+                       '("/last-dir-A/file-A"
+                         "/last-dir-B/file-B")
+                       :test #'equal))
+          (should (equal (caddr file-name-history) (car orig-file-name-history)))
+          (should (equal difftastic--last-dir-A "/last-dir-A/"))
+          (should (equal difftastic--last-dir-B "/last-dir-B/"))
+          (should (equal ediff-read-file-name-called 2))
+          (should (equal ediff-get-default-file-name-called 2)))
+      (setq file-name-history orig-file-name-history))))
 
 (ert-deftest difftastic--files-args:use-default-dir ()
   (cl-letf* ((orig-file-name-history (copy-tree file-name-history))
@@ -6180,15 +6188,23 @@ This only happens when `noninteractive' to avoid messing up with faces."
                     (should (equal (car file-name-history)
                                    "/test-directory/file-A")))
                   (car current)))))
-    (should (equal (difftastic--files-args)
-                   (list "/test-directory/file-A"
-                         "/test-directory/file-B"
-                         nil)))
-    (should (equal file-name-history orig-file-name-history))
-    (should (equal difftastic--last-dir-A "/test-directory/"))
-    (should (equal difftastic--last-dir-B "/test-directory/"))
-    (should (equal ediff-read-file-name-called 2))
-    (should (equal ediff-get-default-file-name-called 2))))
+    (unwind-protect
+        (progn
+          (should (equal (difftastic--files-args)
+                         (list "/test-directory/file-A"
+                               "/test-directory/file-B"
+                               nil)))
+          (should-not (cl-set-exclusive-or
+                       (cl-subseq file-name-history 0 2)
+                       '("/test-directory/file-A"
+                         "/test-directory/file-B")
+                       :test #'equal))
+          (should (equal (caddr file-name-history) (car orig-file-name-history)))
+          (should (equal difftastic--last-dir-A "/test-directory/"))
+          (should (equal difftastic--last-dir-B "/test-directory/"))
+          (should (equal ediff-read-file-name-called 2))
+          (should (equal ediff-get-default-file-name-called 2)))
+      (setq file-name-history orig-file-name-history))))
 
 (ert-deftest difftastic--files-args:use-last-dir-with-prefix ()
   (cl-letf* ((orig-file-name-history (copy-tree file-name-history))
@@ -6224,17 +6240,25 @@ This only happens when `noninteractive' to avoid messing up with faces."
                                    "/last-dir-B/file-A"))) ; [sic!]
                   (car current))))
              (current-prefix-arg 4))
-    (mocklet (((difftastic--get-languages) => "test-languages")
-              ((completing-read "Language: " "test-languages" nil t) => "test-lang"))
-      (should (equal (difftastic--files-args)
-                   (list "/last-dir-A/file-A"
-                         "/last-dir-B/file-B"
-                         "test-lang"))))
-    (should (equal file-name-history orig-file-name-history))
-    (should (equal difftastic--last-dir-A "/last-dir-A/"))
-    (should (equal difftastic--last-dir-B "/last-dir-B/"))
-    (should (equal ediff-read-file-name-called 2))
-    (should (equal ediff-get-default-file-name-called 2))))
+    (unwind-protect
+        (progn
+          (mocklet (((difftastic--get-languages) => "test-languages")
+                    ((completing-read "Language: " "test-languages" nil t) => "test-lang"))
+            (should (equal (difftastic--files-args)
+                           (list "/last-dir-A/file-A"
+                                 "/last-dir-B/file-B"
+                                 "test-lang"))))
+          (should-not (cl-set-exclusive-or
+                       (cl-subseq file-name-history 0 2)
+                       '("/last-dir-A/file-A"
+                         "/last-dir-B/file-B")
+                       :test #'equal))
+          (should (equal (caddr file-name-history) (car orig-file-name-history)))
+          (should (equal difftastic--last-dir-A "/last-dir-A/"))
+          (should (equal difftastic--last-dir-B "/last-dir-B/"))
+          (should (equal ediff-read-file-name-called 2))
+          (should (equal ediff-get-default-file-name-called 2)))
+      (setq file-name-history orig-file-name-history))))
 
 (ert-deftest difftastic--files-args:use-default-dir-with-prefix ()
   (cl-letf* ((orig-file-name-history (copy-tree file-name-history))
@@ -6269,17 +6293,25 @@ This only happens when `noninteractive' to avoid messing up with faces."
                                    "/test-directory/file-A")))
                   (car current))))
              (current-prefix-arg 4))
-    (mocklet (((difftastic--get-languages) => "test-languages")
-              ((completing-read "Language: " "test-languages" nil t) => "test-lang"))
-      (should (equal (difftastic--files-args)
-                   (list "/test-directory/file-A"
-                         "/test-directory/file-B"
-                         "test-lang"))))
-    (should (equal file-name-history orig-file-name-history))
-    (should (equal difftastic--last-dir-A "/test-directory/"))
-    (should (equal difftastic--last-dir-B "/test-directory/"))
-    (should (equal ediff-read-file-name-called 2))
-    (should (equal ediff-get-default-file-name-called 2))))
+    (unwind-protect
+        (progn
+          (mocklet (((difftastic--get-languages) => "test-languages")
+                    ((completing-read "Language: " "test-languages" nil t) => "test-lang"))
+            (should (equal (difftastic--files-args)
+                           (list "/test-directory/file-A"
+                                 "/test-directory/file-B"
+                                 "test-lang"))))
+          (should-not (cl-set-exclusive-or
+                       (cl-subseq file-name-history 0 2)
+                       '("/test-directory/file-A"
+                         "/test-directory/file-B")
+                       :test #'equal))
+          (should (equal (caddr file-name-history) (car orig-file-name-history)))
+          (should (equal difftastic--last-dir-A "/test-directory/"))
+          (should (equal difftastic--last-dir-B "/test-directory/"))
+          (should (equal ediff-read-file-name-called 2))
+          (should (equal ediff-get-default-file-name-called 2)))
+      (setq file-name-history orig-file-name-history))))
 
 (ert-deftest difftastic-files:basic ()
   (mocklet (((difftastic--files-args) => '("/dir/file-A" "/dir/file-B" "test-lang"))

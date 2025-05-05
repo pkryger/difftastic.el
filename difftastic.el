@@ -2009,6 +2009,8 @@ then ask for language before running difftastic."
                                  (difftastic--get-languages)
                                  nil
                                  t)))
+      (add-to-history 'file-name-history (abbreviate-file-name f))
+      (add-to-history 'file-name-history (abbreviate-file-name ff))
       (setq difftastic--last-dir-A (file-name-as-directory
                                     (file-name-directory f)))
       (setq difftastic--last-dir-B (file-name-as-directory

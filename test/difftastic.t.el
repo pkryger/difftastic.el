@@ -5251,7 +5251,11 @@ This only happens when `noninteractive' to avoid messing up with faces."
 ")
     (goto-char (point-min))
     (difftastic--goto-line-col-in-chunk 2 2)
-    (should (equal 15 (point)))))
+    (should (equal 15 (point)))
+    (goto-char (point-min))
+    (difftastic--goto-line-col-in-chunk "2" 0)
+    (should (equal 13 (point)))))
+
 
 (ert-deftest difftastic--goto-line-col-in-chunk:single-column-no-column ()
   (ert-with-test-buffer ()
@@ -5261,7 +5265,10 @@ This only happens when `noninteractive' to avoid messing up with faces."
 ")
     (goto-char (point-min))
     (difftastic--goto-line-col-in-chunk 2 20)
-    (should (equal 19 (point)))))
+    (should (equal 19 (point)))
+    (goto-char (point-min))
+    (difftastic--goto-line-col-in-chunk "3" 20)
+    (should (equal 27 (point)))))
 
 (ert-deftest difftastic--goto-line-col-in-chunk:single-column-no-line ()
   (ert-with-test-buffer ()
@@ -5271,6 +5278,9 @@ This only happens when `noninteractive' to avoid messing up with faces."
 ")
     (goto-char (point-min))
     (difftastic--goto-line-col-in-chunk 7 0)
+    (should (equal 1 (point)))
+    (goto-char (point-min))
+    (difftastic--goto-line-col-in-chunk "5" 0)
     (should (equal 1 (point)))))
 
 (ert-deftest difftastic--goto-line-col-in-chunk:side-by-side ()
@@ -5281,7 +5291,10 @@ This only happens when `noninteractive' to avoid messing up with faces."
 ")
     (goto-char (point-min))
     (difftastic--goto-line-col-in-chunk 2 2)
-    (should (equal 29 (point)))))
+    (should (equal 29 (point)))
+    (goto-char (point-min))
+    (difftastic--goto-line-col-in-chunk "2" 0)
+    (should (equal 27 (point)))))
 
 (ert-deftest difftastic--goto-line-col-in-chunk:side-by-side-column-no-column ()
   (ert-with-test-buffer ()
@@ -5291,7 +5304,10 @@ This only happens when `noninteractive' to avoid messing up with faces."
 ")
     (goto-char (point-min))
     (difftastic--goto-line-col-in-chunk 2 20)
-    (should (equal 33 (point)))))
+    (should (equal 33 (point)))
+    (goto-char (point-min))
+    (difftastic--goto-line-col-in-chunk "3" 20)
+    (should (equal 48 (point)))))
 
 (ert-deftest difftastic--goto-line-col-in-chunk:side-by-side-no-line ()
   (ert-with-test-buffer ()
@@ -5301,6 +5317,9 @@ This only happens when `noninteractive' to avoid messing up with faces."
 ")
     (goto-char (point-min))
     (difftastic--goto-line-col-in-chunk 7 0)
+    (should (equal 1 (point)))
+    (goto-char (point-min))
+    (difftastic--goto-line-col-in-chunk "5" 0)
     (should (equal 1 (point)))))
 
 (ert-deftest difftastic--magit-diff-buffer-file:blob ()

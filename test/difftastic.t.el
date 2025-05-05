@@ -14,6 +14,7 @@
 (require 'org)
 (require 'ox-ascii)
 
+
 (ert-deftest difftastic--copy-tree:basic ()
   (let* ((vec (make-vector 1 nil))
          (bool-vec (make-bool-vector 1 nil))
@@ -34,6 +35,7 @@
               (identity nil))))
   (should-not (identity nil)))
 
+
 (ert-deftest difftastic--with-temp-advice:error-signaled-removes-advice ()
   (should-error (eval
                  '(difftastic--with-temp-advice
@@ -42,6 +44,7 @@
                     (identity nil))))
   (should-not (identity nil)))
 
+
 (ert-deftest difftastic--make-suggestion:basic ()
   (let ((languages '("Emacs Lisp" "C++" "Text"))
         elisp-buffer c++-buffer org-buffer)
@@ -91,6 +94,7 @@
            (difftastic--make-suggestion languages
                                         org-buffer org-buffer)))))))
 
+
 (ert-deftest difftastic--transform-diff-arguments:basic ()
   (should (equal '(("--ignore-submodules=test-submodule")
                    ("--context 1" "--context 2"))
@@ -100,6 +104,7 @@
                     "-M" "-M3" "--find-renames" "--find-renames=4"
                     "--ignore-submodules=test-submodule")))))
 
+
 (ert-deftest difftastic--get-file:buffer-visiting-file-no-temporary-created ()
   (let (temp-file)
     (unwind-protect
@@ -129,6 +134,7 @@
       (when (and (cdr file-buf) (file-exists-p (car file-buf)))
         (delete-file (car file-buf))))))
 
+
 (ert-deftest difftastic--with-file-bufs:basic-temporary-file-bufs-are-preserved ()
   (let (temp-file-A temp-file-B temp-file-C)
     (unwind-protect
@@ -260,6 +266,7 @@
   (should-error (eval `(difftastic--with-file-bufs ((foo)))))
   (should-error (eval `(difftastic--with-file-bufs ((foo bar baz))))))
 
+
 (ert-deftest difftastic--delete-temp-file-buf:nil-does-nothing ()
   (should-not (difftastic--delete-temp-file-buf nil)))
 
@@ -285,6 +292,7 @@
       (when (file-exists-p temp-file)
         (delete-file temp-file)))))
 
+
 (ert-deftest difftastic--build-git-process-environment:without-difftastic-args ()
   (should (equal
            (format "GIT_EXTERNAL_DIFF=%s --color always --width 42 --background %s"
@@ -303,6 +311,7 @@
              42
              '("--override" "*:C++"))))))
 
+
 (ert-deftest difftastic--build-files-command:without-lang-override ()
   (should (equal
            `(,difftastic-executable
@@ -327,6 +336,7 @@
                                             42
                                             "test-language"))))
 
+
 (ert-deftest difftastic--rerun-file-buf:non-temporary-no-temporary-created ()
   (let (file-buf)
     (unwind-protect
@@ -389,6 +399,7 @@
       (when (and (cdr file-buf) (file-exists-p (car file-buf)))
         (delete-file (car file-buf))))))
 
+
 (ert-deftest difftastic--chunk-regexp:file-chunk-extracted ()
   (mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
     (dolist (file '("difftastic.el"
@@ -611,6 +622,7 @@
                 (should
                  (string-match-p (difftastic--chunk-regexp nil) header))))))))))
 
+
 (ert-deftest difftastic--point-at-added-removed-p:chunk-header ()
   (dolist (chunk-header '("difftastic.el --- Emacs Lisp"
                           "difftastic.el --- 1/2 --- Emacs Lisp"
@@ -653,6 +665,7 @@
                   (message "failed added-removed: %s" added-removed))
                 added-removed)))))
 
+
 (ert-deftest difftastic-next-chunk:erts-scenarios ()
   (when (fboundp 'ert-test-erts-file) ;; since Emacs-29
     (mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
@@ -706,6 +719,7 @@ test/difftastic.t.el --- Emacs Lisp
       (difftastic-next-chunk)
       (should (equal 178 (point))))))
 
+
 (ert-deftest difftastic-next-file:erts-scenarios ()
   (when (fboundp 'ert-test-erts-file) ;; since Emacs-29
     (mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
@@ -738,6 +752,7 @@ test/difftastic.t.el --- Emacs Lisp
         (should (equal data "No more files")))
       (should (equal (point-min) (point))))))
 
+
 (ert-deftest difftastic-previous-chunk:erts-scenarios ()
   (when (fboundp 'ert-test-erts-file) ;; since Emacs-29
     (mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
@@ -790,6 +805,7 @@ test/difftastic.t.el --- Emacs Lisp
       (difftastic-previous-chunk)
       (should (equal (point-min) (point))))))
 
+
 (ert-deftest difftastic-previous-file:erts-scenarios ()
   (when (fboundp 'ert-test-erts-file) ;; since Emacs-29
     (mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
@@ -822,6 +838,7 @@ test/difftastic.t.el --- Emacs Lisp
         (should (equal data "No more files")))
       (should (equal (point-min) (point))))))
 
+
 (ert-deftest difftastic-hide-chunk:chunk-hidden ()
   (let ((expected
          (concat
@@ -1064,6 +1081,7 @@ test/difftastic.t.el --- Emacs Lisp
                  (should
                   (ert-equal-including-properties (buffer-string) ,expected))))))))
 
+
 (ert-deftest difftastic-show-chunk:chunk-header-chunk-shown ()
   (let ((expected "difftastic.el --- 1/2 --- Emacs Lisp
 1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
@@ -1250,6 +1268,7 @@ test/difftastic.t.el --- Emacs Lisp
           (difftastic-show-chunk)
           (should (equal-including-properties (buffer-string) ,expected)))))))
 
+
 (ert-deftest difftastic-toggle-chunk:chunk-hidden ()
   (let ((expected
          (concat
@@ -1506,6 +1525,7 @@ test/difftastic.t.el --- Emacs Lisp
           (difftastic-toggle-chunk)
           (should (equal-including-properties (buffer-string) ,expected)))))))
 
+
 (ert-deftest difftastic--chunk-bounds:file-chunk-point-at-beginning ()
   (mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
     (ert-with-test-buffer ()
@@ -1660,6 +1680,7 @@ test/difftastic.t.el --- Emacs Lisp
         (goto-char pos))
       (should-not (difftastic--chunk-bounds)))))
 
+
 (ert-deftest difftastic--chunk-file-name:file-chunk ()
   (mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
     (ert-with-test-buffer ()
@@ -1678,6 +1699,7 @@ test/difftastic.t.el --- Emacs Lisp
                      (difftastic--chunk-file-name
                       (cons (point-min) (point-max))))))))
 
+
 (ert-deftest difftastic--line-num-rx:match ()
   (should (eql 0
                (string-match-p (rx-to-string
@@ -1876,6 +1898,7 @@ test/difftastic.t.el --- Emacs Lisp
                                       ,(difftastic--line-num-rx 3)))
                               " .2")))
 
+
 (ert-deftest difftastic--classify-chunk:single-column-no-left-first ()
   (ert-with-test-buffer ()
     (insert "  1         bar
@@ -1971,6 +1994,7 @@ test/difftastic.t.el --- Emacs Lisp
     (should (eq (difftastic--classify-chunk (cons (point-min) (point-max)))
                 'side-by-side))))
 
+
 (ert-deftest difftastic--parse-side-by-side-chunk:no-left-first ()
   (ert-with-test-buffer ()
     (insert "foo --- Text
@@ -2103,6 +2127,7 @@ test/difftastic.t.el --- Emacs Lisp
                ((59 103)  (10 59 61)   (100 89 92))
                ((104 148) (11 104 106) (101 134 137)))))))
 
+
 (ert-deftest difftastic--parse-single-column-chunk:no-left-first ()
   (ert-with-test-buffer ()
     (insert "foo --- Text
@@ -2177,6 +2202,7 @@ test/difftastic.t.el --- Emacs Lisp
                ((33 51) (10 33 35) (100 36 39))
                ((52 70) (11 52 54) (101 55 58)))))))
 
+
 (ert-deftest difftastic--chunk-file-at-point:side-by-side-no-right ()
   (ert-with-test-buffer ()
     (insert "foo --- Text
@@ -2702,6 +2728,7 @@ test/difftastic.t.el --- Emacs Lisp
     (should (equal (cons 'eol (difftastic--chunk-file-at-point))
                    '(eol "foo" 101 right)))))
 
+
 (ert-deftest difftastic-diff-visit-file-setup:goto-line-col ()
   (ert-with-test-buffer ()
     (insert "foo\n")
@@ -2790,6 +2817,7 @@ test/difftastic.t.el --- Emacs Lisp
                         (difftastic--diff-visit-file-setup ,buffer 2 0)))))
             (should (equal "File buffer is not visible" data))))))))
 
+
 (ert-deftest difftastic--diff-visit-file-or-buffer:left-buffer ()
   (ert-with-test-buffer ()
     (insert "foo\n")
@@ -2938,6 +2966,7 @@ test/difftastic.t.el --- Emacs Lisp
                           '("foo" 2 right) #'fn)))
           (should (equal (point) ,pos)))))))
 
+
 (ert-deftest difftastic--diff-visit-git-file:left-revision ()
   (ert-with-test-buffer ()
     (insert "foo\n")
@@ -3606,6 +3635,7 @@ test/difftastic.t.el --- Emacs Lisp
                           '("test-file" 2 right) #'fn t)))
           (should (equal (point) ,pos)))))))
 
+
 (ert-deftest difftastic--diff-visit-file:git-file ()
   (mocklet (((difftastic--diff-visit-git-file "test-chunk-file" #'ignore t))
             (difftastic--diff-visit-file-or-buffer not-called))
@@ -3626,6 +3656,7 @@ test/difftastic.t.el --- Emacs Lisp
                     (difftastic--diff-visit-file nil #'ignore t)))))
         (should (equal data "No chunk file at point")))))
 
+
 (ert-deftest difftastic-diff-visit-file:basic ()
   (mocklet (((difftastic--chunk-file-at-point) => "test-chunk-file")
             ((difftastic--diff-visit-file
@@ -3639,18 +3670,21 @@ test/difftastic.t.el --- Emacs Lisp
     (let ((current-prefix-arg 4))
       (call-interactively #'difftastic-diff-visit-file))))
 
+
 (ert-deftest difftastic-diff-visit-file-other-window:basic ()
   (mocklet (((difftastic--chunk-file-at-point) => "test-chunk-file")
             ((difftastic--diff-visit-file
               "test-chunk-file" #'switch-to-buffer-other-window)))
     (call-interactively #'difftastic-diff-visit-file-other-window)))
 
+
 (ert-deftest difftastic-diff-visit-file-other-frame:basic ()
   (mocklet (((difftastic--chunk-file-at-point) => "test-chunk-file")
             ((difftastic--diff-visit-file
               "test-chunk-file" #'switch-to-buffer-other-frame)))
     (call-interactively #'difftastic-diff-visit-file-other-frame)))
 
+
 (ert-deftest difftastic-diff-visit-worktree-file:basic ()
   (mocklet (((difftastic--chunk-file-at-point) => "test-chunk-file")
             ((difftastic--diff-visit-file
@@ -3664,18 +3698,21 @@ test/difftastic.t.el --- Emacs Lisp
     (let ((current-prefix-arg 4))
       (call-interactively #'difftastic-diff-visit-worktree-file))))
 
+
 (ert-deftest difftastic-diff-visit-worktree-file-other-window:basic ()
   (mocklet (((difftastic--chunk-file-at-point) => "test-chunk-file")
             ((difftastic--diff-visit-file
               "test-chunk-file" #'switch-to-buffer-other-window t)))
     (call-interactively #'difftastic-diff-visit-worktree-file-other-window)))
 
+
 (ert-deftest difftastic-diff-visit-worktree-file-other-frame:basic ()
   (mocklet (((difftastic--chunk-file-at-point) => "test-chunk-file")
             ((difftastic--diff-visit-file
               "test-chunk-file" #'switch-to-buffer-other-frame t)))
     (call-interactively #'difftastic-diff-visit-worktree-file-other-frame)))
 
+
 (ert-deftest difftastic--get-languages:parse-output ()
   (let ((file "difft--list-languages.out")
         out)
@@ -3703,6 +3740,7 @@ test/difftastic.t.el --- Emacs Lisp
                          "TypeScript TSX" "VHDL" "XML" "YAML" "Zig")
                        (difftastic--get-languages)))))))
 
+
 ;; When running in noninteractive batch mode there are no faces defined, ergo:
 ;; no colors.  See this discussion:
 ;; https://lists.gnu.org/archive/html/help-gnu-emacs/2024-02/msg00095.html For
@@ -3733,6 +3771,7 @@ test/difftastic.t.el --- Emacs Lisp
             (should
              (ert-equal-including-properties (buffer-string) ,expected))))))))
 
+
 (ert-deftest difftastic--run-command-filter:chunk-ansi-colors-applied ()
   (let ((expected
          (concat
@@ -4813,6 +4852,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
                           ((:background ,difftastic-t-string-bg)
                            (:foreground ,difftastic-t-string-fg)))))))))))
 
+
 (ert-deftest difftastic--run-command-sentinel:with-output-action-called ()
   (ert-with-test-buffer ()
     (insert "test output")
@@ -4851,6 +4891,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
         (should-not (equal (point) (point-min)))
         (should (buffer-modified-p))))))
 
+
 (ert-deftest difftastic--run-command:basic ()
   (let* ((expected-fg
           (if noninteractive
@@ -4885,6 +4926,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
         (should
          (eval `(ert-equal-including-properties (buffer-string) ,expected)))))))
 
+
 (ert-deftest difftastic-rerun-requested-window-width:basic ()
   (eval
    '(mocklet (((window-width) => 160)
@@ -4892,6 +4934,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
       (should (equal (difftastic-rerun-requested-window-width)
                      156)))))
 
+
 (ert-deftest difftastic-requested-window-width:other-window ()
   (eval
    '(mocklet (((count-windows) => 2)
@@ -4927,6 +4970,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
         (should (equal (difftastic-requested-window-width)
                        38))))))
 
+
 (ert-deftest difftastic-pop-to-buffer:actual-bigger-than-requested-at-bottom ()
   (ert-with-test-buffer ()
     (insert "0123456789")
@@ -4940,12 +4984,12 @@ This only happens when `noninteractive' to avoid messing up with faces."
     (eval `(mocklet (((pop-to-buffer ,(current-buffer) (list nil))))
              (difftastic-pop-to-buffer ,(current-buffer) 10)))))
 
+
 (ert-deftest difftastic--rerun:not-difftastic-mode-error-signaled ()
   (ert-with-test-buffer ()
     (let ((data (cadr (should-error (difftastic--rerun nil)
                                     :type 'user-error))))
       (should (equal data "Nothing to rerun")))))
-
 
 (ert-deftest difftastic--rerun:no-rerun-alist-mode-error-signaled ()
   (ert-with-test-buffer ()
@@ -5159,6 +5203,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
     (let ((current-prefix-arg 4))
       (call-interactively #'difftastic-rerun))))
 
+
 (ert-deftest difftastic--git-with-difftastic:basic ()
   (let ((rerun-alist '((default-directory . "test-default-directory")
                        (rev-or-range . "test-rev-or-range")
@@ -5200,6 +5245,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
       (should (eq display-buffer-call-count 1))
       (should (equal difftastic--metadata rerun-alist)))))
 
+
 (ert-deftest difftastic--magit-show:nil-error-signaled ()
   (let ((data (cadr (should-error (difftastic--magit-show nil)
                                   :type 'user-error))))
@@ -5214,6 +5260,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
               "test-rev")))
     (difftastic--magit-show "test-rev")))
 
+
 (ert-deftest difftastic-magit-show:no-prefix-no-thing-no-branch ()
   (mocklet (((magit-thing-at-point 'git-revision t))
             ((magit-branch-or-commit-at-point))
@@ -5243,6 +5290,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
     (let ((current-prefix-arg 4))
       (call-interactively #'difftastic-magit-show))))
 
+
 (ert-deftest difftastic--goto-line-col-in-chunk:single-column ()
   (ert-with-test-buffer ()
     (insert "1 1 foo
@@ -5322,6 +5370,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
     (difftastic--goto-line-col-in-chunk "5" 0)
     (should (equal 1 (point)))))
 
+
 (ert-deftest difftastic--magit-diff-buffer-file:blob ()
   (let ((magit-buffer-refname "test-rev"))
     (mocklet (((magit-file-relative-name) => "test-file")
@@ -5386,10 +5435,12 @@ This only happens when `noninteractive' to avoid messing up with faces."
             (cadr (should-error (difftastic--magit-diff-buffer-file)))))
       (should (equal data "Buffer isn't visiting a file")))))
 
+
 (ert-deftest difftastic-magit-diff-buffer-file:basic ()
   (mocklet ((difftastic--magit-diff-buffer-file))
     (call-interactively #'difftastic-magit-diff-buffer-file)))
 
+
 (ert-deftest difftastic--git-diff-range:no-args ()
   (mocklet (((get-buffer-create "*difftastic git diff*") => "test-buffer")
             ((difftastic--git-with-difftastic
@@ -5434,6 +5485,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
               ((difftastic--git-diff-range "test-rev-or-range" "test-args" "test-files")))
       (call-interactively #'difftastic-git-diff-range))))
 
+
 (ert-deftest difftastic--magit-diff:module-section ()
   (eval
    `(let ((section (magit-module-section :type 'module
@@ -5662,11 +5714,13 @@ This only happens when `noninteractive' to avoid messing up with faces."
             ((call-interactively #'difftastic-git-diff-range)))
     (difftastic--magit-diff "test-args" "test-files")))
 
+
 (ert-deftest difftastic-magit-diff:basic ()
   (mocklet (((magit-diff-arguments) => '("test-args" "test-files"))
             ((difftastic--magit-diff "test-args" "test-files")))
     (call-interactively #'difftastic-magit-diff)))
 
+
 (ert-deftest difftastic-mode--do-exit:basic ()
   (ert-with-test-buffer ()
     (let ((buffer (current-buffer))
@@ -5722,18 +5776,22 @@ This only happens when `noninteractive' to avoid messing up with faces."
                        ((exit-action ,buffer) :times 1))
                (difftastic-mode--do-exit #'exit-action))))))
 
+
 (ert-deftest difftascit-leave:basic ()
   (mocklet (((difftastic-mode--do-exit) :times 1))
     (funcall-interactively #'difftastic-leave)))
 
+
 (ert-deftest difftascit-quit:basic ()
   (mocklet (((difftastic-mode--do-exit 'kill-buffer) :times 1))
     (funcall-interactively #'difftastic-quit)))
 
+
 (ert-deftest difftascit-quit-all:basic ()
   (mocklet (((difftastic-mode--do-exit 'kill-buffer t) :times 1))
     (funcall-interactively #'difftastic-quit-all)))
 
+
 (ert-deftest difftastic--dired-diff:basic ()
   (mocklet (((dired-diff "test-file") :times 1))
     (difftastic--dired-diff "test-file" nil)))
@@ -5778,6 +5836,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
         (difftastic--dired-diff 'interactive "test-lang"))
       (should (equal 1 dired-diff-called)))))
 
+
 (ert-deftest difftastic-dired-diff:basic ()
   (mocklet (((difftastic--dired-diff "test-file" nil) :times 1))
     (difftastic-dired-diff "test-file")))
@@ -5798,6 +5857,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
               ((completing-read "Language: " "test-langs" nil t) => "test-lang"))
       (call-interactively #'difftastic-dired-diff))))
 
+
 (ert-deftest difftastic--files-internal:basic ()
   (ert-with-test-buffer ()
     (let* ((display-buffer-called 0)
@@ -5840,6 +5900,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
           (delete-file (car file-buf-B))))
       (should (equal display-buffer-called 1)))))
 
+
 (ert-deftest difftastic--buffers-args:buffers-with-files ()
   (cl-letf* ((file-A (make-temp-file "difftastic.t"))
              (file-B (make-temp-file "difftastic.t"))
@@ -6090,6 +6151,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
       (when (buffer-name buffer-A)
         (kill-buffer buffer-A)))))
 
+
 (ert-deftest difftastic-buffers:basic ()
   (let* ((file-A (make-temp-file "difftastic.t"))
          (file-B (make-temp-file "difftastic.t"))
@@ -6125,6 +6187,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
       (when (file-exists-p file-A)
         (delete-file file-A)))))
 
+
 (ert-deftest difftastic--files-args:use-last-dir ()
   (cl-letf* ((orig-file-name-history (copy-tree file-name-history))
              (difftastic-use-last-dir t)
@@ -6333,6 +6396,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
           (should (equal ediff-get-default-file-name-called 2)))
       (setq file-name-history orig-file-name-history))))
 
+
 (ert-deftest difftastic-files:basic ()
   (mocklet (((difftastic--files-args) => '("/dir/file-A" "/dir/file-B" "test-lang"))
             ((get-buffer-create "*difftastic file-A file-B*") => "test-buffer")
@@ -6341,6 +6405,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
              :times 1))
     (call-interactively #'difftastic-files)))
 
+
 ;; LocalWords: README el
 
 (provide 'difftastic.t)

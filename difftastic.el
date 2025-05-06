@@ -1061,7 +1061,7 @@ and SIDE is either `left' or `right'."
               (point (point)))
     (if (< point (caaar lines))
         ; use right when point is in chunk header
-        (list file nil 'right)
+        (list file nil 0 'right)
       (catch 'chunk-file
         (while lines
           (pcase-let* ((`((,bol ,eol) ,left ,right) (car lines)))
@@ -1069,8 +1069,16 @@ and SIDE is either `left' or `right'."
               (if (and left
                        (or (not right)
                            (< point (cadr right))))
-                  (throw 'chunk-file (list file (car left) 'left))
-                (throw 'chunk-file (list file (car right) 'right))))
+                  (throw 'chunk-file (list file
+                                           (car left)
+                                           (max 0
+                                                (- point (caddr left) 1))
+                                           'left))
+                (throw 'chunk-file (list file
+                                         (car right)
+                                         (max 0
+                                              (- point (caddr right) 1))
+                                         'right))))
             (setq lines (cdr lines))))))))
 
 (defun difftastic--diff-visit-file-setup (buffer line col)
@@ -1102,7 +1110,7 @@ is the chunk file name, LINE-NUM is an optional line number within the
 FILE and SIDE is either `left' or `right'.  Use FN to display the buffer
 in some window.  After visiting the FILE start a smerge session (if
 there are unmerged changes) and run `difftastic-diff-visit-file-hook'."
-  (pcase-let* ((`(,_ ,line ,side) chunk-file)
+  (pcase-let* ((`(,_ ,line ,col ,side) chunk-file)
                (file-buf (alist-get (if (eq side 'left)
                                         'file-buf-A
                                       'file-buf-B)
@@ -1116,7 +1124,7 @@ there are unmerged changes) and run `difftastic-diff-visit-file-hook'."
                         (get-file-buffer file)
                         (find-file-noselect file))))
     (funcall fn buf)
-    (difftastic--diff-visit-file-setup buf line 0)
+    (difftastic--diff-visit-file-setup buf line col)
     buf))
 
 (defun difftastic--diff-visit-git-file (chunk-file fn &optional force-worktree)
@@ -1128,7 +1136,7 @@ name, LINE-NUM is an optional line number within the FILE and SIDE is
 either `left' or `right'.  Use FN to display the buffer in some window.
 After visiting the FILE start a smerge session (if there are unmerged
 changes) and run `difftastic-diff-visit-file-hook'."
-  (pcase-let* ((`(,file ,line ,side) chunk-file)
+  (pcase-let* ((`(,file ,line ,col ,side) chunk-file)
                (default-directory (alist-get 'default-directory
                                              difftastic--metadata))
                (rev (if-let* ((rev-or-range (alist-get 'rev-or-range
@@ -1163,7 +1171,7 @@ changes) and run `difftastic-diff-visit-file-hook'."
                (setq line
                      (magit-diff-visit--offset file rev line))))))
     (funcall fn buf)
-    (difftastic--diff-visit-file-setup buf line 0)
+    (difftastic--diff-visit-file-setup buf line col)
     buf))
 
 (defun difftastic--diff-visit-file (chunk-file fn &optional force-worktree)

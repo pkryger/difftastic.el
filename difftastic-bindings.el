@@ -22,22 +22,25 @@
 
 (defun difftastic-bindings--parse-bindings (bindings)
   "Parse BINDINGS into a suffix group specification."
-  (vconcat
-   (mapcar (lambda (spec)
-             (let ((fun (if-let* ((f (cadr spec))
-                                  ((symbolp f)))
-                            ;; it is unquoted, i.e., '("X" fun-x)
-                            f
-                          ;; it is quoted, i.e., '("X" 'fun-x) or '("X" #'fun-x)
-                          (cadr f))))
-               (list (car spec)
-                     (or (when-let* ((desc (caddr spec))
-                                     ((stringp desc))
-                                     ((< 0 (length desc))))
-                           desc)
-                         (symbol-name fun))
-                     fun)))
-           bindings)))
+  (let ((bindings
+         (mapcar (lambda (spec)
+                   (let ((fun (if-let* ((f (cadr spec))
+                                        ((symbolp f)))
+                                  ;; it is unquoted, i.e., '("X" fun-x)
+                                  f
+                                ;; it is quoted, i.e., '("X" 'fun-x) or '("X" #'fun-x)
+                                (cadr f))))
+                     (list (car spec)
+                           (or (when-let* ((desc (caddr spec))
+                                           ((stringp desc))
+                                           ((< 0 (length desc))))
+                                 desc)
+                               (symbol-name fun))
+                           fun)))
+             bindings)))
+    (if (eql 1 (length bindings))
+        (car bindings)
+      (vconcat bindings))))
 
 (defvar difftastic-bindings--installed-plist nil
   "Prefixes and keymaps that have difftastic bindings installed.")
@@ -137,7 +140,6 @@ remove them from `difftastic-bindings--installed-plist'."
     (put keymap 'difftastic--installed nil)
     (difftastic-bindings--remove-from-installed :keymaps keymap)))
 
-;;;###autoload
 (defcustom difftastic-bindings-prefixes
   '((magit-diff (-1 -1) magit-diff)
     (magit-blame (-1) magit-blame))
@@ -155,8 +157,10 @@ can be in any form accepted by `transient-get-suffix', which see."
   :link '(emacs-commentary-link "difftastic")
   :risky t
   :group 'difftastic-bindings)
+(make-obsolete-variable 'difftastic-bindings-prefixes
+                        'difftastic-bindings-alist
+                        "20250506")
 
-;;;###autoload
 (defcustom difftastic-bindings-keymaps
   '((magit-blame-read-only-mode-map . magit-blame))
   "List of keymaps to add `difftastic' bindings to.
@@ -170,28 +174,127 @@ or file (string) that defines the MAP."
   :link '(emacs-commentary-link "difftastic")
   :risky t
   :group 'difftastic-bindings)
+(make-obsolete-variable 'difftastic-bindings-keymaps
+                        'difftastic-bindings-alist
+                        "20250506")
 
 ;;;###autoload
 (defcustom difftastic-bindings-alist
-  '(("D" difftastic-magit-diff "Difftastic diff (dwim)")
-    ("S" difftastic-magit-show "Difftastic show"))
+  '((((prefixes .  ((magit-diff (-1 -1) magit-diff)
+                    (magit-blame (-1) magit-blame)))
+      (keymaps . ((magit-blame-read-only-mode-map . magit-blame))))
+     .
+     (("D" difftastic-magit-diff "Difftastic diff (dwim)")
+      ("S" difftastic-magit-show "Difftastic show")))
+    (((prefixes . ((magit-file-dispatch (0 1 -1) magit-files))))
+     .
+     (("M-d" difftastic-magit-diff-buffer-file "Difftastic")))
+    (((keymaps . ((dired-mode-map . dired))))
+     .
+     (("M-=" difftastic-dired-diff))))
   "Define `difftastic' bindings.
-Each entry is in a form of (KEY COMMAND DESCRIPTION), where KEY
-is a key that should be bound, COMMAND is a command that should
-be executed when KEY has been pressed, and DESCRIPTION is a
-description that should be used for suffixes that are added to
-prefixes as defined in `difftastic-bindings-prefixes'.  KEY needs
-to be a valid key according to `key-valid-p' and in a form
-accepted by `transient-append-suffix'."
-  :type '(repeat
-          (list (key :tag "Key")
-                (function :tag "Command")
-                (choice :tag "Description"
-                        (const :tag "Command Name" nil)
-                        (string :tag "Literal Text"))))
+This variable defines all bindings together with prefixes and keymaps
+where they should be installed.  It is an alist where each entry in in a
+form (SPECS . BINDINGS).  The SPECS is an alist where each entry is in a
+form (TYPE . SPEC).  The TYPE is either `prefixes' or `keymaps' and:
+
+- When TYPE is `prefixes' then SPEC is a list where each element is in a
+  from of (PREFIX LOC FEATURE), where PREFIX is a `transient' prefix to
+  which to install bindings, LOC is a location within the prefix and
+  FEATURE is a feature (symbol) or file (string) that defines the
+  prefix.  When length of SPEC is equal to 1 the binding is installed a
+  transient suffix, otherwise it's installed as a transient column.  LOC
+  can be in any form accepted by `transient-get-suffix', which see.
+
+- When TYPE is `keymaps' then SPEC is a list where each element is in a
+  form of (MAP . FEATURE), where MAP is a keymap to set bindings to and
+  FEATURE is a feature (symbol) or file (string) that defines the MAP.
+
+BINDINGS is a list where each enlement is in a form of (KEY COMMAND
+DESCRIPTION), where KEY is a key that should be bound, COMMAND is a
+command that should be executed when KEY has been pressed, and
+DESCRIPTION is a description that should be used for suffixes that are
+added to prefixes.  KEY needs to be a valid key according to
+`key-valid-p' and in a form accepted by `transient-append-suffix'.
+
+Note: this variable is applied only when `difftastic-bindings-mode' is
+turned on.  This means that the mode may need to be turned off and on
+again."
+  :type '(alist :key-type
+                (set
+                 (cons :tag "Prefixes"
+                       (const prefixes)
+                       (repeat (list (symbol :tag "Prefix")
+                                     (repeat :tag "Location" (integer))
+                                     (choice
+                                      (string :tag "File")
+                                      (symbol :tag "Feature")))))
+                 (cons :tag "Keymaps"
+                       (const keymaps)
+                       (alist :key-type (symbol :tag "Keymap")
+                              :value-type (choice
+                                           (string :tag "File")
+                                           (symbol :tag "Feature")))))
+                :value-type
+                (repeat
+                 (list (key :tag "Key")
+                       (function :tag "Command")
+                       (choice :tag "Description"
+                               (const :tag "Command Name" nil)
+                               (string :tag "Literal Text")))))
   :link '(emacs-commentary-link "difftastic")
   :risky t
   :group 'difftastic-bindings)
+
+(defun difftastic-bindings--prefix-specs (bindings-alist)
+  "Return a list of prefixes specs from BINDINGS-ALIST.
+BINDINGS-ALIST is in the same form as `difftastic-bindings-alilst',
+which see."
+  (apply #'append
+         (mapcar (lambda (elt)
+                   (alist-get 'prefixes (car elt)))
+                 bindings-alist)))
+
+(defun difftastic-bindings--keymaps (bindings-alist)
+  "Return a list of keymaps from BINDINGS-ALIST.
+BINDINGS-ALIST is in the same form as `difftastic-bindings-alilst',
+which see."
+  (apply #'append
+         (mapcar (lambda (elt)
+                   (alist-get 'keymaps (car elt)))
+                 bindings-alist)))
+
+(defun difftastic-bindings--prefix-specs-bindings (bindings-alist &optional prefix)
+  "Return a list of PREFIX specs and bindings from BINDINGS-ALIST.
+When PREFIX is nil return a list of all prefix specs and bindings.
+BINDINGS-ALIST is in the same form as `difftastic-bindings-alilst',
+which see."
+  (apply #'append
+         (mapcar (lambda (elt)
+                   (when-let* ((prefixes (alist-get 'prefixes (car elt))))
+                     (if prefix
+                         (when-let* ((spec (assq prefix prefixes)))
+                           (list (cons spec (cdr elt))))
+                       (mapcar (lambda (spec)
+                                 (cons spec (cdr elt)))
+                               prefixes))))
+                 bindings-alist)))
+
+(defun difftastic-bindings--keymap-bindings (bindings-alist &optional keymap)
+  "Return a list of KEYMAP specs and bindings from BINDINGS-ALIST.
+When KEYMAP is nil return a list of all keymaps and bindings.
+BINDINGS-ALIST is in the same form as `difftastic-bindings-alilst',
+which see."
+  (apply #'append
+         (mapcar (lambda (elt)
+                   (when-let* ((keymaps (alist-get 'keymaps (car elt))))
+                     (if keymap
+                         (when-let* ((spec (assq keymap keymaps)))
+                           (list (cons spec (cdr elt))))
+                       (mapcar (lambda (spec)
+                                 (cons spec (cdr elt)))
+                               keymaps))))
+                 bindings-alist)))
 
 (defvar difftastic-bindings--after-load-alist nil
   "Features and prefixes and keymaps that should have bindings managed.
@@ -221,7 +324,6 @@ type should be one of `:prefixes' or `:keymaps'."
       (push (cons feature (list type (list symbol)))
             difftastic-bindings--after-load-alist))))
 
-
 (defun difftastic-bindings--after-load (load-file)
   "Ensure difftastic bindings are set up after LOAD-FILE has been loaded.
 This function is designed as an `after-load-functions' hook."
@@ -233,50 +335,56 @@ This function is designed as an `after-load-functions' hook."
               (prefixes-keymaps
                (cdr (assq sym difftastic-bindings--after-load-alist))))
     (dolist (prefix (plist-get prefixes-keymaps :prefixes))
-      (when-let* ((loc (car (alist-get prefix
-                                       difftastic-bindings-prefixes)))
-                  (suffix (difftastic-bindings--parse-bindings
-                           difftastic-bindings-alist)))
-        (difftastic-bindings--append-suffix prefix
-                                            loc
-                                            suffix)))
+      (dolist (prefix-spec-bindings (difftastic-bindings--prefix-specs-bindings
+                                     difftastic-bindings-alist prefix))
+        (when-let* ((loc (cadr (car prefix-spec-bindings)))
+                    (suffix (difftastic-bindings--parse-bindings
+                             (cdr prefix-spec-bindings))))
+          (difftastic-bindings--append-suffix prefix
+                                              loc
+                                              suffix))))
     (dolist (keymap (plist-get prefixes-keymaps :keymaps))
-      (when (boundp keymap)
-        (unless (get keymap 'difftastic--installed)
-          (difftastic-bindings--bind-keys keymap
-                                          difftastic-bindings-alist))))))
+      (when-let* (((boundp keymap))
+                  ((not (get keymap 'difftastic--installed)))
+                  (bindings (cdar (difftastic-bindings--keymap-bindings
+                                   difftastic-bindings-alist
+                                   keymap))))
+        (difftastic-bindings--bind-keys keymap bindings)))))
 
 (defun difftastic-bindings-mode--turn-on ()
   "Install difftastic bindings and register an `after-load-functions' hook."
-  (let ((suffix (difftastic-bindings--parse-bindings
-                 difftastic-bindings-alist)))
-    (dolist (prefix-spec difftastic-bindings-prefixes)
-      (pcase-let* ((`(,prefix ,loc ,feature-file) prefix-spec)
-                   (feature (if (stringp feature-file)
-                                (intern feature-file)
-                              feature-file)))
-        (when (featurep feature)
-          (difftastic-bindings--append-suffix prefix
-                                              loc
-                                              suffix)))))
+  (dolist (prefix-spec-bindings (difftastic-bindings--prefix-specs-bindings
+                                 difftastic-bindings-alist))
+    (pcase-let* ((`((,prefix ,loc ,feature-file) . ,bindings)
+                  prefix-spec-bindings)
+                 (feature (if (stringp feature-file)
+                              (intern feature-file)
+                            feature-file)))
+      (when-let* (((featurep feature))
+                  (suffix (difftastic-bindings--parse-bindings bindings)))
+        (difftastic-bindings--append-suffix prefix
+                                            loc
+                                            suffix))))
 
-  (dolist (keymap-spec difftastic-bindings-keymaps)
-    (pcase-let* ((`(,keymap . ,feature-file) keymap-spec)
+  (dolist (keymap-spec-bindings (difftastic-bindings--keymap-bindings
+                                 difftastic-bindings-alist))
+    (pcase-let* ((`((,keymap . ,feature-file) . ,bindings) keymap-spec-bindings)
                  (feature (if (stringp feature-file)
                               (intern feature-file)
                             feature-file)))
       (when (and (featurep feature)
                  (boundp keymap))
-        (difftastic-bindings--bind-keys keymap
-                                        difftastic-bindings-alist))))
+        (difftastic-bindings--bind-keys keymap bindings))))
 
-  (dolist (prefix-spec difftastic-bindings-prefixes)
+  (dolist (prefix-spec (difftastic-bindings--prefix-specs
+                        difftastic-bindings-alist))
     (pcase-let* ((`(,prefix ,_ ,file-feature) prefix-spec))
       (difftastic-bindings--add-to-after-load
        file-feature
        :prefixes
        prefix)))
-  (dolist (keymap-spec difftastic-bindings-keymaps)
+  (dolist (keymap-spec (difftastic-bindings--keymaps
+                        difftastic-bindings-alist))
     (pcase-let* ((`(,keymap . ,file-feature) keymap-spec))
       (difftastic-bindings--add-to-after-load
        file-feature
@@ -299,10 +407,8 @@ This function is designed as an `after-load-functions' hook."
 ;;;###autoload
 (define-minor-mode difftastic-bindings-mode
   "Ensure key bindings to `difftastic' commands.
-Use bindings specified in `difftastic-bindings' (which see) to
-create a suffixes in prefixes defined in
-`difftastic-bindings-prefixes' (which see) and install them into
-`difftastic-bindings-keymaps' (which see)."
+Use bindings specified in `difftastic-bindings-alist' (which see) to
+create defined suffixes in prefixes and bindings in keymaps."
   :global t
   :group 'difftastic-bindings
   (if difftastic-bindings-mode

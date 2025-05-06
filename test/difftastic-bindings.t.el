@@ -13,15 +13,22 @@
 (require 'transient)
 (require 'cl-lib)
 
-(ert-deftest difftastic-bindings--parse-bindings:basic ()
-  (let ((bindings '(("A" fun-a "Do A")
-                    ("B" 'fun-b "")
-                    ("C" #'fun-c))))
-    (should (equal (difftastic-bindings--parse-bindings bindings)
-                   [("A" "Do A" fun-a)
-                    ("B" "fun-b" fun-b)
-                    ("C" "fun-c" fun-c)]))))
+
+(ert-deftest difftastic-bindings--parse-bindings:transient-column ()
+  (should (equal (difftastic-bindings--parse-bindings '(("A" fun-a "Do A")
+                                                        ("B" 'fun-b "")
+                                                        ("C" #'fun-c)))
+                 [("A" "Do A" fun-a)
+                  ("B" "fun-b" fun-b)
+                  ("C" "fun-c" fun-c)])))
 
+(ert-deftest difftastic-bindings--parse-bindings:transient-suffix ()
+  (should (equal (difftastic-bindings--parse-bindings '(("A" fun-a "Do A")))
+                 '("A" "Do A" fun-a)))
+  (should (equal (difftastic-bindings--parse-bindings '(("B" 'fun-b "")))
+                 '("B" "fun-b" fun-b)))
+  (should (equal (difftastic-bindings--parse-bindings '(("C" #'fun-c)))
+                 '("C" "fun-c" fun-c))))
 
 (ert-deftest difftastic-bindings--add-to-installed:first-element ()
   (let (difftastic-bindings--installed-plist)
@@ -264,6 +271,165 @@
     (put 'difftastic-bindings-t-keymap-1 'difftastic--installed nil)))
 
 
+(ert-deftest difftastic-bindings--prefix-specs:basic ()
+  (let ((bindings-alist '((((prefixes .  ((magit-diff (-1 -1) magit-diff)
+                                          (magit-blame (-1) magit-blame)))
+                            (keymaps . ((magit-blame-read-only-mode-map . magit-blame))))
+                           .
+                           (("D" difftastic-magit-diff "Difftastic diff (dwim)")
+                            ("S" difftastic-magit-show "Difftastic show")))
+                          (((prefixes . ((magit-file-dispatch (0 1 1) magit-file))))
+                           .
+                           (("M-d" difftastic-magit-diff-buffer-file "Difftastic")))
+                          (((keymaps . ((dired-mode-map . dired))))
+                           .
+                           (("M-=" difftastic-dired-diff))))))
+    (should-not (cl-set-exclusive-or
+                 '((magit-diff (-1 -1) magit-diff)
+                   (magit-blame (-1) magit-blame)
+                   (magit-file-dispatch (0 1 1) magit-file))
+                 (difftastic-bindings--prefix-specs
+                  bindings-alist)))))
+
+
+(ert-deftest difftastic-bindings--keymaps:basic ()
+  (let ((bindings-alist '((((prefixes .  ((magit-diff (-1 -1) magit-diff)
+                                          (magit-blame (-1) magit-blame)))
+                            (keymaps . ((magit-blame-read-only-mode-map . magit-blame))))
+                           .
+                           (("D" difftastic-magit-diff "Difftastic diff (dwim)")
+                            ("S" difftastic-magit-show "Difftastic show")))
+                          (((prefixes . ((magit-file-dispatch (0 1 1) magit-file))))
+                           .
+                           (("M-d" difftastic-magit-diff-buffer-file "Difftastic")))
+                          (((keymaps . ((dired-mode-map . dired))))
+                           .
+                           (("M-=" difftastic-dired-diff))))))
+    (should-not (cl-set-exclusive-or
+                 '((magit-blame-read-only-mode-map . magit-blame)
+                   (dired-mode-map . dired))
+                 (difftastic-bindings--keymaps
+                  bindings-alist)))))
+
+
+(ert-deftest difftastic-bindings--prefix-specs-bindings:prefix ()
+  (let ((bindings-alist '((((prefixes .  ((magit-diff (-1 -1) magit-diff)
+                                          (magit-blame (-1) magit-blame)))
+                            (keymaps . ((magit-blame-read-only-mode-map . magit-blame))))
+                           .
+                           (("D" difftastic-magit-diff "Difftastic diff (dwim)")
+                            ("S" difftastic-magit-show "Difftastic show")))
+                          (((prefixes . ((magit-file-dispatch (0 1 1) magit-file))))
+                           .
+                           (("M-d" difftastic-magit-diff-buffer-file "Difftastic")))
+                          (((keymaps . ((dired-mode-map . dired))))
+                           .
+                           (("M-=" difftastic-dired-diff))))))
+    (should (equal
+             '(((magit-diff (-1 -1) magit-diff)
+                .
+                (("D" difftastic-magit-diff "Difftastic diff (dwim)")
+                 ("S" difftastic-magit-show "Difftastic show"))))
+             (difftastic-bindings--prefix-specs-bindings
+              bindings-alist
+              'magit-diff)))
+    (should (equal
+           '(((magit-file-dispatch (0 1 1) magit-file)
+              .
+              (("M-d" difftastic-magit-diff-buffer-file "Difftastic"))))
+           (difftastic-bindings--prefix-specs-bindings
+            bindings-alist
+            'magit-file-dispatch)))
+    (should-not (difftastic-bindings--prefix-specs-bindings
+                 bindings-alist
+                 'magit-blame-read-only-mode-map))))
+
+(ert-deftest difftastic-bindings--prefix-specs-bindings:all ()
+  (let ((bindings-alist '((((prefixes .  ((magit-diff (-1 -1) magit-diff)
+                                          (magit-blame (-1) magit-blame)))
+                            (keymaps . ((magit-blame-read-only-mode-map . magit-blame))))
+                           .
+                           (("D" difftastic-magit-diff "Difftastic diff (dwim)")
+                            ("S" difftastic-magit-show "Difftastic show")))
+                          (((prefixes . ((magit-file-dispatch (0 1 1) magit-file))))
+                           .
+                           (("M-d" difftastic-magit-diff-buffer-file "Difftastic")))
+                          (((keymaps . ((dired-mode-map . dired))))
+                           .
+                           (("M-=" difftastic-dired-diff))))))
+    (should-not (cl-set-exclusive-or
+                 '(((magit-diff (-1 -1) magit-diff)
+                    .
+                    (("D" difftastic-magit-diff "Difftastic diff (dwim)")
+                     ("S" difftastic-magit-show "Difftastic show")))
+                   ((magit-blame (-1) magit-blame)
+                    .
+                    (("D" difftastic-magit-diff "Difftastic diff (dwim)")
+                     ("S" difftastic-magit-show "Difftastic show")))
+                   ((magit-file-dispatch (0 1 1) magit-file)
+                    .
+                    (("M-d" difftastic-magit-diff-buffer-file "Difftastic"))))
+                 (difftastic-bindings--prefix-specs-bindings
+                  bindings-alist)))))
+
+
+(ert-deftest difftastic-bindings--keymap-bindings:keymap ()
+  (let ((bindings-alist '((((prefixes .  ((magit-diff (-1 -1) magit-diff)
+                                          (magit-blame (-1) magit-blame)))
+                            (keymaps . ((magit-blame-read-only-mode-map . magit-blame))))
+                           .
+                           (("D" difftastic-magit-diff "Difftastic diff (dwim)")
+                            ("S" difftastic-magit-show "Difftastic show")))
+                          (((prefixes . ((magit-file-dispatch (0 1 1) magit-file))))
+                           .
+                           (("M-d" difftastic-magit-diff-buffer-file "Difftastic")))
+                          (((keymaps . ((dired-mode-map . dired))))
+                           .
+                           (("M-=" difftastic-dired-diff))))))
+    (should (equal
+             '(((magit-blame-read-only-mode-map . magit-blame)
+                .
+                (("D" difftastic-magit-diff "Difftastic diff (dwim)")
+                 ("S" difftastic-magit-show "Difftastic show"))))
+             (difftastic-bindings--keymap-bindings
+              bindings-alist
+              'magit-blame-read-only-mode-map)))
+    (should (equal
+             '(((dired-mode-map . dired)
+               .
+               (("M-=" difftastic-dired-diff))))
+             (difftastic-bindings--keymap-bindings
+              bindings-alist
+              'dired-mode-map)))
+    (should-not (difftastic-bindings--keymap-bindings
+                 bindings-alist
+                 'magit-diff))))
+
+(ert-deftest difftastic-bindings--keymap-bindings:all ()
+  (let ((bindings-alist '((((prefixes .  ((magit-diff (-1 -1) magit-diff)
+                                          (magit-blame (-1) magit-blame)))
+                            (keymaps . ((magit-blame-read-only-mode-map . magit-blame))))
+                           .
+                           (("D" difftastic-magit-diff "Difftastic diff (dwim)")
+                            ("S" difftastic-magit-show "Difftastic show")))
+                          (((prefixes . ((magit-file-dispatch (0 1 1) magit-file))))
+                           .
+                           (("M-d" difftastic-magit-diff-buffer-file "Difftastic")))
+                          (((keymaps . ((dired-mode-map . dired))))
+                           .
+                           (("M-=" difftastic-dired-diff))))))
+    (should-not (cl-set-exclusive-or
+                 '(((magit-blame-read-only-mode-map . magit-blame)
+                    .
+                    (("D" difftastic-magit-diff "Difftastic diff (dwim)")
+                     ("S" difftastic-magit-show "Difftastic show")))
+                   ((dired-mode-map . dired)
+                    .
+                    (("M-=" difftastic-dired-diff))))
+                 (difftastic-bindings--keymap-bindings
+                  bindings-alist)))))
+
+
 (ert-deftest difftastic-bindings--add-to-after-load:one-feature ()
   (let (difftastic-bindings--after-load-alist)
     (difftastic-bindings--add-to-after-load 'dummy-feature
@@ -323,9 +489,12 @@
   (unwind-protect
       ;; Arrange
       (let ((difftastic-bindings-mode t)
-            (difftastic-bindings-prefixes
-             '((dummy-prefix-1 (-1 -1) difftastic-bindings-t-dummy)))
-            (difftastic-bindings-alist '(("A" fun-a "Do A")))
+            (difftastic-bindings-alist
+             '((((prefixes . ((dummy-prefix-1 (-1 -1) difftastic-bindings-t-dummy)))
+                 (keymaps . ((difftastic-bindings-t-keymap-1 . difftastic-bindings-t-dummy)
+                             (difftastic-bindings-t-keymap-2 . difftastic-bindings-t-dummy))))
+                 .
+                 (("A" fun-a "Do A")))))
             (difftastic-bindings--after-load-alist
              (list
               (cons 'difftastic-bindings-t-dummy
@@ -344,12 +513,12 @@
          ;; Expect
          `(mocklet (((difftastic-bindings--append-suffix
                       'dummy-prefix-1 '(-1 -1)
-                      ,(difftastic-bindings--parse-bindings
-                        difftastic-bindings-alist))
+                      `,(difftastic-bindings--parse-bindings
+                        '(("A" fun-a "Do A"))))
                      :times 1)
                     ((difftastic-bindings--bind-keys
                       'difftastic-bindings-t-keymap-1
-                      `,difftastic-bindings-alist)
+                      '(("A" fun-a "Do A")))
                      :times 1))
             ;; Act
             (difftastic-bindings--after-load
@@ -365,9 +534,12 @@
   (unwind-protect
       ;; Arrange
       (let ((difftastic-bindings-mode t)
-            (difftastic-bindings-prefixes
-             '((dummy-prefix-1 (-1 -1) difftastic-bindings-t-dummy)))
-            (difftastic-bindings-alist '(("A" fun-a "Do A")))
+            (difftastic-bindings-alist
+             '((((prefixes . ((dummy-prefix-1 (-1 -1) difftastic-bindings-t-dummy)))
+                 (keymaps . ((difftastic-bindings-t-keymap-1 . difftastic-bindings-t-dummy)
+                             (difftastic-bindings-t-keymap-2 . difftastic-bindings-t-dummy))))
+                 .
+                 (("A" fun-a "Do A")))))
             (difftastic-bindings--after-load-alist
              (list
               (cons 'difftastic-bindings-t-dummy
@@ -400,9 +572,10 @@
   (unwind-protect
       ;; Arrange
       (let ((difftastic-bindings-mode t)
-            (difftastic-bindings-prefixes
-             '((dummy-prefix-1 (-1 -1) difftastic-bindings-t-dummy)))
-            (difftastic-bindings-alist '(("A" fun-a "Do A")))
+            (difftastic-bindings-alist
+             '((((prefixes . ((dummy-prefix-1 (-1 -1) difftastic-bindings-t-dummy))))
+                 .
+                 (("A" fun-a "Do A")))))
             (difftastic-bindings--after-load-alist
              (list
               (cons 'difftastic-bindings-t-dummy
@@ -431,19 +604,14 @@
 (ert-deftest difftastic-bindings-mode--turn-on:basic ()
   (unwind-protect
       ;; Arrange
-      (let ((difftastic-bindings-prefixes
-             '((dummy-prefix-1 (-1 -1) difftastic-bindings-t-dummy)
-               (dummy-prefix-2 (-1) difftastic-bindings-t-dummy-other)
-               (dummy-prefix-3 (-1) "difftastic-bindings-t-dummy-other")))
-            (difftastic-bindings-keymaps
-             (list
-              (cons 'difftastic-bindings-t-keymap-1
-                    "difftastic-bindings-t-dummy")
-              (cons 'difftastic-bindings-t-keymap-2
-                    'difftastic-bindings-t-dummy-other)
-              (cons 'difftastic-bindings-t-keymap-3
-                    'difftastic-bindings-t-dummy)))
-            (difftastic-bindings-alist '(("A" fun-a "Do A")))
+      (let ((difftastic-bindings-alist
+             '((((prefixes . ((dummy-prefix-1 (-1 -1) difftastic-bindings-t-dummy)
+                              (dummy-prefix-2 (-1) difftastic-bindings-t-dummy-other)
+                              (dummy-prefix-3 (-1) "difftastic-bindings-t-dummy-other")))
+                 (keymaps . ((difftastic-bindings-t-keymap-1 . "difftastic-bindings-t-dummy")
+                             (difftastic-bindings-t-keymap-2 . difftastic-bindings-t-dummy-other)
+                             (difftastic-bindings-t-keymap-3 . difftastic-bindings-t-dummy))))
+                . (("A" fun-a "Do A")))))
             difftastic-bindings--after-load-alist
             after-load-functions)
         (provide 'difftastic-bindings-t-dummy)
@@ -455,12 +623,12 @@
          ;; Expect
          `(mocklet (((difftastic-bindings--append-suffix
                       'dummy-prefix-1 '(-1 -1)
-                      ,(difftastic-bindings--parse-bindings
-                        difftastic-bindings-alist))
+                      `,(difftastic-bindings--parse-bindings
+                        '(("A" fun-a "Do A"))))
                      :times 1)
                     ((difftastic-bindings--bind-keys
                       'difftastic-bindings-t-keymap-1
-                      `,difftastic-bindings-alist)
+                      '(("A" fun-a "Do A")))
                      :times 1))
             ;; Act
             (difftastic-bindings-mode--turn-on)))

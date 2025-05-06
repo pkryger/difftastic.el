@@ -149,15 +149,14 @@
 ;;   :ensure difftastic ;; or nil if you prefer manual installation
 ;;   :config (difftastic-bindings-mode))
 ;;
-;; This will bind `D' to `difftastic-magit-diff' and `S' to
+;; By default this will bind `D' to `difftastic-magit-diff' and `S' to
 ;; `difftastic-magit-show' in `magit-diff' and `magit-blame' transient
-;; prefixes as well as in `magit-blame-read-only-map'.  Please refer to
-;; `difftastic-bindings' documentation to see how to change default bindings.
-;;
-;; You can adjust what bindings you want to have configured by changing values
-;; of `difftastic-bindings-alist', `difftastic-bindings-prefixes', and
-;; `difftastic-bindings-keymaps'.  You need to turn the
-;; `difftastic-bindings-mode' off and on again to apply the changes.
+;; prefixes as well as in `magit-blame-read-only-map' as well as `M-d' to
+;; `difftastic-magit-diff-buffer-file' in `magit-file-dispatch' and `M-\=' to
+;; `difftastic-dired-diff' in `dired-mode-map'.  Please refer to
+;; `difftastic-bindings-alist' documentation to see how to change default
+;; bindings.  You need to turn the `difftastic-bindings-mode' off and on again
+;; to apply the changes.
 ;;
 ;; The `difftastic-bindings=mode' was designed to have minimal dependencies
 ;; and be reasonably fast to load, while providing a mechanism to bind
@@ -169,8 +168,8 @@
 ;;
 ;; If you don't want to use mechanism delivered by `difftastic-bindings-mode'
 ;; you can write your own configuration.  As a starting point the following
-;; snippets demonstrate how to achieve roughly the same effect as
-;; `difftastic-bindings-mode':
+;; snippets demonstrate how to achieve roughly partial effect as
+;; `difftastic-bindings-mode' in default configuration:
 ;;
 ;; (require 'difftastic)
 ;; (require 'transient)

@@ -149,14 +149,18 @@
 ;;   :ensure difftastic ;; or nil if you prefer manual installation
 ;;   :config (difftastic-bindings-mode))
 ;;
-;; By default this will bind `D' to `difftastic-magit-diff' and `S' to
-;; `difftastic-magit-show' in `magit-diff' and `magit-blame' transient
-;; prefixes as well as in `magit-blame-read-only-map' as well as `M-d' to
-;; `difftastic-magit-diff-buffer-file' in `magit-file-dispatch' and `M-\=' to
-;; `difftastic-dired-diff' in `dired-mode-map'.  Please refer to
-;; `difftastic-bindings-alist' documentation to see how to change default
-;; bindings.  You need to turn the `difftastic-bindings-mode' off and on again
-;; to apply the changes.
+;; By default this will bind:
+;; - `M-d' to `difftastic-magit-diff' and `M-c' to `difftastic-magit-show' in
+;;   `magit-diff' prefix,
+;; - `M-RET' to `difftastic-magit-show' in `magit-blame' transient prefix and
+;;   in `magit-blame-read-only-map' keymap,
+;; - `M-d' to `difftastic-magit-diff-buffer-file' in `magit-file-dispatch'
+;;   prefix,
+;; - `M-\=' to `difftastic-dired-diff' in `dired-mode-map'.
+;;
+;; Please refer to `difftastic-bindings-alist' documentation to see how to
+;; change default bindings.  You need to toggle the `difftastic-bindings-mode'
+;; off and on again to apply the changes.
 ;;
 ;; The `difftastic-bindings=mode' was designed to have minimal dependencies
 ;; and be reasonably fast to load, while providing a mechanism to bind
@@ -168,8 +172,8 @@
 ;;
 ;; If you don't want to use mechanism delivered by `difftastic-bindings-mode'
 ;; you can write your own configuration.  As a starting point the following
-;; snippets demonstrate how to achieve roughly partial effect as
-;; `difftastic-bindings-mode' in default configuration:
+;; snippets demonstrate how to achieve partial effect similar to the one
+;; provided by `difftastic-bindings-mode' in default configuration:
 ;;
 ;; (require 'difftastic)
 ;; (require 'transient)
@@ -179,15 +183,14 @@
 ;;   (with-eval-after-load 'magit-diff
 ;;     (unless (equal (transient-parse-suffix 'magit-diff suffix)
 ;;                    (transient-get-suffix 'magit-diff '(-1 -1)))
-;;       (transient-append-suffix 'magit-diff '(-1 -1) suffix)))
+;;       (transient-append-suffix 'magit-diff '(-1 -1) suffix))))
+;; (let ((suffix '("M-RET" "Difftastic show" difftastic-magit-show)))
 ;;   (with-eval-after-load 'magit-blame
 ;;     (unless (equal (transient-parse-suffix 'magit-blame suffix)
-;;                    (transient-get-suffix 'magit-blame '(-1)))
-;;       (transient-append-suffix 'magit-blame '(-1) suffix))
+;;                    (transient-get-suffix 'magit-blame "b"))
+;;       (transient-append-suffix 'magit-blame "b" suffix))
 ;;     (keymap-set magit-blame-read-only-mode-map
-;;                 "D" #'difftastic-magit-show)
-;;     (keymap-set magit-blame-read-only-mode-map
-;;                 "S" #'difftastic-magit-show)))
+;;                 "M-RET" #'difftastic-magit-show)))
 ;;
 ;; Or, if you use `use-package':
 ;;
@@ -198,24 +201,24 @@
 ;;     :autoload (transient-get-suffix
 ;;                transient-parse-suffix))
 ;;
-;;   (let ((suffix [("D" "Difftastic diff (dwim)" difftastic-magit-diff)
-;;                  ("S" "Difftastic show" difftastic-magit-show)]))
 ;;     (use-package magit-blame
 ;;       :defer t :ensure magit
 ;;       :bind
 ;;       (:map magit-blame-read-only-mode-map
-;;             ("D" . #'difftastic-magit-diff)
-;;             ("S" . #'difftastic-magit-show))
+;;             ("M-RET" . #'difftastic-magit-show))
 ;;       :config
-;;       (unless (equal (transient-parse-suffix 'magit-blame suffix)
-;;                      (transient-get-suffix 'magit-blame '(-1)))
-;;         (transient-append-suffix 'magit-blame '(-1) suffix)))
+;;       (let ((suffix '("M-RET" "Difftastic show" difftastic-magit-show)))
+;;         (unless (equal (transient-parse-suffix 'magit-blame suffix)
+;;                        (transient-get-suffix 'magit-blame "b"))
+;;           (transient-append-suffix 'magit-blame "b" suffix)))
 ;;     (use-package magit-diff
 ;;       :defer t :ensure magit
 ;;       :config
-;;       (unless (equal (transient-parse-suffix 'magit-diff suffix)
-;;                      (transient-get-suffix 'magit-diff '(-1 -1)))
-;;         (transient-append-suffix 'magit-diff '(-1 -1) suffix)))))
+;;       (let ((suffix [("M-d" "Difftastic diff (dwim)" difftastic-magit-diff)
+;;                      ("M-c" "Difftastic show" difftastic-magit-show)]))
+;;         (unless (equal (transient-parse-suffix 'magit-diff suffix)
+;;                        (transient-get-suffix 'magit-diff '(-1 -1)))
+;;           (transient-append-suffix 'magit-diff '(-1 -1) suffix)))))
 ;;
 ;;
 ;; Usage

@@ -229,7 +229,10 @@ again."
                  (cons :tag "Prefixes"
                        (const prefixes)
                        (repeat (list (symbol :tag "Prefix")
-                                     (repeat :tag "Location" (integer))
+                                     (choice :tag "Location"
+                                             (key :tag "Key")
+                                             (string :tag "Command")
+                                             (repeat (integer :tag "Coordinate")))
                                      (choice
                                       (string :tag "File")
                                       (symbol :tag "Feature")))))

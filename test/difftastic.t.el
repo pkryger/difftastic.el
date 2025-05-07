@@ -5420,9 +5420,12 @@ This only happens when `noninteractive' to avoid messing up with faces."
              (magit-buffer-refname nil))
     (mocklet (((magit-file-relative-name) => "test-file")
               ((magit-toplevel) => "test-toplevel")
-              ((get-buffer-create "*difftastic git diff unstaged*")  => "test-buffer")
+              ; mock native functions `line-number-at-pos' and `current-column'
+              ; before `get-buffer-create' to avoid shaeningans when running
+              ; tests with cask on laptop
               ((line-number-at-pos) => 42)
               ((current-column) => 17)
+              ((get-buffer-create "*difftastic git diff unstaged*")  => "test-buffer")
               ((magit-get-current-branch) => "test-branch")
               ((difftastic--goto-line-col-in-chunk 42 17)))
       (difftastic--magit-diff-buffer-file)
@@ -5443,9 +5446,12 @@ This only happens when `noninteractive' to avoid messing up with faces."
              (magit-buffer-refname nil))
     (mocklet (((magit-file-relative-name) => "test-file")
               ((magit-toplevel) => "test-toplevel")
-              ((get-buffer-create "*difftastic git diff unstaged*")  => "test-buffer")
+              ; mock native functions `line-number-at-pos' and `current-column'
+              ; before `get-buffer-create' to avoid shaeningans when running
+              ; tests with cask on laptop
               ((line-number-at-pos) => 42)
               ((current-column) => 17)
+              ((get-buffer-create "*difftastic git diff unstaged*")  => "test-buffer")
               ((magit-get-current-branch))
               ((difftastic--goto-line-col-in-chunk 42 17)))
       (difftastic--magit-diff-buffer-file)

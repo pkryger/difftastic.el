@@ -1789,6 +1789,37 @@ the working tree.  In both cases limit the diff to the file or blob."
   (interactive)
   (difftastic--magit-diff-buffer-file))
 
+(defun difftastic--file-extension-for-mode (mode)
+  "Return a file extension for MODE."
+  (alist-get
+   mode
+   (cl-remove-duplicates
+    (delq
+     nil
+     (apply
+      #'append
+      (mapcar
+       (lambda (ext)
+         (when-let* ((mode (assoc-default ext
+                                          auto-mode-alist
+                                          'string-match))
+                     ((functionp mode))
+                     (ts-mode (intern (string-replace
+                                       "-mode"
+                                       "-ts-mode"
+                                       (symbol-name mode))))
+                     (ext (string-replace "*" "" ext)))
+           (list (cons mode ext)
+                 (cons ts-mode ext))))
+       (cl-remove-if-not
+        (lambda (str)
+          (string-match (rx string-start "*.") str))
+        (string-split
+         (shell-command-to-string
+          (concat difftastic-executable " --list-languages")))))))
+    :test (lambda (lhs rhs)
+            (eq (car lhs) (car rhs))))))
+
 (defun difftastic--make-temp-file (prefix buffer)
   "Make a temporary file for BUFFER content with PREFIX included in file name."
   ;; adapted from `make-auto-save-file-name'
@@ -1804,7 +1835,9 @@ the working tree.  In both cases limit the diff to the file or blob."
           (setq buffer-name (replace-match replacement t t buffer-name))
           (setq limit (1+ (match-end 0)))))
       (make-temp-file (format "difftastic-%s-%s-" prefix buffer-name)
-                      nil nil (buffer-string)))))
+                      nil
+                      (difftastic--file-extension-for-mode major-mode)
+                      (buffer-string)))))
 
 (defun difftastic--get-file-buf (prefix buffer)
   "If BUFFER visits a file return it else create a temporary file with PREFIX.

@@ -105,31 +105,54 @@
                     "--ignore-submodules=test-submodule")))))
 
 
-(ert-deftest difftastic--get-file:buffer-visiting-file-no-temporary-created ()
+(ert-deftest difftastic--file-extension-for-mode:parse-output ()
+  (let ((file "difft--list-languages.out")
+        out)
+    (should (or (file-exists-p file)
+                (file-exists-p (format "test/%s" file))))
+    (setq out (if (file-exists-p file)
+                  file
+                (format "test/%s" file)))
+    (eval
+     `(mocklet ((shell-command-to-string => (ert-with-test-buffer ()
+                                              (insert-file-contents ,out)
+                                              (buffer-string))))
+        ;; Hints for updating the test when difft output changes:
+        ;; $ difft --list-languages > difft--list-languages.out
+        ;; (insert (format "%S" (difftastic--get-languages)))
+        (should (equal ".c" (difftastic--file-extension-for-mode 'c-mode)))
+        (should (equal ".c" (difftastic--file-extension-for-mode 'c-ts-mode)))))))
+
+(ert-deftest difftastic--get-file-buf:buffer-visiting-file-no-temporary-created ()
   (let (temp-file)
     (unwind-protect
-        (ert-with-test-buffer ()
-          (setq temp-file (make-temp-file "difftastic.t"))
-          (write-region (point-min) (point-max) temp-file nil t)
-          (should (equal `(,(buffer-file-name) . nil)
-                         (difftastic--get-file-buf "test" (current-buffer)))))
+        (mocklet ((difftastic--file-extension-for-mode not-called))
+          (ert-with-test-buffer ()
+            (setq temp-file (make-temp-file "difftastic.t"))
+            (write-region (point-min) (point-max) temp-file nil t)
+            (should (equal `(,(buffer-file-name) . nil)
+                           (difftastic--get-file-buf "test" (current-buffer))))))
 
       (when (file-exists-p temp-file)
         (delete-file temp-file)))))
 
-(ert-deftest difftastic--get-file:buffer-not-visiting-file-temporary-created ()
+(ert-deftest difftastic--get-file-buf:buffer-not-visiting-file-temporary-created ()
   (let (file-buf)
     (unwind-protect
-        (ert-with-test-buffer ()
-          (setq file-buf (difftastic--get-file-buf "test" (current-buffer)))
-          (should (consp file-buf))
-          (should (string-match-p
-                   (eval '(rx string-start
-                              (literal temporary-file-directory)
-                              "difftastic-test-"
-                              (one-or-more (not "/"))))
-                   (car file-buf)))
-          (should (equal (current-buffer) (cdr file-buf))))
+        (mocklet (((difftastic--file-extension-for-mode 'c-mode) => ".c"))
+          (ert-with-test-buffer ()
+            (c-mode)
+            (setq file-buf (difftastic--get-file-buf "test" (current-buffer)))
+            (should (consp file-buf))
+            (should (string-match-p
+                     (eval '(rx string-start
+                                (literal temporary-file-directory)
+                                "difftastic-test-"
+                                (one-or-more (not "/"))
+                                ".c"
+                                string-end))
+                     (car file-buf)))
+            (should (equal (current-buffer) (cdr file-buf)))))
 
       (when (and (cdr file-buf) (file-exists-p (car file-buf)))
         (delete-file (car file-buf))))))

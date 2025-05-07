@@ -101,9 +101,11 @@ the `difftastic--installed' property and remove it from
           ;; Try remove the whole suffix if it is still a suffix at loc
           (transient-remove-suffix prefix loc)
         ;; Fall back to key by key removal
-        (seq-do (lambda (binding)
-                  (transient-remove-suffix prefix (car binding)))
-                suffix)))
+        (if (vectorp suffix)
+            (seq-do (lambda (binding)
+                      (transient-remove-suffix prefix (car binding)))
+                    suffix)
+          (transient-remove-suffix prefix (car suffix)))))
     (function-put prefix 'difftastic--installed nil)
     (difftastic-bindings--remove-from-installed :prefixes prefix)))
 

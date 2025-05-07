@@ -161,7 +161,24 @@
                                      :prefixes))))
     (fmakunbound 'dummy-prefix)))
 
-(ert-deftest difftastic-bindings--remove-suffix:existing-fallback ()
+(ert-deftest difftastic-bindings--remove-suffix:existing-fallback-suffix ()
+  (unwind-protect
+      (let ((suffix '("A" "Do A" fun-a))
+            (difftastic-bindings--installed-plist '(:prefixes (dummy-prefix))))
+        (transient-define-prefix dummy-prefix nil [("A" "Do A" fun-a)
+                                                   [("B" "Do B" fun-b)]])
+        (function-put 'dummy-prefix 'difftastic--installed (cons '(-1 -1)
+                                                                 suffix))
+        (difftastic-bindings--remove-suffix 'dummy-prefix)
+        (should-not (ignore-errors
+                      (transient-get-suffix 'dummy-prefix "A")))
+        (should-not (function-get 'dummy-prefix 'difftastic--installed))
+        (should-not  (memq 'dummy-prefix
+                           (plist-get difftastic-bindings--installed-plist
+                                      :prefixes))))
+    (fmakunbound 'dummy-prefix)))
+
+(ert-deftest difftastic-bindings--remove-suffix:existing-fallback-column ()
   (unwind-protect
       (let ((suffix [("A" "Do A" fun-a)])
             (difftastic-bindings--installed-plist '(:prefixes (dummy-prefix))))

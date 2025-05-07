@@ -1065,23 +1065,25 @@ and SIDE is either `left' or `right'."
     (if (< point (caaar lines))
         ; use right when point is in chunk header
         (list file nil 0 'right)
-      (catch 'chunk-file
+      (cl-block search-chunk-file
         (while lines
           (pcase-let* ((`((,bol ,eol) ,left ,right) (car lines)))
             (when (and (<= bol point eol))
               (if (and left
                        (or (not right)
                            (< point (cadr right))))
-                  (throw 'chunk-file (list file
-                                           (car left)
-                                           (max 0
-                                                (- point (caddr left) 1))
-                                           'left))
-                (throw 'chunk-file (list file
-                                         (car right)
-                                         (max 0
-                                              (- point (caddr right) 1))
-                                         'right))))
+                  (cl-return-from search-chunk-file
+                    (list file
+                          (car left)
+                          (max 0
+                               (- point (caddr left) 1))
+                          'left))
+                (cl-return-from search-chunk-file
+                  (list file
+                        (car right)
+                        (max 0
+                             (- point (caddr right) 1))
+                        'right))))
             (setq lines (cdr lines))))))))
 
 (defun difftastic--diff-visit-file-setup (buffer line col)

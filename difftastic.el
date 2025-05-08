@@ -1051,9 +1051,10 @@ END are positions where the line number begins and ends respectively."
 
 (defun difftastic--chunk-file-at-point ()
   "Return a chunk file at point.
-Chunk file is a list in a form of (FILE LINE-NUM SIDE), where FILE is
-the chunk file name, LINE-NUM is an optional line number within the FILE
-and SIDE is either `left' or `right'."
+Chunk file is a list in a form of (FILE LINE-NUM COL SIDE), where FILE
+is the chunk file name, LINE-NUM is an optional line number within the
+FILE (1 based), COL is a column number within the LINE (0 based), and
+SIDE is either `left' or `right'."
   (when-let* ((bounds (difftastic--chunk-bounds))
               (file (difftastic--chunk-file-name bounds))
               (lines (pcase (difftastic--classify-chunk bounds)
@@ -1110,11 +1111,12 @@ start a smerge session (if there are unmerged changes) and run
 
 (defun difftastic--diff-visit-file-or-buffer (chunk-file fn)
   "From a diff visit the appropriate file or buffer CHUNK-FILE.
-The CHUNK-FILE is a list in a form of (FILE LINE-NUM SIDE), where FILE
-is the chunk file name, LINE-NUM is an optional line number within the
-FILE and SIDE is either `left' or `right'.  Use FN to display the buffer
-in some window.  After visiting the FILE start a smerge session (if
-there are unmerged changes) and run `difftastic-diff-visit-file-hook'."
+The CHUNK-FILE is a list in a form of (FILE LINE-NUM COL SIDE), where
+FILE is the chunk file name, LINE-NUM is an optional line number within
+the FILE (1 based), COL is a column number within the LINE (0 based),
+and SIDE is either `left' or `right'.  Use FN to display the buffer in
+some window.  After visiting the FILE start a smerge session (if there
+are unmerged changes) and run `difftastic-diff-visit-file-hook'."
   (pcase-let* ((`(,_ ,line ,col ,side) chunk-file)
                (file-buf (alist-get (if (eq side 'left)
                                         'file-buf-A
@@ -1136,11 +1138,12 @@ there are unmerged changes) and run `difftastic-diff-visit-file-hook'."
   "From a diff visit the appropriate version of CHUNK-FILE in git repository.
 If FORCE-WORKTREE is non-nil, then visit the worktree version of the
 file, even if the diff is about a committed change.  The CHUNK-FILE is a
-list in a form of (FILE LINE-NUM SIDE), where FILE is the chunk file
-name, LINE-NUM is an optional line number within the FILE and SIDE is
-either `left' or `right'.  Use FN to display the buffer in some window.
-After visiting the FILE start a smerge session (if there are unmerged
-changes) and run `difftastic-diff-visit-file-hook'."
+list in a form of (FILE LINE-NUM COL SIDE), where FILE is the chunk file
+name, LINE-NUM is an optional line number within the FILE (1 based), COL
+is a column number within the LINE (0 based), and SIDE is either `left'
+or `right'.  Use FN to display the buffer in some window.  After
+visiting the FILE start a smerge session (if there are unmerged changes)
+and run `difftastic-diff-visit-file-hook'."
   (pcase-let* ((`(,file ,line ,col ,side) chunk-file)
                (default-directory (alist-get 'default-directory
                                              difftastic--metadata))
@@ -1183,11 +1186,12 @@ changes) and run `difftastic-diff-visit-file-hook'."
   "From a diff visit the appropriate version of CHUNK-FILE.
 If FORCE-WORKTREE is non-nil, then visit the worktree version of the
 file, even if the diff is about a committed change.  The CHUNK-FILE is a
-list in a form of (FILE LINE-NUM SIDE), where FILE is the chunk file
-name, LINE-NUM is an optional line number within the FILE and SIDE is
-either `left' or `right'.  Use FN to display the buffer in some window.
-After visiting the FILE start a smerge session (if there are unmerged
-changes) and run `difftastic-diff-visit-file-hook'."
+list in a form of (FILE LINE-NUM COL SIDE), where FILE is the chunk file
+name, LINE-NUM is an optional line number within the FILE (1 based), COL
+is a column number within the LINE (0 based), and SIDE is either `left'
+or `right'.  Use FN to display the buffer in some window.  After
+visiting the FILE start a smerge session (if there are unmerged changes)
+and run `difftastic-diff-visit-file-hook'."
   (if chunk-file
       (if (assq 'git-command difftastic--metadata)
           (difftastic--diff-visit-git-file chunk-file fn force-worktree)
@@ -1196,8 +1200,9 @@ changes) and run `difftastic-diff-visit-file-hook'."
 
 (defun difftastic-diff-visit-file (chunk-file &optional other-window)
   "From a diff visit the appropriate version CHUNK-FILE.
-The CHUNK-FILE is a list in a form of (FILE LINE-NUM SIDE), where FILE is
-the chunk file name, LINE-NUM is an optional line number within the FILE
+The CHUNK-FILE is a list in a form of (FILE LINE-NUM COL SIDE), where
+FILE is the chunk file name, LINE-NUM is an optional line number within
+the FILE (1 based), COL is a column number within the LINE (0 based),
 and SIDE is either `left' or `right'.
 
 Display the buffer in the selected window.  With a prefix argument
@@ -1269,8 +1274,9 @@ Like `difftastic-diff-visit-file', which see, but use
 
 (defun difftastic-diff-visit-worktree-file (chunk-file &optional other-window)
   "From a diff visit worktree version of CHUNK-FILE.
-The CHUNK-FILE is a list in a form of (FILE LINE-NUM SIDE), where FILE is
-the chunk file name, LINE-NUM is an optional line number within the FILE
+The CHUNK-FILE is a list in a form of (FILE LINE-NUM COL SIDE), where
+FILE is the chunk file name, LINE-NUM is an optional line number within
+the FILE (1 based), COL is a column number within the LINE (0 based),
 and SIDE is either `left' or `right'.
 
 Display the buffer in the selected window.  With a prefix

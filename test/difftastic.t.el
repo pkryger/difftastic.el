@@ -106,7 +106,8 @@
 
 
 (ert-deftest difftastic--file-extension-for-mode:parse-output ()
-  (let ((file "difft--list-languages.out")
+  (let (difftastic--mode-extension-alist
+        (file "difft--list-languages.out")
         out)
     (should (or (file-exists-p file)
                 (file-exists-p (format "test/%s" file))))

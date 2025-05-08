@@ -1199,17 +1199,9 @@ and run `difftastic-diff-visit-file-hook'."
     (user-error "No chunk file at point")))
 
 (defun difftastic-diff-visit-file (chunk-file &optional other-window)
-  "From a diff visit the appropriate version CHUNK-FILE.
-The CHUNK-FILE is a list in a form of (FILE LINE-NUM COL SIDE), where
-FILE is the chunk file name, LINE-NUM is an optional line number within
-the FILE (1 based), COL is a column number within the LINE (0 based),
-and SIDE is either `left' or `right'.
-
-Display the buffer in the selected window.  With a prefix argument
-OTHER-WINDOW display the buffer in another window instead.
-
-The point location inside the diff determines which file (at which
-version) or buffer is being visited.
+  "From a diff visit the appropriate version of CHUNK-FILE.
+When called interactively, the point location inside the diff determines
+which file (at which version) or which buffer is being visited.
 
 1. If the diff shows differeces between files or buffers, for example a
    result of `difftastic-files' or `difftastic-buffers' then:
@@ -1244,9 +1236,18 @@ version) or buffer is being visited.
             content then visit the blob \"to\" endpoint.
 
 In the file-visiting buffer also go to the line that corresponds to the
-line that point is on in the diff.  After visiting the FILE start a
-smerge session (if there are unmerged changes) and run
-`difftastic-diff-visit-file-hook'.
+line that point is on in the diff.
+
+Display the buffer in the selected window.  With a prefix argument
+OTHER-WINDOW display the buffer in another window instead.
+
+After visiting the FILE start a smerge session (if there are unmerged
+changes) and run `difftastic-diff-visit-file-hook'.
+
+The CHUNK-FILE is a list in a form of (FILE LINE-NUM COL SIDE), where
+FILE is the chunk file name, LINE-NUM is an optional line number within
+the FILE (1 based), COL is a column number within the LINE (0 based),
+and SIDE is either `left' or `right'.
 
 Note that this command only works if point is inside a diff."
   (interactive (list (difftastic--chunk-file-at-point)
@@ -1274,24 +1275,27 @@ Like `difftastic-diff-visit-file', which see, but use
 
 (defun difftastic-diff-visit-worktree-file (chunk-file &optional other-window)
   "From a diff visit worktree version of CHUNK-FILE.
-The CHUNK-FILE is a list in a form of (FILE LINE-NUM COL SIDE), where
-FILE is the chunk file name, LINE-NUM is an optional line number within
-the FILE (1 based), COL is a column number within the LINE (0 based),
-and SIDE is either `left' or `right'.
-
-Display the buffer in the selected window.  With a prefix
-argument OTHER-WINDOW display the buffer in another window
-instead.
-
-Visit worktree version of the appropriate file.  The location of point
-inside the diff determines which file is being visited.  This is similar
-to `difftastic-diff-visit-file', which see, but always use the \"real\"
+When called interactively the location of point inside the diff
+determines which file is being visited.  This is similar to
+`difftastic-diff-visit-file', which see, but always use the \"real\"
 file when diff shows version control changes.
 
 In the file-visiting buffer also go to the line that corresponds
 to the line that point is on in the diff.  Lines that were added
 or removed in the working tree, the index and other commits in
-between are automatically accounted for."
+between are automatically accounted for.
+
+Display the buffer in the selected window.  With a prefix
+argument OTHER-WINDOW display the buffer in another window
+instead.
+
+After visiting the FILE start a smerge session (if there are unmerged
+changes) and run `difftastic-diff-visit-file-hook'.
+
+The CHUNK-FILE is a list in a form of (FILE LINE-NUM COL SIDE), where
+FILE is the chunk file name, LINE-NUM is an optional line number within
+the FILE (1 based), COL is a column number within the LINE (0 based),
+and SIDE is either `left' or `right'."
   (interactive (list (difftastic--chunk-file-at-point)
                      current-prefix-arg)
                difftastic-mode)

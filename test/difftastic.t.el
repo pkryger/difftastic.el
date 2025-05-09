@@ -3736,34 +3736,6 @@ test/difftastic.t.el --- Emacs Lisp
     (call-interactively #'difftastic-diff-visit-worktree-file-other-frame)))
 
 
-(ert-deftest difftastic--get-languages:parse-output ()
-  (let ((file "difft--list-languages.out")
-        out)
-    (should (or (file-exists-p file)
-                (file-exists-p (format "test/%s" file))))
-    (setq out (if (file-exists-p file)
-                  file
-                (format "test/%s" file)))
-    (eval
-     `(mocklet ((shell-command-to-string => (ert-with-test-buffer ()
-                                              (insert-file-contents ,out)
-                                              (buffer-string))))
-        ;; Hints for updating the test when difft output changes:
-        ;; $ difft --list-languages > difft--list-languages.out
-        ;; (insert (format "%S" (difftastic--get-languages)))
-        (should (equal '("Text" "Ada" "Apex" "Bash" "C" "Clojure" "CMake"
-                         "Common Lisp" "C++" "C#" "CSS" "Dart" "Elixir" "Elm"
-                         "Elvish" "Emacs Lisp" "Erlang" "Gleam" "Go" "Hack"
-                         "Hare" "Haskell" "HCL" "HTML" "Janet" "Java"
-                         "JavaScript" "JavaScript JSX" "JSON" "Julia" "Kotlin"
-                         "LaTeX" "Lua" "Make" "Newick" "Nix" "Objective-C"
-                         "OCaml" "OCaml Interface" "Pascal" "Perl" "PHP"
-                         "Python" "QML" "R" "Racket" "Ruby" "Rust" "Scala"
-                         "SCSS" "Solidity" "SQL" "Swift" "TOML" "TypeScript"
-                         "TypeScript TSX" "VHDL" "XML" "YAML" "Zig")
-                       (difftastic--get-languages)))))))
-
-
 ;; When running in noninteractive batch mode there are no faces defined, ergo:
 ;; no colors.  See this discussion:
 ;; https://lists.gnu.org/archive/html/help-gnu-emacs/2024-02/msg00095.html For
@@ -5468,6 +5440,34 @@ This only happens when `noninteractive' to avoid messing up with faces."
 (ert-deftest difftastic-magit-diff-buffer-file:basic ()
   (mocklet ((difftastic--magit-diff-buffer-file))
     (call-interactively #'difftastic-magit-diff-buffer-file)))
+
+
+(ert-deftest difftastic--get-languages:parse-output ()
+  (let ((file "difft--list-languages.out")
+        out)
+    (should (or (file-exists-p file)
+                (file-exists-p (format "test/%s" file))))
+    (setq out (if (file-exists-p file)
+                  file
+                (format "test/%s" file)))
+    (eval
+     `(mocklet ((shell-command-to-string => (ert-with-test-buffer ()
+                                              (insert-file-contents ,out)
+                                              (buffer-string))))
+        ;; Hints for updating the test when difft output changes:
+        ;; $ difft --list-languages > difft--list-languages.out
+        ;; (insert (format "%S" (difftastic--get-languages)))
+        (should (equal '("Text" "Ada" "Apex" "Bash" "C" "Clojure" "CMake"
+                         "Common Lisp" "C++" "C#" "CSS" "Dart" "Elixir" "Elm"
+                         "Elvish" "Emacs Lisp" "Erlang" "Gleam" "Go" "Hack"
+                         "Hare" "Haskell" "HCL" "HTML" "Janet" "Java"
+                         "JavaScript" "JavaScript JSX" "JSON" "Julia" "Kotlin"
+                         "LaTeX" "Lua" "Make" "Newick" "Nix" "Objective-C"
+                         "OCaml" "OCaml Interface" "Pascal" "Perl" "PHP"
+                         "Python" "QML" "R" "Racket" "Ruby" "Rust" "Scala"
+                         "SCSS" "Solidity" "SQL" "Swift" "TOML" "TypeScript"
+                         "TypeScript TSX" "VHDL" "XML" "YAML" "Zig")
+                       (difftastic--get-languages)))))))
 
 
 (ert-deftest difftastic--git-diff-range:no-args ()

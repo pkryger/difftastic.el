@@ -1660,6 +1660,17 @@ be passed to difftastic."
      rev-or-range
      difftastic-args)))
 
+(defun difftastic--get-languages ()
+  "Return list of language overrides supported by difftastic."
+  (append
+   '("Text")
+   (cl-remove-if (lambda (line)
+                   (string-match-p "^ \\*" line))
+                 (compat-call ;; Since Emacs-29
+                  string-split
+                  (shell-command-to-string
+                   (concat difftastic-executable " --list-languages"))
+                  "\n" t))))
 ;;;###autoload
 (defun difftastic-git-diff-range (&optional rev-or-range args files)
   "Show difference between two commits using difftastic.
@@ -1872,18 +1883,6 @@ when it is a temporary or nil otherwise."
   (when-let* ((file (car file-buf)))
     (when (and (cdr file-buf) (stringp file) (file-exists-p file))
       (delete-file file))))
-
-(defun difftastic--get-languages ()
-  "Return list of language overrides supported by difftastic."
-  (append
-   '("Text")
-   (cl-remove-if (lambda (line)
-                   (string-match-p "^ \\*" line))
-                 (compat-call ;; Since Emacs-29
-                  string-split
-                  (shell-command-to-string
-                   (concat difftastic-executable " --list-languages"))
-                  "\n" t))))
 
 (defun difftastic--make-suggestion (languages buffer-A buffer-B)
   "Suggest one of LANGUAGES based on mode of BUFFER-A and BUFFER-B."

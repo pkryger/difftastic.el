@@ -397,6 +397,8 @@
 (require 'font-lock)
 (require 'magit)
 (require 'view)
+(require 'transient)
+(require 'crm)
 
 (eval-when-compile
   (require 'compat)
@@ -1672,6 +1674,110 @@ be passed to difftastic."
                   (shell-command-to-string
                    (concat difftastic-executable " --list-languages"))
                   "\n" t))))
+
+(defun difftastic--read-overrides (prompt initial-input history)
+                                        ; checkdoc-params: (prompt initial-input history)
+  "Read language overrides."
+  (save-match-data
+    (let ((crm-separator ",")
+          (languages (difftastic--get-languages)))
+      (cl-block nil
+        (while t
+          (let ((str (magit-completing-read-multiple
+                      prompt
+                      languages
+                      nil
+                      nil
+                      initial-input
+                      history)))
+            (when (cl-every (lambda (s)
+                              (string-match (rx string-start
+                                                (one-or-more (not ":"))
+                                                ":"
+                                                (one-or-more (not ":"))
+                                                string-end)
+                                            s))
+                            str)
+              (cl-return str)))
+          (message (concat
+                    "Please enter comma sparated list glob:language associations,"
+                    " for example *.h:C,*.ts:TypeScript TSX,CustomFile:JSON"))
+          (sit-for 1))))))
+
+(defun difftastic--override-prompt (_obj)
+  "Return a prompt for `difftastic--override-infix'."
+  (with-temp-buffer
+    (let ((overriding-local-map crm-local-completion-map))
+      (concat
+       "Comma separated list of glob:language, type "
+       (substitute-command-keys "\\[crm-complete]")
+       " for languages: "))))
+
+(transient-define-infix difftastic--override-infix ()
+  :prompt #'difftastic--override-prompt
+  :multi-value t
+  :class 'transient-option
+  :reader #'difftastic--read-overrides
+  :argument "--override=")
+
+(defun difftastic--transient-args ()
+  "Like `transient-args', but ensure the `--override' argument is exploded."
+  (interactive)
+  (apply #'append
+         (mapcar (lambda (arg)
+                   (if (and (listp arg)
+                            (equal "--override=" (car arg)))
+                       (mapcar (lambda (o)
+                                 (format "--override=%s" o))
+                               (cdr arg))
+                     (list arg)))
+                 (transient-args (oref transient-current-prefix command)))))
+
+(defun difftastic--transient-abort ()
+  "Signal user error."
+  (interactive)
+  (user-error "Aborted"))
+
+(transient-define-prefix difftastic--arguments-menu ()
+  ["Difftastic arguments"
+   ("-o" "language overrides" difftastic--override-infix)
+   ("-s" "strip cr" "--strip-cr="
+    :choices ("on" "off"))
+   ("-c" "context" "--context="
+    :reader transient-read-number-N+)
+   ("-t" "tab width" "--tab-width="
+    :reader transient-read-number-N+)
+   ("-i" "ignore comments" "--ignore-comments")
+   ("-d" "display mode" "--display="
+    :choices ("side-by-side" "side-by-side-show-both" "inline"))
+   ("-h" "syntax highlight" "--syntax-highlight="
+    :choices ("on" "off"))
+   ("-p" "sort paths" "--sort-paths")
+   ("--skip-unchanged" "skip unchanged" "--skip-unchanged"
+    :level 5)
+   ("--color" "use color" "--color="
+    :choices ("always" "auto" "never")
+    :level 5)
+   ("--background" "background brightness" "--background"
+    :choices ("dark" "light")
+    :level 5)
+   ("--width" "line wraping columng" "--width"
+    :reader transient-read-number-N+
+    :level 5)
+   ("--byte-limit" "byte limit" "--byte-limit="
+    :reader transient-read-number-N+
+    :level 5)
+   ("--graph-limit" "graph limit" "--graph-limit="
+    :reader transient-read-number-N+
+    :level 5)
+   ("--error-limit" "parse error limit" "--parse-error-limit="
+    :reader transient-read-number-N+
+    :level 5)]
+
+  [("C-c C-c" "run difftastic" difftastic--transient-args)
+   ("C-c C-g" "abort" difftastic--transient-abort)])
+
+
 ;;;###autoload
 (defun difftastic-git-diff-range (&optional rev-or-range args files)
   "Show difference between two commits using difftastic.

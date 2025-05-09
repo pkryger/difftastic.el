@@ -5470,6 +5470,61 @@ This only happens when `noninteractive' to avoid messing up with faces."
                        (difftastic--get-languages)))))))
 
 
+(ert-deftest difftastic--read-overrides:basic ()
+  (mocklet (((difftastic--get-languages) => "test-languages")
+            ((sit-for 1)))
+    (let ((call-count 0))
+      (cl-letf (((symbol-function #'magit-completing-read-multiple)
+                 (lambda (prompt table &optional predicate require-match
+                                 initial-input hist def inherit-input-method
+                                 no-split)
+                   (cl-incf call-count)
+                   (should (equal prompt "test-prompt"))
+                   (should (equal table "test-languages"))
+                   (should-not predicate)
+                   (should-not require-match)
+                   (should (equal initial-input "test-initial-input"))
+                   (should (equal hist "test-history"))
+                   (should-not def)
+                   (should-not inherit-input-method)
+                   (should-not no-split)
+                   (if (eql 1 call-count)
+                       '("not-valid-association")
+                     '("foo:bar" "baz:qux")))))
+        (ert-with-message-capture messages
+          (should (equal (difftastic--read-overrides "test-prompt"
+                                                     "test-initial-input"
+                                                     "test-history")
+                         '("foo:bar" "baz:qux")))
+          (should (equal messages
+                         (concat
+                          "Please enter comma sparated list glob:language associations,"
+                          " for example *.h:C,*.ts:TypeScript TSX,CustomFile:JSON\n"))))
+        (should (eql call-count 2))))))
+
+
+(ert-deftest difftastic--override-prompt:basic ()
+  (should (equal (concat "Comma separated list of glob:language, type "
+                         (propertize "TAB"
+                                     'face 'help-key-binding
+                                     'font-lock-face 'help-key-binding)
+                         " for languages: ")
+                 (difftastic--override-prompt nil))))
+
+
+(ert-deftest difftastic--transient-args:basic ()
+  (let ((transient-current-prefix (transient-prefix :command "test-command")))
+    (mocklet (((transient-args "test-command") => '(("--override=" "foo" "bar") "--foo" "--bar"
+                                   ("--baz" "qux" "quux"))))
+      (should (equal '("--override=foo" "--override=bar" "--foo" "--bar"
+                       ("--baz" "qux" "quux"))
+                     (call-interactively #'difftastic--transient-args))))))
+
+(ert-deftest difftastic--transient-abort:basic ()
+  (let ((data (cadr (should-error (difftastic--transient-abort)))))
+    (should (equal data "Aborted"))))
+
+
 (ert-deftest difftastic--git-diff-range:no-args ()
   (mocklet (((get-buffer-create "*difftastic git diff*") => "test-buffer")
             ((difftastic--git-with-difftastic

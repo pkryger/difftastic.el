@@ -1607,13 +1607,12 @@ Each argument is matched as regexp.")
 
 (defun difftastic--transform-diff-arguments (args)
   "Transform \\='git diff\\=' ARGS to be compatible with difftastic.
-This removes arguments converts some arguments to be compatible
-with difftastic (i.e., \\='-U\\=' to \\='--context\\=') and
-removes some that are incompatible (i.e., \\='--stat\\=',
-\\='--no-ext-diff\\=').  The return value is a list in a form
-of (GIT-ARGS DIFFT-ARGS), where GIT-ARGS are arguments to be
-passed to \\='git\\=', and DIFFT-ARGS are arguments to be passed
-to difftastic."
+This converts some arguments to be compatible with difftastic (i.e.,
+\\='-U\\=' to \\='--context\\=') and removes some that are
+incompatible (i.e., \\='--stat\\=', \\='--no-ext-diff\\=').  The return
+value is a list in a form of (GIT-ARGS DIFFT-ARGS), where GIT-ARGS are
+arguments to be passed to \\='git\\=', and DIFFT-ARGS are arguments to
+be passed to difftastic."
   (let (case-fold-search)
     (list
      (cl-remove-if

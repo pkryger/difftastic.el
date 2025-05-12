@@ -5512,11 +5512,20 @@ This only happens when `noninteractive' to avoid messing up with faces."
                  (difftastic--override-prompt nil))))
 
 
-(ert-deftest difftastic--override-init-value:lang-override ()
+(ert-deftest difftastic--override-init-value:string ()
   (let ((obj (transient-option)))
     (mocklet (((transient-scope) => '("test-language" "test-fun" "test-args")))
       (difftastic--override-init-value obj))
-    (should (equal (oref obj value) '(".*:test-language")))))
+    (should (equal (oref obj value) '("*:test-language")))))
+
+(ert-deftest difftastic--override-init-value:list ()
+  (let ((obj (transient-option)))
+    (mocklet (((transient-scope) => '(("--override=*.1:test-language-1"
+                                       "--override=*.2:test-language-2")
+                                      "test-fun" "test-args")))
+      (difftastic--override-init-value obj))
+    (should (equal (oref obj value) '("*.1:test-language-1"
+                                      "*.2:test-language-2")))))
 
 (ert-deftest difftastic--override-init-value:nil ()
   (let ((obj (transient-option)))

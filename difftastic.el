@@ -1714,9 +1714,16 @@ be passed to difftastic."
        " for languages: "))))
 
 (defun difftastic--override-init-value (obj)
-  "Initialize value value of OBJ with `transient-scope'."
+  "Initialize value of override OBJ with language override from `transient-scope'.
+When the language override is a string, use it with * glob pattern.
+Otherwise, when the language override is a list use it removing
+\\='--override\\=' prefix from each element."
   (when-let* ((lang-override (car (transient-scope))))
-    (oset obj value (list (format ".*:%s" lang-override)))))
+    (oset obj value (if (stringp lang-override)
+                        (list (format "*:%s" lang-override))
+                      (mapcar (lambda (o)
+                                (string-remove-prefix "--override=" o))
+                              lang-override)))))
 
 (transient-define-infix difftastic--override-infix ()
   :prompt #'difftastic--override-prompt

@@ -1799,6 +1799,12 @@ The LANG-OVERRIDE will be used to initialize language overrides."
   (transient-setup #'difftastic--arguments-menu nil nil
                    :scope (append (list lang-override fun) (list args))))
 
+(defun difftastic--format-override-arg (lang-override)
+  "Format LANG-OVERRIDE to be usable with difftastic call."
+  (if (stringp lang-override)
+      (list (format "--override=*:%s" lang-override))
+    lang-override))
+
 ;;;###autoload
 (defun difftastic-git-diff-range (&optional rev-or-range args files)
   "Show difference between two commits using difftastic.
@@ -2031,28 +2037,26 @@ when it is a temporary or nil otherwise."
                 languages)))
 
 (defun difftastic--build-files-command (file-buf-A file-buf-B requested-width
-                                                   &optional lang-override)
+                                                   &optional difftastic-args)
   "Build a difftastic command to compare files from FILE-BUF-A and FILE-BUF-B.
 The FILE-BUF-A and FILE-BUF-B are conses where car is the file
 and cdr is a buffer when it is a temporary file and nil otherwise.
 REQUESTED-WIDTH is passed to difftastic as \\='--width\\=' argument.
-LANG-OVERRIDE is passed to difftastic as \\='--override\\=' argument."
+DIFFTASTIC-ARGS are passed to difftastic."
   `(,difftastic-executable
     "--color" "always"
     "--width" ,(number-to-string requested-width)
     "--background" ,(format "%s" (frame-parameter nil 'background-mode))
-    ,@(when lang-override (list "--override"
-                                (format "*:%s" lang-override)))
+    ,@difftastic-args
     ,(car file-buf-A)
     ,(car file-buf-B)))
 
 (defun difftastic--files-internal (buffer file-buf-A file-buf-B
-                                          &optional lang-override)
+                                          &optional difftastic-args)
   "Run difftastic on FILE-BUF-A and FILE-BUF-B and show results in BUFFER.
 The FILE-BUF-A and FILE-BUF-B are conses where car is the file
 and cdr is a buffer when it is a temporary file and nil otherwise.
-LANG-OVERRIDE is passed to difftastic as \\='--override\\='
-argument."
+DIFFTASTIS-ARGS are passed to difftastic."
   (let ((requested-width (funcall difftastic-requested-window-width-function))
         (difftastic-display-buffer-function difftastic-display-buffer-function))
     (difftastic--run-command
@@ -2060,11 +2064,11 @@ argument."
      (difftastic--build-files-command file-buf-A
                                       file-buf-B
                                       requested-width
-                                      lang-override)
+                                      difftastic-args)
      (lambda ()
        (setq difftastic--metadata
              `((default-directory . ,default-directory)
-               (lang-override . ,lang-override)
+               (difftastic-args . ,difftastic-args)
                (file-buf-A . ,file-buf-A)
                (file-buf-B . ,file-buf-B)))
        (funcall difftastic-display-buffer-function buffer requested-width)
@@ -2239,14 +2243,14 @@ makes the function prompt for LANG-OVERRIDE.  See \\='difft
    dired-mode)
   (difftastic--dired-diff file lang-override))
 
-(defun difftastic--rerun-file-buf (prefix file-buf rerun-alist)
+(defun difftastic--rerun-file-buf (prefix file-buf metadata)
   "Create a new temporary file for the FILE-BUF with PREFIX if needed.
 The new FILE-BUF is additionally set in RERUN-ALIST.  The FILE-BUF
 is a cons where car is the file and cdr is a buffer when it is a
 temporary file or nil otherwise."
   (if-let* ((buffer (cdr file-buf)))
       (if (buffer-live-p buffer)
-          (setf (alist-get (intern (concat "file-buf-" prefix)) rerun-alist)
+          (setf (alist-get (intern (concat "file-buf-" prefix)) metadata)
                 (difftastic--get-file-buf prefix buffer))
         (user-error "Buffer %s [%s] doesn't exist anymore" prefix buffer))
     file-buf))
@@ -2255,15 +2259,25 @@ temporary file or nil otherwise."
                                         ; checkdoc-params: (lang-override)
   "Implementation for `difftastic-rerun', which see."
   (if-let* (((eq major-mode 'difftastic-mode))
-            (rerun-alist (copy-tree difftastic--metadata)))
-      (let-alist rerun-alist
+            (metadata (copy-tree difftastic--metadata)))
+      (let-alist metadata
         (difftastic--with-file-bufs ((file-buf-A (difftastic--rerun-file-buf
-                                                  "A" .file-buf-A rerun-alist))
+                                                  "A" .file-buf-A metadata))
                                      (file-buf-B (difftastic--rerun-file-buf
-                                                  "B" .file-buf-B rerun-alist)))
+                                                  "B" .file-buf-B metadata)))
           (let* ((default-directory .default-directory)
-                 (lang-override (or lang-override
-                                    (alist-get 'lang-override rerun-alist)))
+                 (difftastic-args
+                   (if-let* ((override (difftastic--format-override-arg
+                                       lang-override)))
+                      (save-match-data
+                        (append override
+                                (cl-remove-if
+                                 (lambda (arg)
+                                   (string-match (rx string-start
+                                                     "--override=")
+                                                 arg))
+                                 .difftastic-args)))
+                    .difftastic-args))
                  (requested-width
                   (funcall (or
                             difftastic-rerun-requested-window-width-function
@@ -2272,23 +2286,21 @@ temporary file or nil otherwise."
                   (if .git-command
                       (difftastic--build-git-process-environment
                        requested-width
-                       (append .difftastic-args
-                               (when lang-override
-                                 (list "--override"
-                                       (format "*:%s" lang-override)))))
+                       difftastic-args)
                     process-environment))
                  (command (or .git-command
                               (difftastic--build-files-command
                                file-buf-A
                                file-buf-B
                                requested-width
-                               lang-override)))
+                               difftastic-args)))
                  (buffer (current-buffer)))
+            (message "*** args=%s" difftastic-args)
             (difftastic--run-command
              buffer
              command
              (lambda ()
-               (setq difftastic--metadata rerun-alist)
+               (setq difftastic--metadata metadata)
                (difftastic--delete-temp-file-buf file-buf-A)
                (difftastic--delete-temp-file-buf file-buf-B))))))
     (user-error "Nothing to rerun")))

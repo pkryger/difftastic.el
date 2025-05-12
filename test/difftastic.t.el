@@ -335,7 +335,7 @@
              '("--override" "*:C++"))))))
 
 
-(ert-deftest difftastic--build-files-command:without-lang-override ()
+(ert-deftest difftastic--build-files-command:without-difftastic-args ()
   (should (equal
            `(,difftastic-executable
              "--color" "always"
@@ -346,33 +346,33 @@
                                             (cons "test-file-B" nil)
                                             42))))
 
-(ert-deftest difftastic--build-files-command:with-lang-override ()
+(ert-deftest difftastic--build-files-command:with-difftastic-args ()
   (should (equal
            `(,difftastic-executable
              "--color" "always"
              "--width" "42"
              "--background" ,(format "%s" (frame-parameter nil 'background-mode))
-             "--override" "*:test-language"
+             "--override=*:test-language"
              "test-file-A" "test-file-B")
            (difftastic--build-files-command (cons "test-file-A" nil)
                                             (cons "test-file-B" nil)
                                             42
-                                            "test-language"))))
+                                            '("--override=*:test-language")))))
 
 
 (ert-deftest difftastic--rerun-file-buf:non-temporary-no-temporary-created ()
   (let (file-buf)
     (unwind-protect
-        (let* ((rerun-alist '((file-buf-test . ("test-file" . nil))))
-               (orig-rerun-alist (copy-tree rerun-alist)))
+        (let* ((metadata '((file-buf-test . ("test-file" . nil))))
+               (orig-rerun-alist (copy-tree metadata)))
           (setq file-buf
                 (difftastic--rerun-file-buf
                  "test"
-                 (alist-get 'file-buf-test rerun-alist)
-                 rerun-alist))
+                 (alist-get 'file-buf-test metadata)
+                 metadata))
           (should (equal (alist-get 'file-buf-test orig-rerun-alist)
                          file-buf))
-          (should (equal orig-rerun-alist rerun-alist)))
+          (should (equal orig-rerun-alist metadata)))
 
       (when (and (cdr file-buf) (file-exists-p (car file-buf)))
         (delete-file (car file-buf))))))
@@ -380,17 +380,17 @@
 (ert-deftest difftastic--rerun-file-buf:temporary-live-buffer-new-temporary-created ()
   (let (file-buf)
     (unwind-protect
-        (let ((rerun-alist '((file-buf-test . ("test-file" . t)))))
+        (let ((metadata '((file-buf-test . ("test-file" . t)))))
           (ert-with-test-buffer ()
             (setq file-buf
                   (difftastic--rerun-file-buf
                    "test"
                    (cons "test-file" (current-buffer))
-                   rerun-alist))
+                   metadata))
             (should-not (equal "test-file" (car file-buf)))
             (should (file-exists-p (car file-buf)))
             (should (equal file-buf
-                           (alist-get 'file-buf-test rerun-alist)))))
+                           (alist-get 'file-buf-test metadata)))))
 
       (when (and (cdr file-buf) (file-exists-p (car file-buf)))
         (delete-file (car file-buf))))))
@@ -399,25 +399,25 @@
   (let (file-buf)
     (unwind-protect
         (let ((text-quoting-style 'straight)
-              buffer rerun-alist orig-rerun-alist)
+              buffer metadata orig-rerun-alist)
           (ert-with-test-buffer ()
             (setq buffer (current-buffer)))
 
-          (setq rerun-alist `((file-buf-test . ("test-file" . ,buffer)))
-                orig-rerun-alist (copy-tree rerun-alist))
+          (setq metadata `((file-buf-test . ("test-file" . ,buffer)))
+                orig-rerun-alist (copy-tree metadata))
           (let ((data (cadr
                        (should-error
                         (setq file-buf
                               (difftastic--rerun-file-buf
                                "test"
-                               (alist-get 'file-buf-test rerun-alist)
-                               rerun-alist))
+                               (alist-get 'file-buf-test metadata)
+                               metadata))
                         :type 'user-error))))
             (should
              (equal data
                     "Buffer test [#<killed buffer>] doesn't exist anymore")))
 
-          (should (equal orig-rerun-alist rerun-alist)))
+          (should (equal orig-rerun-alist metadata)))
 
       (when (and (cdr file-buf) (file-exists-p (car file-buf)))
         (delete-file (car file-buf))))))
@@ -4995,16 +4995,16 @@ This only happens when `noninteractive' to avoid messing up with faces."
       (should (equal data "Nothing to rerun")))))
 
 (ert-deftest difftastic--rerun:git-command-rerun-requested-width ()
-  (let ((rerun-alist '((default-directory . "test-default-directory")
-                       (git-command . "test-command")
-                       (difftastic-args . ("test-difftastic-args"))))
+  (let ((metadata '((default-directory . "test-default-directory")
+                    (git-command . "test-command")
+                    (difftastic-args . ("test-difftastic-args"))))
         (difftastic-rerun-requested-window-width-function
          (lambda ()
            "test-difftastic-width"))
         (run-command-call-count 0))
     (ert-with-test-buffer ()
       (difftastic-mode)
-      (setq difftastic--metadata rerun-alist)
+      (setq difftastic--metadata metadata)
       (mocklet (((difftastic--build-git-process-environment
                   "test-difftastic-width" '("test-difftastic-args"))
                  => "test-process-environment"))
@@ -5022,13 +5022,13 @@ This only happens when `noninteractive' to avoid messing up with faces."
                 ,(cl-incf run-command-call-count))
             (difftastic--rerun nil))))
       (should (eq run-command-call-count 1))
-      (should-not (eq difftastic--metadata rerun-alist))
-      (should (equal difftastic--metadata rerun-alist)))))
+      (should-not (eq difftastic--metadata metadata))
+      (should (equal difftastic--metadata metadata)))))
 
 (ert-deftest difftastic--rerun:git-command-requested-width ()
-  (let ((rerun-alist '((default-directory . "test-default-directory")
-                       (git-command . "test-command")
-                       (difftastic-args . ("test-difftastic-args"))))
+  (let ((metadata '((default-directory . "test-default-directory")
+                    (git-command . "test-command")
+                    (difftastic-args . ("test-difftastic-args"))))
         (difftastic-rerun-requested-window-width-function nil)
         (difftastic-requested-window-width-function
          (lambda ()
@@ -5036,7 +5036,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
         (run-command-call-count 0))
     (ert-with-test-buffer ()
       (difftastic-mode)
-      (setq difftastic--metadata rerun-alist)
+      (setq difftastic--metadata metadata)
       (mocklet (((difftastic--build-git-process-environment
                   "test-difftastic-width" '("test-difftastic-args"))
                  => "test-process-environment"))
@@ -5054,24 +5054,23 @@ This only happens when `noninteractive' to avoid messing up with faces."
                 ,(cl-incf run-command-call-count))
             (difftastic--rerun nil))))
       (should (eq run-command-call-count 1))
-      (should-not (eq difftastic--metadata rerun-alist))
-      (should (equal difftastic--metadata rerun-alist)))))
+      (should-not (eq difftastic--metadata metadata))
+      (should (equal difftastic--metadata metadata)))))
 
 (ert-deftest difftastic--rerun:git-command-with-lang-override ()
-  (let ((rerun-alist '((default-directory . "test-default-directory")
-                       (git-command . "test-command")
-                       (difftastic-args . ("test-difftastic-args"))))
+  (let ((metadata '((default-directory . "test-default-directory")
+                    (git-command . "test-command")
+                    (difftastic-args . ("test-difftastic-args"))))
         (difftastic-rerun-requested-window-width-function
          (lambda ()
            "test-difftastic-width"))
         (run-command-call-count 0))
     (ert-with-test-buffer ()
       (difftastic-mode)
-      (setq difftastic--metadata rerun-alist)
+      (setq difftastic--metadata metadata)
       (mocklet (((difftastic--build-git-process-environment
                   "test-difftastic-width" '("test-difftastic-args"
-                                            "--override"
-                                            "*:test-lang-override"))
+                                            "--override=*:test-lang-override"))
                  => "test-process-environment"))
         (eval
          `(difftastic--with-temp-advice
@@ -5087,24 +5086,24 @@ This only happens when `noninteractive' to avoid messing up with faces."
                 ,(cl-incf run-command-call-count))
             (difftastic--rerun "test-lang-override"))))
       (should (eq run-command-call-count 1))
-      (should-not (eq difftastic--metadata rerun-alist))
-      (should (equal difftastic--metadata rerun-alist)))))
+      (should-not (eq difftastic--metadata metadata))
+      (should (equal difftastic--metadata metadata)))))
 
 (ert-deftest difftastic--rerun:files-command-rerun-requested-width ()
-  (let ((rerun-alist '((default-directory . "test-default-directory")
-                       (lang-override . "test-lang-override")
-                       (file-buf-A . ("test-file-buf-A" . nil))
-                       (file-buf-B . ("test-file-buf-B" . nil))))
+  (let ((metadata '((default-directory . "test-default-directory")
+                    (difftastic-args . ("test-difftastic-arg"))
+                    (file-buf-A . ("test-file-buf-A" . nil))
+                    (file-buf-B . ("test-file-buf-B" . nil))))
         (difftastic-rerun-requested-window-width-function
          (lambda ()
            "test-difftastic-width"))
         (run-command-call-count 0))
     (ert-with-test-buffer ()
       (difftastic-mode)
-      (setq difftastic--metadata rerun-alist)
+      (setq difftastic--metadata metadata)
       (mocklet (((difftastic--build-files-command
                   '("test-file-buf-A" . nil) '("test-file-buf-B". nil)
-                  "test-difftastic-width" "test-lang-override")
+                  "test-difftastic-width" '("test-difftastic-arg"))
                  => "test-command"))
         (eval
          `(difftastic--with-temp-advice
@@ -5119,14 +5118,14 @@ This only happens when `noninteractive' to avoid messing up with faces."
                 ,(cl-incf run-command-call-count))
             (difftastic--rerun nil))))
       (should (eq run-command-call-count 1))
-      (should-not (eq difftastic--metadata rerun-alist))
-      (should (equal difftastic--metadata rerun-alist)))))
+      (should-not (eq difftastic--metadata metadata))
+      (should (equal difftastic--metadata metadata)))))
 
 (ert-deftest difftastic--rerun:files-command-requested-width ()
-  (let ((rerun-alist '((default-directory . "test-default-directory")
-                       (lang-override . "test-lang-override")
-                       (file-buf-A . ("test-file-buf-A" . nil))
-                       (file-buf-B . ("test-file-buf-B" . nil))))
+  (let ((metadata '((default-directory . "test-default-directory")
+                    (difftastic-args . ("test-difftastic-arg"))
+                    (file-buf-A . ("test-file-buf-A" . nil))
+                    (file-buf-B . ("test-file-buf-B" . nil))))
         (difftastic-rerun-requested-window-width-function nil)
         (difftastic-requested-window-width-function
          (lambda ()
@@ -5134,10 +5133,10 @@ This only happens when `noninteractive' to avoid messing up with faces."
         (run-command-call-count 0))
     (ert-with-test-buffer ()
       (difftastic-mode)
-      (setq difftastic--metadata rerun-alist)
+      (setq difftastic--metadata metadata)
       (mocklet (((difftastic--build-files-command
                   '("test-file-buf-A" . nil) '("test-file-buf-B". nil)
-                  "test-difftastic-width" "test-lang-override")
+                  "test-difftastic-width" '("test-difftastic-arg"))
                  => "test-command"))
         (eval
          `(difftastic--with-temp-advice
@@ -5152,24 +5151,26 @@ This only happens when `noninteractive' to avoid messing up with faces."
                 ,(cl-incf run-command-call-count))
             (difftastic--rerun nil))))
       (should (eq run-command-call-count 1))
-      (should-not (eq difftastic--metadata rerun-alist))
-      (should (equal difftastic--metadata rerun-alist)))))
+      (should-not (eq difftastic--metadata metadata))
+      (should (equal difftastic--metadata metadata)))))
 
 (ert-deftest difftastic--rerun:files-command-with-lang-override ()
-  (let ((rerun-alist '((default-directory . "test-default-directory")
-                       (lang-override . "lang-override")
-                       (file-buf-A . ("test-file-buf-A" . nil))
-                       (file-buf-B . ("test-file-buf-B" . nil))))
+  (let ((metadata '((default-directory . "test-default-directory")
+                    (difftastic-args . ("--override=*:test-lang-override-1"
+                                        "test-difftastic-arg"))
+                    (file-buf-A . ("test-file-buf-A" . nil))
+                    (file-buf-B . ("test-file-buf-B" . nil))))
         (difftastic-rerun-requested-window-width-function
          (lambda ()
            "test-difftastic-width"))
         (run-command-call-count 0))
     (ert-with-test-buffer ()
       (difftastic-mode)
-      (setq difftastic--metadata rerun-alist)
+      (setq difftastic--metadata metadata)
       (mocklet (((difftastic--build-files-command
                   '("test-file-buf-A" . nil) '("test-file-buf-B". nil)
-                  "test-difftastic-width" "test-lang-override")
+                  "test-difftastic-width" '("--override=*:test-lang-override-2"
+                                            "test-difftastic-arg"))
                  => "test-command"))
         (eval
          `(difftastic--with-temp-advice
@@ -5182,10 +5183,10 @@ This only happens when `noninteractive' to avoid messing up with faces."
                 (should (functionp sentinel))
                 (funcall sentinel)
                 ,(cl-incf run-command-call-count))
-            (difftastic--rerun "test-lang-override"))))
+            (difftastic--rerun "test-lang-override-2"))))
       (should (eq run-command-call-count 1))
-      (should-not (eq difftastic--metadata rerun-alist))
-      (should (equal difftastic--metadata rerun-alist)))))
+      (should-not (eq difftastic--metadata metadata))
+      (should (equal difftastic--metadata metadata)))))
 
 (ert-deftest difftastic-rerun:no-prefix ()
   (mocklet (((difftastic--rerun nil)))
@@ -5200,10 +5201,10 @@ This only happens when `noninteractive' to avoid messing up with faces."
 
 
 (ert-deftest difftastic--git-with-difftastic:basic ()
-  (let ((rerun-alist '((default-directory . "test-default-directory")
-                       (rev-or-range . "test-rev-or-range")
-                       (git-command . "test-command")
-                       (difftastic-args . "test-difftastic-args")))
+  (let ((metadata '((default-directory . "test-default-directory")
+                    (rev-or-range . "test-rev-or-range")
+                    (git-command . "test-command")
+                    (difftastic-args . "test-difftastic-args")))
         (default-directory "test-default-directory")
         (difftastic-requested-window-width-function
          (lambda ()
@@ -5238,7 +5239,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
                                                #'test-action)))))
       (should (eq run-command-call-count 1))
       (should (eq display-buffer-call-count 1))
-      (should (equal difftastic--metadata rerun-alist)))))
+      (should (equal difftastic--metadata metadata)))))
 
 
 (ert-deftest difftastic--magit-show:nil-error-signaled ()
@@ -5532,6 +5533,17 @@ This only happens when `noninteractive' to avoid messing up with faces."
     (mocklet (((transient-scope) => '(nil "test-fun" "test-args")))
       (difftastic--override-init-value obj))
     (should-not (oref obj value))))
+
+
+(ert-deftest difftastic--format-override-arg:basic ()
+  (should (equal '("--override=*:test-override")
+                 (difftastic--format-override-arg "test-override")))
+  (should (equal '("--override=*.1:test-override-1"
+                   "--override=*.2:test-override-2")
+                 (difftastic--format-override-arg
+                  '("--override=*.1:test-override-1"
+                    "--override=*.2:test-override-2"))))
+  (should-not (difftastic--format-override-arg nil)))
 
 
 (ert-deftest difftastic--with-difftastic-args:basic ()
@@ -5996,13 +6008,14 @@ This only happens when `noninteractive' to avoid messing up with faces."
       (unwind-protect
           (eval
            `(mocklet (((difftastic--build-files-command
-                        ',file-buf-A ',file-buf-B "test-width" "test-lang")
+                        ',file-buf-A ',file-buf-B "test-width"
+                        '("test-arg-1" "test-arg-2"))
                        => '("echo" "-n" "test output")))
               (let ((process
                      (difftastic--files-internal ,buffer
                                                  ',file-buf-A
                                                  ',file-buf-B
-                                                 "test-lang")))
+                                                 '("test-arg-1" "test-arg-2"))))
                 (with-timeout (5
                                (signal-process process 'SIGKILL)
                                (ert-fail "timeout"))
@@ -6010,8 +6023,8 @@ This only happens when `noninteractive' to avoid messing up with faces."
               (should (equal (buffer-string) "test output"))
               (should (equal (alist-get 'default-directory difftastic--metadata)
                              default-directory))
-              (should (equal (alist-get 'lang-override difftastic--metadata)
-                             "test-lang"))
+              (should (equal (alist-get 'difftastic-args difftastic--metadata)
+                             '("test-arg-1" "test-arg-2")))
               (should (equal (alist-get 'file-buf-A difftastic--metadata)
                              ',file-buf-A))
               (should (equal (alist-get 'file-buf-B difftastic--metadata)

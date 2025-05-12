@@ -1723,20 +1723,18 @@ be passed to difftastic."
 (defun difftastic--transient-args ()
   "Like `transient-args', but ensure the `--override' argument is exploded."
   (interactive)
-  (apply #'append
-         (mapcar (lambda (arg)
-                   (if (and (listp arg)
-                            (equal "--override=" (car arg)))
-                       (mapcar (lambda (o)
-                                 (format "--override=%s" o))
-                               (cdr arg))
-                     (list arg)))
-                 (transient-args (oref transient-current-prefix command)))))
+  (message "difftastic--transient-args: %S"
+           (apply #'append
+                  (mapcar (lambda (arg)
+                            (if (and (listp arg)
+                                     (equal "--override=" (car arg)))
+                                (mapcar (lambda (o)
+                                          (format "--override=%s" o))
+                                        (cdr arg))
+                              (list arg)))
+                          (transient-args
+                           (oref transient-current-prefix command))))))
 
-(defun difftastic--transient-abort ()
-  "Signal user error."
-  (interactive)
-  (user-error "Aborted"))
 
 (transient-define-prefix difftastic--arguments-menu ()
   ["Difftastic arguments"
@@ -1774,9 +1772,7 @@ be passed to difftastic."
     :reader transient-read-number-N+
     :level 5)]
 
-  [("C-c C-c" "run difftastic" difftastic--transient-args)
-   ("C-c C-g" "abort" difftastic--transient-abort)])
-
+  [("C-c C-c" "run difftastic" difftastic--transient-args)])
 
 ;;;###autoload
 (defun difftastic-git-diff-range (&optional rev-or-range args files)

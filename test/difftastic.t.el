@@ -5520,11 +5520,6 @@ This only happens when `noninteractive' to avoid messing up with faces."
                        ("--baz" "qux" "quux"))
                      (call-interactively #'difftastic--transient-args))))))
 
-(ert-deftest difftastic--transient-abort:basic ()
-  (let ((data (cadr (should-error (difftastic--transient-abort)))))
-    (should (equal data "Aborted"))))
-
-
 (ert-deftest difftastic--git-diff-range:no-args ()
   (mocklet (((get-buffer-create "*difftastic git diff*") => "test-buffer")
             ((difftastic--git-with-difftastic

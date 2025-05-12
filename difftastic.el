@@ -1713,12 +1713,18 @@ be passed to difftastic."
        (substitute-command-keys "\\[crm-complete]")
        " for languages: "))))
 
+(defun difftastic--override-init-value (obj)
+  "Initialize value value of OBJ with `transient-scope'."
+  (when-let* ((lang-override (car (transient-scope))))
+    (oset obj value (list (format ".*:%s" lang-override)))))
+
 (transient-define-infix difftastic--override-infix ()
   :prompt #'difftastic--override-prompt
   :multi-value t
   :class 'transient-option
   :reader #'difftastic--read-overrides
-  :argument "--override=")
+  :argument "--override="
+  :init-value #'difftastic--override-init-value)
 
 (transient-define-suffix difftastic--with-difftastic-args ()
   "Call car of `transient-scope' with its cdr and extra difftastic arguments.
@@ -1726,26 +1732,26 @@ Difftastic arguments are like `transient-args', but ensure the
 `--override' argument is exploded."
   :transient 'transient--do-exit
   (interactive)
-  (let ((scope (transient-scope))
-        (difft-args (apply #'append
-                           (mapcar (lambda (arg)
-                                     (if (and (listp arg)
-                                              (equal "--override=" (car arg)))
-                                         (mapcar (lambda (o)
-                                                   (format "--override=%s" o))
-                                                 (cdr arg))
-                                       (list arg)))
-                                   (transient-args
-                                    (oref transient-current-prefix command))))))
-    (when-let* ((fun (car scope))
-                ((functionp fun)))
-      (apply fun (append (cdr scope)
-                         (list difft-args))))))
+  (pcase-let ((`(,_ ,fun ,args) (transient-scope))
+              (difft-args
+               (apply #'append
+                      (mapcar (lambda (arg)
+                                (if (and (listp arg)
+                                         (equal "--override=" (car arg)))
+                                    (mapcar (lambda (o)
+                                              (format "--override=%s" o))
+                                            (cdr arg))
+                                  (list arg)))
+                              (transient-args
+                               (oref transient-current-prefix command))))))
+    (when (functionp fun)
+      (apply fun (append args (list difft-args))))))
 
-(transient-define-prefix difftastic--arguments-menu (fun &rest args)
+(transient-define-prefix difftastic--arguments-menu (lang-override fun &rest args)
   "Call FUN with ARGS and extra difftastic arguments.
 Number of ARGS must be equal to number of arguments that FUN takes minus
-1. The last argument will be a list of extra difftastic arguments."
+1. The last argument will be a list of extra difftastic arguments.
+The LANG-OVERRIDE will be used to initialize language overrides."
   ["Difftastic arguments"
    ("-o" "language overrides" difftastic--override-infix)
    ("-s" "strip cr" "--strip-cr="
@@ -1784,7 +1790,7 @@ Number of ARGS must be equal to number of arguments that FUN takes minus
   [("C-c C-c" "run difftastic" difftastic--with-difftastic-args)]
   (interactive)
   (transient-setup #'difftastic--arguments-menu nil nil
-                   :scope (append (list fun) args)))
+                   :scope (append (list lang-override fun) (list args))))
 
 ;;;###autoload
 (defun difftastic-git-diff-range (&optional rev-or-range args files)

@@ -5512,6 +5512,19 @@ This only happens when `noninteractive' to avoid messing up with faces."
                  (difftastic--override-prompt nil))))
 
 
+(ert-deftest difftastic--override-init-value:lang-override ()
+  (let ((obj (transient-option)))
+    (mocklet (((transient-scope) => '("test-language" "test-fun" "test-args")))
+      (difftastic--override-init-value obj))
+    (should (equal (oref obj value) '(".*:test-language")))))
+
+(ert-deftest difftastic--override-init-value:nil ()
+  (let ((obj (transient-option)))
+    (mocklet (((transient-scope) => '(nil "test-fun" "test-args")))
+      (difftastic--override-init-value obj))
+    (should-not (oref obj value))))
+
+
 (ert-deftest difftastic--with-difftastic-args:basic ()
   (let ((transient-current-prefix (transient-prefix :command "test-command")))
     (mocklet (((transient-args "test-command")
@@ -5523,7 +5536,9 @@ This only happens when `noninteractive' to avoid messing up with faces."
                                       "--foo" "--bar"
                                       ("--baz" "qux" "quux")))
                => "test-value")
-              ((transient-scope) => '(difftastic--test-fun "test-arg1" "test-arg2")))
+              ((transient-scope) => '("test-language"
+                                      difftastic--test-fun
+                                      ("test-arg1" "test-arg2"))))
       (should (equal "test-value"
                      (call-interactively #'difftastic--with-difftastic-args))))))
 
@@ -5531,8 +5546,14 @@ This only happens when `noninteractive' to avoid messing up with faces."
 (ert-deftest difftastic--arguments-menu:basic ()
   (mocklet (((transient-setup 'difftastic--arguments-menu
                               nil nil
-                              :scope '("test-fun" "test-arg1" "test-arg2"))))
-    (funcall-interactively #'difftastic--arguments-menu "test-fun" "test-arg1" "test-arg2")))
+                              :scope '("test-language"
+                                       "test-fun"
+                                       ("test-arg1" "test-arg2")))))
+    (funcall-interactively #'difftastic--arguments-menu
+                           "test-language"
+                           "test-fun"
+                           "test-arg1"
+                           "test-arg2")))
 
 
 (ert-deftest difftastic--git-diff-range:no-args ()

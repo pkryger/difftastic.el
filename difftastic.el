@@ -1720,23 +1720,32 @@ be passed to difftastic."
   :reader #'difftastic--read-overrides
   :argument "--override=")
 
-(defun difftastic--transient-args ()
-  "Like `transient-args', but ensure the `--override' argument is exploded."
+(transient-define-suffix difftastic--with-difftastic-args ()
+  "Call car of `transient-scope' with its cdr and extra difftastic arguments.
+Difftastic arguments are like `transient-args', but ensure the
+`--override' argument is exploded."
+  :transient 'transient--do-exit
   (interactive)
-  (message "difftastic--transient-args: %S"
-           (apply #'append
-                  (mapcar (lambda (arg)
-                            (if (and (listp arg)
-                                     (equal "--override=" (car arg)))
-                                (mapcar (lambda (o)
-                                          (format "--override=%s" o))
-                                        (cdr arg))
-                              (list arg)))
-                          (transient-args
-                           (oref transient-current-prefix command))))))
+  (let ((scope (transient-scope))
+        (difft-args (apply #'append
+                           (mapcar (lambda (arg)
+                                     (if (and (listp arg)
+                                              (equal "--override=" (car arg)))
+                                         (mapcar (lambda (o)
+                                                   (format "--override=%s" o))
+                                                 (cdr arg))
+                                       (list arg)))
+                                   (transient-args
+                                    (oref transient-current-prefix command))))))
+    (when-let* ((fun (car scope))
+                ((functionp fun)))
+      (apply fun (append (cdr scope)
+                         (list difft-args))))))
 
-
-(transient-define-prefix difftastic--arguments-menu ()
+(transient-define-prefix difftastic--arguments-menu (fun &rest args)
+  "Call FUN with ARGS and extra difftastic arguments.
+Number of ARGS must be equal to number of arguments that FUN takes minus
+1. The last argument will be a list of extra difftastic arguments."
   ["Difftastic arguments"
    ("-o" "language overrides" difftastic--override-infix)
    ("-s" "strip cr" "--strip-cr="
@@ -1772,7 +1781,10 @@ be passed to difftastic."
     :reader transient-read-number-N+
     :level 5)]
 
-  [("C-c C-c" "run difftastic" difftastic--transient-args)])
+  [("C-c C-c" "run difftastic" difftastic--with-difftastic-args)]
+  (interactive)
+  (transient-setup #'difftastic--arguments-menu nil nil
+                   :scope (append (list fun) args)))
 
 ;;;###autoload
 (defun difftastic-git-diff-range (&optional rev-or-range args files)

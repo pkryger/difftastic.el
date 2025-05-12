@@ -5512,13 +5512,28 @@ This only happens when `noninteractive' to avoid messing up with faces."
                  (difftastic--override-prompt nil))))
 
 
-(ert-deftest difftastic--transient-args:basic ()
+(ert-deftest difftastic--with-difftastic-args:basic ()
   (let ((transient-current-prefix (transient-prefix :command "test-command")))
-    (mocklet (((transient-args "test-command") => '(("--override=" "foo" "bar") "--foo" "--bar"
-                                   ("--baz" "qux" "quux"))))
-      (should (equal '("--override=foo" "--override=bar" "--foo" "--bar"
-                       ("--baz" "qux" "quux"))
-                     (call-interactively #'difftastic--transient-args))))))
+    (mocklet (((transient-args "test-command")
+               => '(("--override=" "foo" "bar")
+                    "--foo" "--bar"
+                    ("--baz" "qux" "quux")))
+              ((difftastic--test-fun "test-arg1" "test-arg2"
+                                    '("--override=foo" "--override=bar"
+                                      "--foo" "--bar"
+                                      ("--baz" "qux" "quux")))
+               => "test-value")
+              ((transient-scope) => '(difftastic--test-fun "test-arg1" "test-arg2")))
+      (should (equal "test-value"
+                     (call-interactively #'difftastic--with-difftastic-args))))))
+
+
+(ert-deftest difftastic--arguments-menu:basic ()
+  (mocklet (((transient-setup 'difftastic--arguments-menu
+                              nil nil
+                              :scope '("test-fun" "test-arg1" "test-arg2"))))
+    (funcall-interactively #'difftastic--arguments-menu "test-fun" "test-arg1" "test-arg2")))
+
 
 (ert-deftest difftastic--git-diff-range:no-args ()
   (mocklet (((get-buffer-create "*difftastic git diff*") => "test-buffer")

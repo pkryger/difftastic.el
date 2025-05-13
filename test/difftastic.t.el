@@ -6030,7 +6030,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
     (let ((buffer (current-buffer))
           difftastic-exits-all-viewing-windows)
       (eval `(mocklet (((window-buffer) => ,buffer)
-                       ((quit-window) :times 1))
+                       ((quit-window)))
                (difftastic-mode--do-exit))))))
 
 (ert-deftest difftastic-mode--do-exit:all-windows ()
@@ -6056,8 +6056,8 @@ This only happens when `noninteractive' to avoid messing up with faces."
     (let ((buffer (current-buffer))
           difftastic-exits-all-viewing-windows)
       (eval `(mocklet (((window-buffer) => ,buffer)
-                       ((quit-window) :times 1)
-                       ((exit-action ,buffer) :times 1))
+                       ((quit-window))
+                       ((exit-action ,buffer)))
                (difftastic-mode--do-exit #'exit-action))))))
 
 (ert-deftest difftastic-mode--do-exit:all-windows-and-exit-action ()
@@ -6067,7 +6067,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
       (eval `(mocklet (((window-buffer) => ,buffer)
                        ((get-buffer-window-list) => '("window" "window"))
                        ((quit-window nil "window") :times 2)
-                       ((exit-action ,buffer) :times 1))
+                       ((exit-action ,buffer)))
                (difftastic-mode--do-exit #'exit-action t))))))
 
 (ert-deftest difftastic-mode--do-exit:exits-all-viewing-windows-and-exit-action ()
@@ -6077,32 +6077,32 @@ This only happens when `noninteractive' to avoid messing up with faces."
       (eval `(mocklet (((window-buffer) => ,buffer)
                        ((get-buffer-window-list) => '("window" "window"))
                        ((quit-window nil "window") :times 2)
-                       ((exit-action ,buffer) :times 1))
+                       ((exit-action ,buffer)))
                (difftastic-mode--do-exit #'exit-action))))))
 
 
 (ert-deftest difftascit-leave:basic ()
-  (mocklet (((difftastic-mode--do-exit) :times 1))
+  (mocklet (((difftastic-mode--do-exit)))
     (funcall-interactively #'difftastic-leave)))
 
 
 (ert-deftest difftascit-quit:basic ()
-  (mocklet (((difftastic-mode--do-exit 'kill-buffer) :times 1))
+  (mocklet (((difftastic-mode--do-exit 'kill-buffer)))
     (funcall-interactively #'difftastic-quit)))
 
 
 (ert-deftest difftascit-quit-all:basic ()
-  (mocklet (((difftastic-mode--do-exit 'kill-buffer t) :times 1))
+  (mocklet (((difftastic-mode--do-exit 'kill-buffer t)))
     (funcall-interactively #'difftastic-quit-all)))
 
 
 (ert-deftest difftastic--dired-diff:basic ()
-  (mocklet (((dired-diff "test-file") :times 1))
+  (mocklet (((dired-diff "test-file")))
     (difftastic--dired-diff "test-file" nil)))
 
 (ert-deftest difftastic--dired-diff:basic-and-lang-override ()
   (let ((dired-diff-called 0))
-    (mocklet (((difftastic-files "current" "test-file" "test-lang") :times 1))
+    (mocklet (((difftastic-files "current" "test-file" "test-lang")))
       (difftastic--with-temp-advice 'dired-diff
           :override
           (lambda (file &rest _)
@@ -6114,7 +6114,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
 
 (ert-deftest difftastic--dired-diff:interactive ()
   (let ((dired-diff-called 0))
-    (mocklet (((difftastic-files "current" "test-file" "test-lang") :times 1))
+    (mocklet (((difftastic-files "current" "test-file" "test-lang")))
       (difftastic--with-temp-advice 'dired-diff
           :override
           (lambda (&rest _)
@@ -6128,7 +6128,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
 
 (ert-deftest difftastic--dired-diff:interactive-and-lang-override ()
   (let ((dired-diff-called 0))
-    (mocklet (((difftastic-files "current" "test-file" "test-lang") :times 1))
+    (mocklet (((difftastic-files "current" "test-file" "test-lang")))
       (difftastic--with-temp-advice 'dired-diff
           :override
           (lambda (&rest _)
@@ -6142,21 +6142,21 @@ This only happens when `noninteractive' to avoid messing up with faces."
 
 
 (ert-deftest difftastic-dired-diff:basic ()
-  (mocklet (((difftastic--dired-diff "test-file" nil) :times 1))
+  (mocklet (((difftastic--dired-diff "test-file" nil)))
     (difftastic-dired-diff "test-file")))
 
 (ert-deftest difftastic-dired-diff:basic-with-lang-override ()
-  (mocklet (((difftastic--dired-diff "test-file" "test-lang") :times 1))
+  (mocklet (((difftastic--dired-diff "test-file" "test-lang")))
     (difftastic-dired-diff "test-file" "test-lang")))
 
 (ert-deftest difftastic-dired-diff:interactive ()
-  (mocklet (((difftastic--dired-diff 'interactive nil) :times 1)
+  (mocklet (((difftastic--dired-diff 'interactive nil))
             (completing-read not-called))
     (call-interactively #'difftastic-dired-diff)))
 
 (ert-deftest difftastic-dired-diff:interactive-with-lang-override ()
   (let ((current-prefix-arg '(4)))
-    (mocklet (((difftastic--dired-diff 'interactive "test-lang") :times 1)
+    (mocklet (((difftastic--dired-diff 'interactive "test-lang"))
               ((difftastic--get-languages) => "test-langs")
               ((completing-read "Language: " "test-langs" nil t) => "test-lang"))
       (call-interactively #'difftastic-dired-diff))))

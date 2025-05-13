@@ -44,6 +44,7 @@
 ;; - Chunks and file navigation using `n' / `N' and `p' / `P' in generated
 ;;   diffs.
 ;; - DWIM workflows from `magit'.
+;; - Use difftastic do compare files and buffers (also directly from `dired').
 ;; - Rerun `difftastic' with `g' to use current window width to "reflow"
 ;;   content and/or to force language change (when called with prefix).
 ;;

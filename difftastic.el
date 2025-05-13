@@ -1788,7 +1788,7 @@ Difftastic arguments are like `transient-args', but ensure the
     (when (functionp fun)
       (apply fun (append args (list difft-args))))))
 
-(transient-define-prefix difftastic--arguments-menu (lang-override fun &rest args) ; TODO: rename
+(transient-define-prefix difftastic--with-extra-arguments (lang-override fun &rest args)
   "Call FUN with ARGS and extra difftastic arguments.
 Number of ARGS must be equal to number of arguments that FUN takes minus
 1. The last argument will be a list of extra difftastic arguments.
@@ -1830,7 +1830,7 @@ The LANG-OVERRIDE will be used to initialize language overrides."
 
   [("C-c C-c" "run difftastic" difftastic--with-difftastic-args)]
   (interactive)
-  (transient-setup #'difftastic--arguments-menu nil nil
+  (transient-setup #'difftastic--with-extra-arguments nil nil
                    :scope (append (list lang-override fun) (list args))))
 
 (defun difftastic--format-override-arg (lang-or-args)
@@ -1852,11 +1852,11 @@ The meaning of REV-OR-RANGE, ARGS, and FILES is like in
                         current-prefix-arg))
                      (magit-diff-arguments)))
   (if (equal current-prefix-arg '(16))
-      (difftastic--arguments-menu nil
-                                  #'difftastic--git-diff-range
-                                  rev-or-range
-                                  args
-                                  files)
+      (difftastic--with-extra-arguments nil
+                                        #'difftastic--git-diff-range
+                                        rev-or-range
+                                        args
+                                        files)
     (difftastic--git-diff-range rev-or-range args files)))
 
 (defun difftastic--magit-diff (args files &optional difftastic-args)
@@ -1926,7 +1926,10 @@ The meaning of REV-OR-RANGE, ARGS, and FILES is like in
   "Show the result of \\='git diff ARGS -- FILES\\=' with difftastic."
   (interactive (magit-diff-arguments))
   (if (equal current-prefix-arg '(16))
-      (difftastic--arguments-menu nil #'difftastic--magit-diff args files)
+      (difftastic--with-extra-arguments nil
+                                        #'difftastic--magit-diff
+                                        args
+                                        files)
     (difftastic--magit-diff args files nil)))
 
 (defun difftastic--magit-show (rev &optional difftastic-args)
@@ -1954,7 +1957,7 @@ When REV couldn't be guessed or called with prefix arg ask for REV."
           ;; Otherwise, query the user.
           (magit-read-branch-or-commit "Revision"))))
   (if (equal current-prefix-arg '(16))
-      (difftastic--arguments-menu nil #'difftastic--magit-show rev)
+      (difftastic--with-extra-arguments nil #'difftastic--magit-show rev)
     (difftastic--magit-show rev)))
 
 (defun difftastic--goto-line-col-in-chunk (line col)
@@ -2008,7 +2011,8 @@ the buffer visits a file, then show the differences between `HEAD' and
 the working tree.  In both cases limit the diff to the file or blob."
   (interactive)
   (if (equal current-prefix-arg '(16))
-      (difftastic--arguments-menu nil #'difftastic--magit-diff-buffer-file)
+      (difftastic--with-extra-arguments nil
+                                        #'difftastic--magit-diff-buffer-file)
     (difftastic--magit-diff-buffer-file)))
 
 (defun difftastic--file-extension-for-mode (mode)
@@ -2230,10 +2234,10 @@ BUFFER-B is a file buffer,
 then ask for language before running difftastic."
   (interactive (difftastic--buffers-args))
   (if (equal current-prefix-arg '(16))
-      (difftastic--arguments-menu lang-override
-                                  #'difftastic--buffers
-                                  buffer-A
-                                  buffer-B)
+      (difftastic--with-extra-arguments lang-override
+                                        #'difftastic--buffers
+                                        buffer-A
+                                        buffer-B)
     (difftastic--buffers buffer-A buffer-B lang-override)))
 
 (defun difftastic--files-args ()
@@ -2295,10 +2299,10 @@ function is called with a prefix arg then ask for language before
 running difftastic."
   (interactive (difftastic--files-args))
   (if (equal current-prefix-arg '(16))
-      (difftastic--arguments-menu lang-override
-                                  #'difftastic--files
-                                  file-A
-                                  file-B)
+      (difftastic--with-extra-arguments lang-override
+                                        #'difftastic--files
+                                        file-A
+                                        file-B)
     (difftastic--files file-A
                        file-B
                        lang-override)))
@@ -2407,7 +2411,7 @@ the latter is set to nil the call is made to
                                    (difftastic--get-languages) nil t)))
                difftastic-mode)
   (if (equal current-prefix-arg '(16))
-      (difftastic--arguments-menu lang-override #'difftastic--rerun)
+      (difftastic--with-extra-arguments lang-override #'difftastic--rerun)
     (difftastic--rerun lang-override)))
 
 ;;; LocalWords: unmerged unstaged smerge

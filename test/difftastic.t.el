@@ -5293,7 +5293,8 @@ This only happens when `noninteractive' to avoid messing up with faces."
   (mocklet (((completing-read "Language: " "test-languages" nil t) => "test-language")
             ((difftastic--get-languages) => "test-languages")
             (difftastic--rerun not-called)
-            ((difftastic--arguments-menu "test-language" #'difftastic--rerun)))
+            ((difftastic--with-extra-arguments "test-language"
+                                               #'difftastic--rerun)))
     (let ((current-prefix-arg '(16)))
       (call-interactively #'difftastic-rerun))))
 
@@ -5389,7 +5390,9 @@ This only happens when `noninteractive' to avoid messing up with faces."
   (mocklet (((magit-thing-at-point 'git-revision t) => "test-rev")
             (magit-branch-or-commit-at-point not-called)
             (magit-read-branch-or-commit not-called)
-            ((difftastic--arguments-menu nil #'difftastic--magit-show "test-rev")))
+            ((difftastic--with-extra-arguments nil
+                                               #'difftastic--magit-show
+                                               "test-rev")))
     (let ((current-prefix-arg '(16)))
       (call-interactively #'difftastic-magit-show))))
 
@@ -5552,7 +5555,8 @@ This only happens when `noninteractive' to avoid messing up with faces."
     (call-interactively #'difftastic-magit-diff-buffer-file)))
 
 (ert-deftest difftastic-magit-diff-buffer-file:double-prefix ()
-  (mocklet (((difftastic--arguments-menu nil #'difftastic--magit-diff-buffer-file)))
+  (mocklet (((difftastic--with-extra-arguments nil
+                                               #'difftastic--magit-diff-buffer-file)))
     (let ((current-prefix-arg '(16)))
       (call-interactively #'difftastic-magit-diff-buffer-file))))
 
@@ -5678,13 +5682,13 @@ This only happens when `noninteractive' to avoid messing up with faces."
                      (call-interactively #'difftastic--with-difftastic-args))))))
 
 
-(ert-deftest difftastic--arguments-menu:basic ()
-  (mocklet (((transient-setup 'difftastic--arguments-menu
+(ert-deftest difftastic--with-extra-arguments:basic ()
+  (mocklet (((transient-setup 'difftastic--with-extra-arguments
                               nil nil
                               :scope '("test-language"
                                        "test-fun"
                                        ("test-arg1" "test-arg2")))))
-    (funcall-interactively #'difftastic--arguments-menu
+    (funcall-interactively #'difftastic--with-extra-arguments
                            "test-language"
                            "test-fun"
                            "test-arg1"
@@ -5746,7 +5750,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
   (let ((current-prefix-arg '(16)))
     (mocklet (((magit-diff-read-range-or-commit "Diff for range" nil nil) => "test-rev-or-range")
               ((magit-diff-arguments) => '("test-args" "test-files"))
-              ((difftastic--arguments-menu nil
+              ((difftastic--with-extra-arguments nil
                                            #'difftastic--git-diff-range
                                            "test-rev-or-range"
                                            "test-args"
@@ -6002,7 +6006,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
 
 (ert-deftest difftastic-magit-diff:double-prefix ()
   (mocklet (((magit-diff-arguments) => '("test-args" "test-files"))
-            ((difftastic--arguments-menu nil #'difftastic--magit-diff "test-args" "test-files")))
+            ((difftastic--with-extra-arguments nil #'difftastic--magit-diff "test-args" "test-files")))
     (let ((current-prefix-arg '(16)))
       (call-interactively #'difftastic-magit-diff))))
 
@@ -6518,7 +6522,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
     (mocklet (((difftastic--buffers-args) => '("test-buffer-A"
                                                "test-buffer-B"
                                                "test-language"))
-              ((difftastic--arguments-menu "test-language"
+              ((difftastic--with-extra-arguments "test-language"
                                            #'difftastic--buffers
                                            "test-buffer-A"
                                            "test-buffer-B")))
@@ -6759,7 +6763,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
 (ert-deftest difftastic--files:double-prefix ()
   (let ((current-prefix-arg '(16)))
     (mocklet (((difftastic--files-args) => '("/dir/file-A" "/dir/file-B" "test-lang"))
-              ((difftastic--arguments-menu "test-lang"
+              ((difftastic--with-extra-arguments "test-lang"
                                            #'difftastic--files
                                            "/dir/file-A"
                                            "/dir/file-B")))

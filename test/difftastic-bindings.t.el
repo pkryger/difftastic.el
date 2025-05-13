@@ -531,12 +531,10 @@
          `(mocklet (((difftastic-bindings--append-suffix
                       'dummy-prefix-1 '(-1 -1)
                       `,(difftastic-bindings--parse-bindings
-                         '(("A" fun-a "Do A"))))
-                     :times 1)
+                         '(("A" fun-a "Do A")))))
                     ((difftastic-bindings--bind-keys
                       'difftastic-bindings-t-keymap-1
-                      '(("A" fun-a "Do A")))
-                     :times 1))
+                      '(("A" fun-a "Do A")))))
             ;; Act
             (difftastic-bindings--after-load
              "/a/path/difftastic-bindings-t-dummy.elc"))))
@@ -641,12 +639,10 @@
          `(mocklet (((difftastic-bindings--append-suffix
                       'dummy-prefix-1 '(-1 -1)
                       `,(difftastic-bindings--parse-bindings
-                         '(("A" fun-a "Do A"))))
-                     :times 1)
+                         '(("A" fun-a "Do A")))))
                     ((difftastic-bindings--bind-keys
                       'difftastic-bindings-t-keymap-1
-                      '(("A" fun-a "Do A")))
-                     :times 1))
+                      '(("A" fun-a "Do A")))))
             ;; Act
             (difftastic-bindings-mode--turn-on)))
         ;; Then
@@ -697,11 +693,9 @@
     (eval
      ;; Expect
      `(mocklet (((difftastic-bindings--remove-suffix
-                  'dummy-prefix-1)
-                 :times 1)
+                  'dummy-prefix-1))
                 ((difftastic-bindings--unbind-keys
-                  'dummy-keymap-1)
-                 :times 1))
+                  'dummy-keymap-1)))
         ;; Act
         (difftastic-bindings-mode--turn-off)))
     ;; Then
@@ -713,10 +707,10 @@
 (ert-deftest difftastic-bindings-mode:basic ()
   ;; toggle twice, so it remains the same when running interactively
   (let ((difftastic-bindings-mode t))
-    (eval '(mocklet (((difftastic-bindings-mode--turn-off) :times 1)
+    (eval '(mocklet (((difftastic-bindings-mode--turn-off))
                      (difftastic-bindings-mode--turn-on not-called))
              (difftastic-bindings-mode 'toggle)))
-    (eval '(mocklet (((difftastic-bindings-mode--turn-on) :times 1)
+    (eval '(mocklet (((difftastic-bindings-mode--turn-on))
                      (difftastic-bindings-mode--turn-off not-called))
              (difftastic-bindings-mode 'toggle)))))
 

@@ -132,7 +132,8 @@
         (should (equal ".c" (difftastic--file-extension-for-mode 'c-mode)))
         (should (equal ".c" (difftastic--file-extension-for-mode 'c-ts-mode)))))))
 
-(ert-deftest difftastic--get-file-buf:buffer-visiting-file-no-temporary-created ()
+
+(ert-deftest difftastic--get-file-buf:buffer-visiting-file-no-temporary-created ()
   (let (temp-file)
     (unwind-protect
         (mocklet ((difftastic--file-extension-for-mode not-called))
@@ -5666,9 +5667,9 @@ This only happens when `noninteractive' to avoid messing up with faces."
                     "--foo" "--bar"
                     ("--baz" "qux" "quux")))
               ((difftastic--test-fun "test-arg1" "test-arg2"
-                                    '("--override=foo" "--override=bar"
-                                      "--foo" "--bar"
-                                      ("--baz" "qux" "quux")))
+                                     '("--override=foo" "--override=bar"
+                                       "--foo" "--bar"
+                                       ("--baz" "qux" "quux")))
                => "test-value")
               ((transient-scope) => '("test-language"
                                       difftastic--test-fun
@@ -5875,13 +5876,13 @@ This only happens when `noninteractive' to avoid messing up with faces."
               (magit-file-status not-called)
               (magit--merge-range not-called))
       (cl-letf (((symbol-function #'difftastic--git-diff-range)
-                (lambda (&optional rev-or-range args files difftastic-args)
-                  (should (equal 'staged rev-or-range))
-                  (should (equal args '("--cached" "test-args")))
-                  (should (equal files "test-files"))
-                  (should (equal difftastic-args '("test-difftastic-args")))
-                  (should (equal default-directory "magit-toplevel"))
-                  (cl-incf difftastic--git-diff-range-called))))
+                 (lambda (&optional rev-or-range args files difftastic-args)
+                   (should (equal 'staged rev-or-range))
+                   (should (equal args '("--cached" "test-args")))
+                   (should (equal files "test-files"))
+                   (should (equal difftastic-args '("test-difftastic-args")))
+                   (should (equal default-directory "magit-toplevel"))
+                   (cl-incf difftastic--git-diff-range-called))))
         (difftastic--magit-diff '("test-args") "test-files" '("test-difftastic-args"))))
     (should (equal 1 difftastic--git-diff-range-called))))
 
@@ -5894,15 +5895,15 @@ This only happens when `noninteractive' to avoid messing up with faces."
               (magit-file-status not-called)
               (magit--merge-range not-called))
       (cl-letf (((symbol-function #'difftastic--git-diff-range)
-                (lambda (&optional rev-or-range args files difftastic-args)
-                  (should (equal 'staged rev-or-range))
-                  (should (equal args '("test-args" "--cached")))
-                  (should (equal files "test-files"))
-                  (should (equal difftastic-args '("test-difftastic-args")))
-                  (should (equal default-directory "magit-toplevel"))
-                  (cl-incf difftastic--git-diff-range-called))))
+                 (lambda (&optional rev-or-range args files difftastic-args)
+                   (should (equal 'staged rev-or-range))
+                   (should (equal args '("test-args" "--cached")))
+                   (should (equal files "test-files"))
+                   (should (equal difftastic-args '("test-difftastic-args")))
+                   (should (equal default-directory "magit-toplevel"))
+                   (cl-incf difftastic--git-diff-range-called))))
         (difftastic--magit-diff '("test-args" "--cached") "test-files" '("test-difftastic-args"))))
-      (should (equal 1 difftastic--git-diff-range-called))))
+    (should (equal 1 difftastic--git-diff-range-called))))
 
 (ert-deftest difftastic--magit-diff:staged-not-deleted-modified ()
   (let ((difftastic--git-diff-range-called 0))
@@ -5913,15 +5914,15 @@ This only happens when `noninteractive' to avoid messing up with faces."
               ((magit-file-status "test-file-at-point") => nil)
               (magit--merge-range not-called))
       (cl-letf (((symbol-function #'difftastic--git-diff-range)
-                (lambda (&optional rev-or-range args files difftastic-args)
-                  (should (equal 'staged rev-or-range))
-                  (should (equal args '("--cached" "test-args")))
-                  (should (equal files "test-files"))
-                  (should (equal difftastic-args '("test-difftastic-args")))
-                  (should (equal default-directory "magit-toplevel"))
-                  (cl-incf difftastic--git-diff-range-called))))
+                 (lambda (&optional rev-or-range args files difftastic-args)
+                   (should (equal 'staged rev-or-range))
+                   (should (equal args '("--cached" "test-args")))
+                   (should (equal files "test-files"))
+                   (should (equal difftastic-args '("test-difftastic-args")))
+                   (should (equal default-directory "magit-toplevel"))
+                   (cl-incf difftastic--git-diff-range-called))))
         (difftastic--magit-diff '("test-args") "test-files" '("test-difftastic-args"))))
-      (should (equal 1 difftastic--git-diff-range-called))))
+    (should (equal 1 difftastic--git-diff-range-called))))
 
 (ert-deftest difftastic--magit-diff:staged-not-deleted-modified-already-cached ()
   (let ((difftastic--git-diff-range-called 0))
@@ -5932,28 +5933,28 @@ This only happens when `noninteractive' to avoid messing up with faces."
               ((magit-file-status "test-file-at-point") => nil)
               (magit--merge-range not-called))
       (cl-letf (((symbol-function #'difftastic--git-diff-range)
-                (lambda (&optional rev-or-range args files difftastic-args)
-                  (should (equal 'staged rev-or-range))
-                  (should (equal args '("test-args" "--cached")))
-                  (should (equal files "test-files"))
-                  (should (equal difftastic-args '("test-difftastic-args")))
-                  (should (equal default-directory "magit-toplevel"))
-                  (cl-incf difftastic--git-diff-range-called))))
+                 (lambda (&optional rev-or-range args files difftastic-args)
+                   (should (equal 'staged rev-or-range))
+                   (should (equal args '("test-args" "--cached")))
+                   (should (equal files "test-files"))
+                   (should (equal difftastic-args '("test-difftastic-args")))
+                   (should (equal default-directory "magit-toplevel"))
+                   (cl-incf difftastic--git-diff-range-called))))
         (difftastic--magit-diff '("test-args" "--cached") "test-files" '("test-difftastic-args"))))
-      (should (equal 1 difftastic--git-diff-range-called))))
+    (should (equal 1 difftastic--git-diff-range-called))))
 
 (ert-deftest difftastic--magit-diff:stash ()
   (let ((difftastic--git-diff-range-called 0))
     (mocklet (((magit-toplevel) => "magit-toplevel")
               ((magit-diff--dwim) => '(stash . "test-commit")))
       (cl-letf (((symbol-function #'difftastic--git-diff-range)
-                (lambda (&optional rev-or-range args files difftastic-args)
-                  (should (equal rev-or-range "test-commit^..test-commit"))
-                  (should (equal args "test-args"))
-                  (should (equal files "test-files"))
-                  (should (equal difftastic-args '("test-difftastic-args")))
-                  (should (equal default-directory "magit-toplevel"))
-                  (cl-incf difftastic--git-diff-range-called))))
+                 (lambda (&optional rev-or-range args files difftastic-args)
+                   (should (equal rev-or-range "test-commit^..test-commit"))
+                   (should (equal args "test-args"))
+                   (should (equal files "test-files"))
+                   (should (equal difftastic-args '("test-difftastic-args")))
+                   (should (equal default-directory "magit-toplevel"))
+                   (cl-incf difftastic--git-diff-range-called))))
         (difftastic--magit-diff "test-args" "test-files" '("test-difftastic-args"))))
     (should (equal 1 difftastic--git-diff-range-called))))
 
@@ -5962,30 +5963,30 @@ This only happens when `noninteractive' to avoid messing up with faces."
     (mocklet (((magit-toplevel) => "magit-toplevel")
               ((magit-diff--dwim) => '(commit . "test-commit")))
       (cl-letf (((symbol-function #'difftastic--git-diff-range)
-                (lambda (&optional rev-or-range args files difftastic-args)
-                  (should (equal rev-or-range "test-commit^..test-commit"))
-                  (should (equal args "test-args"))
-                  (should (equal files "test-files"))
-                  (should (equal difftastic-args '("test-difftastic-args")))
-                  (should (equal default-directory "magit-toplevel"))
-                  (cl-incf difftastic--git-diff-range-called))))
+                 (lambda (&optional rev-or-range args files difftastic-args)
+                   (should (equal rev-or-range "test-commit^..test-commit"))
+                   (should (equal args "test-args"))
+                   (should (equal files "test-files"))
+                   (should (equal difftastic-args '("test-difftastic-args")))
+                   (should (equal default-directory "magit-toplevel"))
+                   (cl-incf difftastic--git-diff-range-called))))
         (difftastic--magit-diff "test-args" "test-files" '("test-difftastic-args"))))
-      (should (equal 1 difftastic--git-diff-range-called))))
+    (should (equal 1 difftastic--git-diff-range-called))))
 
 (ert-deftest difftastic--magit-diff:range ()
   (let ((difftastic--git-diff-range-called 0))
     (mocklet (((magit-toplevel) => "magit-toplevel")
               ((magit-diff--dwim) => "test-range"))
       (cl-letf (((symbol-function #'difftastic--git-diff-range)
-                (lambda (&optional rev-or-range args files difftastic-args)
-                  (should (equal rev-or-range "test-range"))
-                  (should (equal args "test-args"))
-                  (should (equal files "test-files"))
-                  (should (equal difftastic-args '("test-difftastic-args")))
-                  (should (equal default-directory "magit-toplevel"))
-                  (cl-incf difftastic--git-diff-range-called))))
+                 (lambda (&optional rev-or-range args files difftastic-args)
+                   (should (equal rev-or-range "test-range"))
+                   (should (equal args "test-args"))
+                   (should (equal files "test-files"))
+                   (should (equal difftastic-args '("test-difftastic-args")))
+                   (should (equal default-directory "magit-toplevel"))
+                   (cl-incf difftastic--git-diff-range-called))))
         (difftastic--magit-diff "test-args" "test-files" '("test-difftastic-args"))))
-      (should (equal 1 difftastic--git-diff-range-called))))
+    (should (equal 1 difftastic--git-diff-range-called))))
 
 (ert-deftest difftastic--magit-diff:fallback ()
   (mocklet (((magit-toplevel) => "magit-toplevel")
@@ -6284,12 +6285,12 @@ This only happens when `noninteractive' to avoid messing up with faces."
                    "Language: " "test-languages" nil t "test-suggestion")
                   => "test-lang"))
               (should (equal (difftastic--buffers-args)
-                         (list
-                          (buffer-name ,buffer-A)
-                          (buffer-name ,buffer-B)
-                          "test-lang")))))
-        (should (equal read-buffer-called 2))
-        (should (equal ediff-other-buffer-called 2)))
+                             (list
+                              (buffer-name ,buffer-A)
+                              (buffer-name ,buffer-B)
+                              "test-lang")))))
+          (should (equal read-buffer-called 2))
+          (should (equal ediff-other-buffer-called 2)))
       (when (buffer-name buffer-B)
         (kill-buffer buffer-B))
       (when (buffer-name buffer-A)
@@ -6426,12 +6427,12 @@ This only happens when `noninteractive' to avoid messing up with faces."
                    "Language: " "test-languages" nil t "test-suggestion")
                   => "test-lang"))
               (should (equal (difftastic--buffers-args)
-                         (list
-                          (buffer-name ,buffer-A)
-                          (buffer-name ,buffer-B)
-                          "test-lang")))))
-        (should (equal read-buffer-called 2))
-        (should (equal ediff-other-buffer-called 2)))
+                             (list
+                              (buffer-name ,buffer-A)
+                              (buffer-name ,buffer-B)
+                              "test-lang")))))
+          (should (equal read-buffer-called 2))
+          (should (equal ediff-other-buffer-called 2)))
       (when (buffer-name buffer-B)
         (kill-buffer buffer-B))
       (when (buffer-name buffer-A)
@@ -6521,7 +6522,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
                                            #'difftastic--buffers
                                            "test-buffer-A"
                                            "test-buffer-B")))
-    (call-interactively #'difftastic-buffers))))
+      (call-interactively #'difftastic-buffers))))
 
 
 (ert-deftest difftastic--files-args:use-last-dir ()
@@ -6749,7 +6750,8 @@ This only happens when `noninteractive' to avoid messing up with faces."
                                          '("test-difftastic-args"))))
     (difftastic--files  "/dir/file-A" "/dir/file-B" '("test-difftastic-args"))))
 
-(ert-deftest difftastic-files:basic ()
+
+(ert-deftest difftastic-files:basic ()
   (mocklet (((difftastic--files-args) => '("/dir/file-A" "/dir/file-B" "test-lang"))
             ((difftastic--files  "/dir/file-A" "/dir/file-B" "test-lang")))
     (call-interactively #'difftastic-files)))
@@ -6761,7 +6763,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
                                            #'difftastic--files
                                            "/dir/file-A"
                                            "/dir/file-B")))
-    (call-interactively #'difftastic-files))))
+      (call-interactively #'difftastic-files))))
 
 
 ;; LocalWords: README el

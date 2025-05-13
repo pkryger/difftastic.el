@@ -1919,7 +1919,15 @@ The meaning of REV-OR-RANGE, ARGS, and FILES is like in
                                      files
                                      difftastic-args))
         (_
-         (call-interactively #'difftastic-git-diff-range))))))) ;; TODO: pass difftastic-args?
+         (apply #'difftastic--git-diff-range
+                (magit-diff-read-range-or-commit
+                 "Diff for range"
+                 nil
+                 (when (equal current-prefix-arg '(4))
+                   current-prefix-arg))
+                args
+                files
+                (list difftastic-args))))))))
 
 ;;;###autoload
 (defun difftastic-magit-diff (&optional args files)

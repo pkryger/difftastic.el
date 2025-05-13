@@ -5995,8 +5995,9 @@ This only happens when `noninteractive' to avoid messing up with faces."
 (ert-deftest difftastic--magit-diff:fallback ()
   (mocklet (((magit-toplevel) => "magit-toplevel")
             ((magit-diff--dwim) => nil)
-            ((call-interactively #'difftastic-git-diff-range)))
-    (difftastic--magit-diff "test-args" "test-files")))
+            ((magit-diff-read-range-or-commit "Diff for range" nil nil) => "test-rev")
+            ((difftastic--git-diff-range "test-rev" "test-args" "test-files" '("test-difftastic-args"))))
+    (difftastic--magit-diff "test-args" "test-files" '("test-difftastic-args"))))
 
 
 (ert-deftest difftastic-magit-diff:basic ()

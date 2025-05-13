@@ -6148,6 +6148,15 @@ This only happens when `noninteractive' to avoid messing up with faces."
               ((completing-read "Language: " "test-langs" nil t) => "test-lang"))
       (call-interactively #'difftastic-dired-diff))))
 
+(ert-deftest difftastic-dired-diff:interactive-with-double-prefix ()
+  (let ((current-prefix-arg '(16)))
+    (mocklet (((difftastic--with-extra-arguments nil
+                                                 #'difftastic--dired-diff
+                                                 'interactive))
+              (difftastic--get-languages not-called)
+              (completing-read not-called))
+      (call-interactively #'difftastic-dired-diff))))
+
 
 (ert-deftest difftastic--files-internal:basic ()
   (ert-with-test-buffer ()

@@ -248,6 +248,15 @@
 ;; - `difftastic-git-diff-range' - transform `ARGS' for difftastic and show
 ;;   the result of `git diff ARGS REV-OR-RANGE -- FILES' with `difftastic'.
 ;;
+;; All above commands (and `difftastic-rerun' described below) support
+;; specification of `difft' arguments when called with a double prefix
+;; argument.  This is in addition to a command specific handling of a single
+;; prefix argument.  In order to aid arguments entry, a `transient' menu is
+;; used, however some - less commonly used - arguments are not visible in
+;; default configuration.  Type `C-x l' in the menu to make them visible.
+;; Note that in some cases arguments will take precedence over standard and
+;; computed values, for example `--width' is one such a argument.
+;;
 ;;
 ;; `difftastic-mode' commands
 ;; ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1844,7 +1853,8 @@ The LANG-OVERRIDE will be used to initialize language overrides."
   "Show difference between two commits using difftastic.
 The meaning of REV-OR-RANGE, ARGS, and FILES is like in
 `magit-diff-range', but ARGS are adjusted for difftastic with
-`difftastic--transform-diff-arguments'."
+`difftastic--transform-diff-arguments'.  When called with double prefix
+argument ask for extra arguments for difftastic call."
   (interactive (cons (magit-diff-read-range-or-commit
                       "Diff for range"
                       nil
@@ -1931,7 +1941,10 @@ The meaning of REV-OR-RANGE, ARGS, and FILES is like in
 
 ;;;###autoload
 (defun difftastic-magit-diff (&optional args files)
-  "Show the result of \\='git diff ARGS -- FILES\\=' with difftastic."
+  "Show the result of \\='git diff ARGS -- FILES\\=' with difftastic.
+When called with double prefix argument ask for extra arguments for
+difftastic call.  When called with double prefix argument ask for extra
+arguments for difftastic call."
   (interactive (magit-diff-arguments))
   (if (equal current-prefix-arg '(16))
       (difftastic--with-extra-arguments nil
@@ -1954,7 +1967,9 @@ The meaning of REV-OR-RANGE, ARGS, and FILES is like in
 ;;;###autoload
 (defun difftastic-magit-show (rev)
   "Show the result of \\='git show REV\\=' with difftastic.
-When REV couldn't be guessed or called with prefix arg ask for REV."
+When REV couldn't be guessed or called with prefix arg ask for REV.
+When called with double prefix argument ask for extra arguments for
+difftastic call."
   (interactive
    (list (or
           ;; If not invoked with prefix arg, try to guess the REV from
@@ -2016,7 +2031,9 @@ the buffer.  COL is is column in right side of the chunk."
   "Show diff for the blob or file visited in the current buffer.
 When the buffer visits a blob, then show the respective commit.  When
 the buffer visits a file, then show the differences between `HEAD' and
-the working tree.  In both cases limit the diff to the file or blob."
+the working tree.  In both cases limit the diff to the file or blob.
+When called with double prefix argument ask for extra arguments for
+difftastic call."
   (interactive)
   (if (equal current-prefix-arg '(16))
       (difftastic--with-extra-arguments nil
@@ -2239,7 +2256,8 @@ When:
 BUFFER-B is a file buffer,
 - or function is called with a prefix arg,
 
-then ask for language before running difftastic."
+then ask for language before running difftastic.  When called with
+double prefix argument ask for extra arguments for difftastic call."
   (interactive (difftastic--buffers-args))
   (if (equal current-prefix-arg '(16))
       (difftastic--with-extra-arguments lang-override
@@ -2301,10 +2319,11 @@ then ask for language before running difftastic."
 ;;;###autoload
 (defun difftastic-files (file-A file-B &optional lang-override)
   "Run difftastic on a pair of files, FILE-A and FILE-B.
-Optionally, provide a LANG-OVERRIDE to override language used.
-See \\='difft --list-languages\\=' for language list.  When
-function is called with a prefix arg then ask for language before
-running difftastic."
+Optionally, provide a LANG-OVERRIDE to override language used.  See
+\\='difft --list-languages\\=' for language list.  When function is
+called with a prefix arg then ask for language before running
+difftastic.  When called with double prefix argument ask for extra
+arguments for difftastic call."
   (interactive (difftastic--files-args))
   (if (equal current-prefix-arg '(16))
       (difftastic--with-extra-arguments lang-override
@@ -2321,7 +2340,7 @@ running difftastic."
   (cl-letf (((symbol-function 'diff)
              (lambda (current file &rest _)
                (difftastic-files current file lang-override)))
-            (current-prefix-arg nil)) ;; TODO: hmmm
+            (current-prefix-arg nil))
     (if (eq file 'interactive)
         (call-interactively #'dired-diff)
       (funcall #'dired-diff file))))
@@ -2331,13 +2350,18 @@ running difftastic."
   "Compare file at point with FILE using difftastic.
 The behavior is the same as `dired-diff', except for the prefix argument, which
 makes the function prompt for LANG-OVERRIDE.  See \\='difft
---list-languages\\=' for language list."
+--list-languages\\=' for language list.   When called with double prefix
+argument ask for extra arguments for difftastic call."
   (interactive
    (list 'interactive
          (when (equal current-prefix-arg '(4))
            (completing-read "Language: " (difftastic--get-languages) nil t)))
    dired-mode)
-  (difftastic--dired-diff file lang-override))
+  (if (equal current-prefix-arg '(16))
+      (difftastic--with-extra-arguments lang-override
+                                        #'difftastic--dired-diff
+                                        file)
+    (difftastic--dired-diff file lang-override)))
 
 (defun difftastic--rerun-file-buf (prefix file-buf metadata)
   "Create a new temporary file for the FILE-BUF with PREFIX if needed.
@@ -2410,9 +2434,10 @@ called with a prefix arg (single of double) then ask for language before
 running difftastic.
 
 In order to determine requested width for difftastic a call to
-`difftastic-rerun-requested-window-width-function' is made.  When
-the latter is set to nil the call is made to
-`difftastic-requested-window-width-function'."
+`difftastic-rerun-requested-window-width-function' is made.  When the
+latter is set to nil the call is made to
+`difftastic-requested-window-width-function'.  When called with double
+prefix argument ask for extra arguments for difftastic call."
   (interactive (list
                 (when current-prefix-arg ;; ask also when double prefix [sic!]
                   (completing-read "Language: "

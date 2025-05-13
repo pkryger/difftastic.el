@@ -343,13 +343,26 @@
              42
              '("--override=*:C++"))))))
 
+(ert-deftest difftastic--build-git-process-environment:with-difftastic-args-override ()
+  (should (equal
+           (format
+            "GIT_EXTERNAL_DIFF=%s --color=foo --width=bar --background=baz --override=*:C++"
+            difftastic-executable)
+           (car
+            (difftastic--build-git-process-environment
+             42
+             '("--color=foo"
+               "--width=bar"
+               "--background=baz"
+               "--override=*:C++"))))))
+
 
 (ert-deftest difftastic--build-files-command:without-difftastic-args ()
   (should (equal
            `(,difftastic-executable
-             "--color" "always"
-             "--width" "42"
-             "--background" ,(format "%s" (frame-parameter nil 'background-mode))
+             "--color=always"
+             "--width=42"
+             ,(format "--background=%s" (frame-parameter nil 'background-mode))
              "test-file-A" "test-file-B")
            (difftastic--build-files-command (cons "test-file-A" nil)
                                             (cons "test-file-B" nil)
@@ -358,15 +371,31 @@
 (ert-deftest difftastic--build-files-command:with-difftastic-args ()
   (should (equal
            `(,difftastic-executable
-             "--color" "always"
-             "--width" "42"
-             "--background" ,(format "%s" (frame-parameter nil 'background-mode))
+             "--color=always"
+             "--width=42"
+             ,(format "--background=%s" (frame-parameter nil 'background-mode))
              "--override=*:test-language"
              "test-file-A" "test-file-B")
            (difftastic--build-files-command (cons "test-file-A" nil)
                                             (cons "test-file-B" nil)
                                             42
                                             '("--override=*:test-language")))))
+
+(ert-deftest difftastic--build-files-command:with-difftastic-args-override ()
+  (should (equal
+           `(,difftastic-executable
+             "--color=foo"
+             "--width=bar"
+             "--background=baz"
+             "--override=*:test-language"
+             "test-file-A" "test-file-B")
+           (difftastic--build-files-command (cons "test-file-A" nil)
+                                            (cons "test-file-B" nil)
+                                            42
+                                            '("--color=foo"
+                                              "--width=bar"
+                                              "--background=baz"
+                                              "--override=*:test-language")))))
 
 
 (ert-deftest difftastic--rerun-file-buf:non-temporary-no-temporary-created ()

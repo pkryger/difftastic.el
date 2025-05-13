@@ -1484,20 +1484,43 @@ Utilise `difftastic--ansi-color-add-background-cache' to cache
             difftastic--ansi-color-add-background-cache)
       face)))
 
+(defun difftastic--add-standard-args (difftastic-args requested-width)
+  "Add standard arguments to DIFFTASTIC-ARGS, unless these are already present.
+It adds \\='--color=always\\=', \\='--background=(light|dark)\\=', and
+\\='--width=REQUESTED-WIDTH\\='."
+  (save-match-data
+    (unless (cl-find-if (lambda (arg)
+                          (string-match (rx string-start "--background=") arg))
+                        difftastic-args)
+      (setq difftastic-args (cons (format "--background=%s"
+                                          (frame-parameter nil 'background-mode))
+                                  difftastic-args))
+      (unless (cl-find-if (lambda (arg)
+                            (string-match (rx string-start "--width=") arg))
+                          difftastic-args)
+        (setq difftastic-args (cons (format "--width=%s" requested-width)
+                                    difftastic-args)))
+      (unless (cl-find-if (lambda (arg)
+                            (string-match (rx string-start "--color=") arg))
+                          difftastic-args)
+        (setq difftastic-args (cons "--color=always"
+                                    difftastic-args)))))
+  difftastic-args)
+
 (defun difftastic--build-git-process-environment (requested-width
                                                   &optional difftastic-args)
   "Build a difftastic git command with REQUESTED-WIDTH.
 The DIFFTASTIC-ARGS is a list of extra arguments to pass to
 `difftastic-executable'."
-  (cons (format
-         "GIT_EXTERNAL_DIFF=%s --color=always --width=%s --background=%s%s" ; TODO: deal with color, background, and width from difftastic args
-         difftastic-executable
-         requested-width
-         (frame-parameter nil 'background-mode)
-         (if difftastic-args
-             (format " %s" (string-join difftastic-args " "))
-           ""))
-        process-environment))
+  (let ((difftastic-args (difftastic--add-standard-args difftastic-args
+                                                        requested-width)))
+    (cons (format
+           "GIT_EXTERNAL_DIFF=%s%s"
+           difftastic-executable
+           (if difftastic-args
+               (format " %s" (string-join difftastic-args " "))
+             ""))
+          process-environment)))
 
 (defun difftastic--git-with-difftastic (buffer command rev-or-range
                                                &optional difftastic-args action)
@@ -2087,10 +2110,7 @@ and cdr is a buffer when it is a temporary file and nil otherwise.
 REQUESTED-WIDTH is passed to difftastic as \\='--width\\=' argument.
 DIFFTASTIC-ARGS are passed to difftastic."
   `(,difftastic-executable
-    "--color" "always"
-    "--width" ,(number-to-string requested-width)  ; TODO: deal with color, width and background from difftastic args
-    "--background" ,(format "%s" (frame-parameter nil 'background-mode))
-    ,@difftastic-args
+    ,@(difftastic--add-standard-args difftastic-args requested-width)
     ,(car file-buf-A)
     ,(car file-buf-B)))
 
@@ -2344,7 +2364,7 @@ temporary file or nil otherwise."
                                  .difftastic-args)))
                      (or lang-or-args .difftastic-args)))
                  (requested-width
-                  (funcall (or ; TODO: deal with width in difftastic-args
+                  (funcall (or
                             difftastic-rerun-requested-window-width-function
                             difftastic-requested-window-width-function)))
                  (process-environment

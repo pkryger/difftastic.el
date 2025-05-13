@@ -2184,7 +2184,7 @@ error each symbol in FILE-BUFS will be passed to
 
 (defun difftastic--buffers (buffer-A buffer-B lang-override
                                      &optional difftastic-args)
-                                        ; checkdoc-params: (buffer-A buffer-B lang-overrid difftastic-args)
+                                        ; checkdoc-params: (buffer-A buffer-B lang-override difftastic-args)
   "Implementation of `difftastic-buffers', which see."
     (difftastic--with-file-bufs ((file-buf-A (difftastic--get-file-buf
                                             "A" (get-buffer buffer-A)))
@@ -2311,7 +2311,7 @@ temporary file or nil otherwise."
     file-buf))
 
 (defun difftastic--rerun (lang-override difftastic-args)
-                                        ; checkdoc-params: (lang-override)
+                                        ; checkdoc-params: (lang-override difftastic-args)
   "Implementation for `difftastic-rerun', which see."
   (if-let* (((eq major-mode 'difftastic-mode))
             (metadata (copy-tree difftastic--metadata)))

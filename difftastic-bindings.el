@@ -37,7 +37,7 @@
                                  desc)
                                (symbol-name fun))
                            fun)))
-             bindings)))
+                 bindings)))
     (if (eql 1 (length bindings))
         (car bindings)
       (vconcat bindings))))
@@ -55,8 +55,8 @@ TYPE should be one of `:prefixes' or `:keymaps'."
     (unless (memq symbol installed)
       (setq difftastic-bindings--installed-plist
             (plist-put difftastic-bindings--installed-plist
-                 type
-                 (cons symbol installed))))))
+                       type
+                       (cons symbol installed))))))
 
 (defun difftastic-bindings--remove-from-installed (type symbol)
   "Remove SYMBOL of TYPE from `difftastic-bindings--installed-plist'.
@@ -65,9 +65,9 @@ TYPE should be one of `:prefixes' or `:keymaps'."
                               type)))
     (when (memq symbol installed)
       (setq difftastic-bindings--installed-plist
-          (plist-put difftastic-bindings--installed-plist
-               type
-               (delq symbol installed))))))
+            (plist-put difftastic-bindings--installed-plist
+                       type
+                       (delq symbol installed))))))
 
 (defun difftastic-bindings--append-suffix (prefix loc suffix)
   "Append bindings in SUFFIX to PREFIX at LOC.
@@ -326,8 +326,8 @@ type should be one of `:prefixes' or `:keymaps'."
         (unless (memq symbol symbols)
           (setcdr entry
                   (plist-put (cdr entry)
-                     type
-                     (cons symbol symbols))))
+                             type
+                             (cons symbol symbols))))
       (push (cons feature (list type (list symbol)))
             difftastic-bindings--after-load-alist))))
 

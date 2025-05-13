@@ -894,20 +894,20 @@ The value of 6 allows for line numbers of up to 999,999.")
   (defun difftastic--line-num-rx (digits)
     "Return `rx' form for a up DIGITS long line number."
     `(seq ,(append
-            ; favor only digits or only dots up to given length
+            ;; favor only digits or only dots up to given length
             `(or (group (** 1 ,digits digit))
                  (group (** 1 ,digits ".")))
-             (let (num)
-               (dotimes (spaces (1- digits))
-                 (push `(seq
-                         ,(if (< 0 spaces)
-                              `(** 1 ,(1+ spaces) " ")
-                            `(= ,(1+ spaces) " "))
-                         (or (group (= ,(- digits (1+ spaces)) digit))
-                             (group (= ,(- digits (1+ spaces)) "."))))
-                       num))
-               ; favor more digits (or dots)
-               (nreverse num)))
+            (let (num)
+              (dotimes (spaces (1- digits))
+                (push `(seq
+                        ,(if (< 0 spaces)
+                             `(** 1 ,(1+ spaces) " ")
+                           `(= ,(1+ spaces) " "))
+                        (or (group (= ,(- digits (1+ spaces)) digit))
+                            (group (= ,(- digits (1+ spaces)) "."))))
+                      num))
+              ;; favor more digits (or dots)
+              (nreverse num)))
           (or " " line-end)))
 
   (rx-define difftastic--line-num-rx
@@ -916,7 +916,7 @@ The value of 6 allows for line numbers of up to 999,999.")
   (defun difftastic--line-num-or-spaces-rx (digits)
     "Return `rx' form for a up DIGITS long line number or up to DIGITS spaces."
     `(or
-      ; search for spaces first so they can be accounted as a left column
+      ;; search for spaces first so they can be accounted as a left column
       (** 2 ,(1+ digits) " ")
       ,(difftastic--line-num-rx digits)))
 
@@ -1027,10 +1027,10 @@ END are positions where the line number begins and ends respectively."
                                               (equal (car cols)
                                                      (car candidate)))
                                             (caddr line)))))
-                       (setcar right (or (car right)
-                                         prev-num-right))
-                       (setq prev-num-right (car right))
-                       right))))
+                     (setcar right (or (car right)
+                                       prev-num-right))
+                     (setq prev-num-right (car right))
+                     right))))
         lines))))
 
 (defun difftastic--parse-single-column-chunk (bounds)
@@ -1077,7 +1077,7 @@ SIDE is either `left' or `right'."
                         (difftastic--parse-single-column-chunk bounds))))
               (point (point)))
     (if (< point (caaar lines))
-        ; use right when point is in chunk header
+        ;; use right when point is in chunk header
         (list file nil 0 'right)
       (cl-block search-chunk-file
         (while lines
@@ -1181,7 +1181,7 @@ and run `difftastic-diff-visit-file-hook'."
                         (or (get-file-buffer file)
                             (find-file-noselect file))
                       (magit-find-file-noselect (if (stringp rev) rev "HEAD")
-                                           file))))
+                                                file))))
     (when line
       (with-current-buffer buf
         (cond ((eq rev 'staged)
@@ -1324,16 +1324,16 @@ and SIDE is either `left' or `right'."
   "From a diff visit the worktree version of CHUNK-FILE in other window.
 Like `difftastic-diff-visit-worktree-file', which see, but use
 `switch-to-buffer-other-window'."
-    (interactive (list (difftastic--chunk-file-at-point))
-                 difftastic-mode)
+  (interactive (list (difftastic--chunk-file-at-point))
+               difftastic-mode)
   (difftastic--diff-visit-file chunk-file #'switch-to-buffer-other-window t))
 
 (defun difftastic-diff-visit-worktree-file-other-frame (chunk-file)
   "From a diff visit the worktree version of CHUNK-FILE in other frame.
 Like `difftastic-diff-visit-worktree-file', which see, but use
 `switch-to-buffer-other-frame'."
-    (interactive (list (difftastic--chunk-file-at-point))
-                 difftastic-mode)
+  (interactive (list (difftastic--chunk-file-at-point))
+               difftastic-mode)
   (difftastic--diff-visit-file chunk-file #'switch-to-buffer-other-frame t))
 
 ;; From `view-mode'
@@ -1682,7 +1682,7 @@ argument extracted from ARGS with the one from DIFFTASTIC-ARGS."
         difftastic-args)))))
 
 (defun difftastic--git-diff-range (rev-or-range args files &optional difftastic-args)
-                            ; checkdoc-params: (rev-or-range args files difftastic-args)
+  ;; checkdoc-params: (rev-or-range args files difftastic-args)
   "Implementation for `difftastic-git-diff-range', which see."
   (pcase-let* ((`(,git-args ,difftastic-args)
                 (difftastic--transform-diff-arguments args difftastic-args))
@@ -1720,7 +1720,7 @@ argument extracted from ARGS with the one from DIFFTASTIC-ARGS."
                   "\n" t))))
 
 (defun difftastic--extra-arguments-read-overrides (prompt initial-input history)
-                            ; checkdoc-params: (prompt initial-input history)
+  ;; checkdoc-params: (prompt initial-input history)
   "Read language overrides."
   (save-match-data
     (let ((crm-separator ",")
@@ -1871,7 +1871,7 @@ argument ask for extra arguments for difftastic call."
     (difftastic--git-diff-range rev-or-range args files)))
 
 (defun difftastic--magit-diff (args files &optional difftastic-args)
-                            ; checkdoc-params: (args files difftastic-args)
+  ;; checkdoc-params: (args files difftastic-args)
   "Implementation for `difftastic-magit-diff', which see."
   (let ((default-directory (magit-toplevel))
         (section (magit-current-section)))
@@ -1955,7 +1955,7 @@ arguments for difftastic call."
     (difftastic--magit-diff args files nil)))
 
 (defun difftastic--magit-show (rev &optional difftastic-args)
-                            ; checkdoc-params: (rev difftastic-args)
+  ;; checkdoc-params: (rev difftastic-args)
   "Implementation for `difftastic-magit-show', which see."
   (if rev
       (difftastic--git-with-difftastic
@@ -2001,7 +2001,7 @@ the buffer.  COL is is column in right side of the chunk."
                       (+ (point) col))))))
 
 (defun difftastic--magit-diff-buffer-file (&optional difftastic-args)
-                            ; checkdoc-params: (difftastic-args)
+  ;; checkdoc-params: (difftastic-args)
   "Implementation for `difftastic-magit-diff-buffer-file'."
   (if-let* ((default-directory (magit-toplevel))
             (file (magit-file-relative-name)))
@@ -2233,7 +2233,7 @@ error each symbol in FILE-BUFS will be passed to
               (completing-read "Language: " languages nil t suggested))))))
 
 (defun difftastic--buffers (buffer-A buffer-B lang-or-args)
-                            ; checkdoc-params: (buffer-A buffer-B lang-or-args)
+  ;; checkdoc-params: (buffer-A buffer-B lang-or-args)
   "Implementation of `difftastic-buffers', which see."
   (difftastic--with-file-bufs ((file-buf-A (difftastic--get-file-buf
                                             "A" (get-buffer buffer-A)))
@@ -2305,7 +2305,7 @@ double prefix argument ask for extra arguments for difftastic call."
                                     (file-name-directory ff))))))
 
 (defun difftastic--files (file-A file-B &optional lang-or-args)
-                            ; checkdoc-params: (file-A file-B lang-or-args)
+  ;; checkdoc-params: (file-A file-B lang-or-args)
   "Implementation for `difftastic-files', which see."
   (difftastic--files-internal
    (get-buffer-create (concat "*difftastic "
@@ -2336,7 +2336,7 @@ arguments for difftastic call."
                        lang-override)))
 
 (defun difftastic--dired-diff (file lang-override)
-                            ; checkdoc-params: (file lang-override)
+  ;; checkdoc-params: (file lang-override)
   "Implementation for `difftastic--dired-diff', which see."
   (cl-letf (((symbol-function 'diff)
              (lambda (current file &rest _)
@@ -2377,7 +2377,7 @@ temporary file or nil otherwise."
     file-buf))
 
 (defun difftastic--rerun (lang-or-args)
-                            ; checkdoc-params: (lang-or-args)
+  ;; checkdoc-params: (lang-or-args)
   "Implementation for `difftastic-rerun', which see."
   (if-let* (((eq major-mode 'difftastic-mode))
             (metadata (copy-tree difftastic--metadata)))

@@ -1916,48 +1916,48 @@ test/difftastic.t.el --- Emacs Lisp
 
 (ert-deftest difftastic--line-num-rx:no-match ()
   (should-not (string-match-p (rx-to-string
-                                `(seq string-start
-                                      ,(difftastic--line-num-rx 1)))
+                               `(seq string-start
+                                     ,(difftastic--line-num-rx 1)))
                               " "))
   (should-not (string-match-p (rx-to-string
-                                `(seq string-start
-                                      ,(difftastic--line-num-rx 1)))
+                               `(seq string-start
+                                     ,(difftastic--line-num-rx 1)))
                               " 1"))
   (should-not (string-match-p (rx-to-string
-                                `(seq string-start
-                                      ,(difftastic--line-num-rx 1)))
+                               `(seq string-start
+                                     ,(difftastic--line-num-rx 1)))
                               " ."))
   (should-not (string-match-p (rx-to-string
-                                `(seq string-start
-                                      ,(difftastic--line-num-rx 1)))
+                               `(seq string-start
+                                     ,(difftastic--line-num-rx 1)))
                               "22"))
   (should-not (string-match-p (rx-to-string
-                                `(seq string-start
-                                      ,(difftastic--line-num-rx 1)))
+                               `(seq string-start
+                                     ,(difftastic--line-num-rx 1)))
                               ".."))
   (should-not (string-match-p (rx-to-string
-                                `(seq string-start
-                                      ,(difftastic--line-num-rx 2)))
+                               `(seq string-start
+                                     ,(difftastic--line-num-rx 2)))
                               " 22"))
   (should-not (string-match-p (rx-to-string
-                                `(seq string-start
-                                      ,(difftastic--line-num-rx 2)))
+                               `(seq string-start
+                                     ,(difftastic--line-num-rx 2)))
                               " .."))
   (should-not (string-match-p (rx-to-string
-                                `(seq string-start
-                                      ,(difftastic--line-num-rx 2)))
+                               `(seq string-start
+                                     ,(difftastic--line-num-rx 2)))
                               ".2"))
   (should-not (string-match-p (rx-to-string
-                                `(seq string-start
-                                      ,(difftastic--line-num-rx 2)))
+                               `(seq string-start
+                                     ,(difftastic--line-num-rx 2)))
                               "2."))
   (should-not (string-match-p (rx-to-string
-                                `(seq string-start
-                                      ,(difftastic--line-num-rx 3)))
+                               `(seq string-start
+                                     ,(difftastic--line-num-rx 3)))
                               " 2."))
   (should-not (string-match-p (rx-to-string
-                                `(seq string-start
-                                      ,(difftastic--line-num-rx 3)))
+                               `(seq string-start
+                                     ,(difftastic--line-num-rx 3)))
                               " .2")))
 
 
@@ -2925,12 +2925,13 @@ test/difftastic.t.el --- Emacs Lisp
       (setq buffer (current-buffer)))
     (let ((difftastic--metadata `((file-buf-A . ("test-file-A" . ,buffer))
                                   (file-buf-B . ("test-file-B" . "test-buf-B")))))
-      (eval `(mocklet ((fn not-called))
-        (let ((data (cadr
-                     (should-error (difftastic--diff-visit-file-or-buffer
-                                    '("foo" 2 0 left) #'fn)))))
-          (should (equal data
-                         "Buffer A [#<killed buffer>] doesn't exist anymore"))))))))
+      (eval
+       `(mocklet ((fn not-called))
+          (let ((data (cadr
+                       (should-error (difftastic--diff-visit-file-or-buffer
+                                      '("foo" 2 0 left) #'fn)))))
+            (should (equal data
+                           "Buffer A [#<killed buffer>] doesn't exist anymore"))))))))
 
 (ert-deftest difftastic--diff-visit-file-or-buffer:right-buffer-not-live ()
   (let (buffer
@@ -2939,12 +2940,13 @@ test/difftastic.t.el --- Emacs Lisp
       (setq buffer (current-buffer)))
     (let ((difftastic--metadata `((file-buf-A . ("test-file-A" . "test-buf-A"))
                                   (file-buf-B . ("test-file-B" . ,buffer)))))
-      (eval `(mocklet ((fn not-called))
-        (let ((data (cadr
-                     (should-error (difftastic--diff-visit-file-or-buffer
-                                    '("foo" 2 0 right) #'fn)))))
-          (should (equal data
-                         "Buffer B [#<killed buffer>] doesn't exist anymore"))))))))
+      (eval
+       `(mocklet ((fn not-called))
+          (let ((data (cadr
+                       (should-error (difftastic--diff-visit-file-or-buffer
+                                      '("foo" 2 0 right) #'fn)))))
+            (should (equal data
+                           "Buffer B [#<killed buffer>] doesn't exist anymore"))))))))
 
 (ert-deftest difftastic--diff-visit-file-or-buffer:left-visiting ()
   (ert-with-test-buffer ()
@@ -3713,10 +3715,10 @@ test/difftastic.t.el --- Emacs Lisp
 (ert-deftest difftastic--diff-visit-file:no-file ()
   (mocklet ((difftastic--diff-visit-git-file not-called)
             (difftastic--diff-visit-file-or-buffer not-called))
-      (let ((data (cadr
-                   (should-error
-                    (difftastic--diff-visit-file nil #'ignore t)))))
-        (should (equal data "No chunk file at point")))))
+    (let ((data (cadr
+                 (should-error
+                  (difftastic--diff-visit-file nil #'ignore t)))))
+      (should (equal data "No chunk file at point")))))
 
 
 (ert-deftest difftastic-diff-visit-file:basic ()
@@ -5505,9 +5507,9 @@ This only happens when `noninteractive' to avoid messing up with faces."
              (magit-buffer-refname nil))
     (mocklet (((magit-file-relative-name) => "test-file")
               ((magit-toplevel) => "test-toplevel")
-              ; mock native functions `line-number-at-pos' and `current-column'
-              ; before `get-buffer-create' to avoid shaeningans when running
-              ; tests with cask on laptop
+              ;; mock native functions `line-number-at-pos' and `current-column'
+              ;; before `get-buffer-create' to avoid shaeningans when running
+              ;; tests with cask on laptop
               ((line-number-at-pos) => 42)
               ((current-column) => 17)
               ((get-buffer-create "*difftastic git diff unstaged*")  => "test-buffer")
@@ -5531,9 +5533,9 @@ This only happens when `noninteractive' to avoid messing up with faces."
              (magit-buffer-refname nil))
     (mocklet (((magit-file-relative-name) => "test-file")
               ((magit-toplevel) => "test-toplevel")
-              ; mock native functions `line-number-at-pos' and `current-column'
-              ; before `get-buffer-create' to avoid shaeningans when running
-              ; tests with cask on laptop
+              ;; mock native functions `line-number-at-pos' and `current-column'
+              ;; before `get-buffer-create' to avoid shaeningans when running
+              ;; tests with cask on laptop
               ((line-number-at-pos) => 42)
               ((current-column) => 17)
               ((get-buffer-create "*difftastic git diff unstaged*")  => "test-buffer")

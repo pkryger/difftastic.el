@@ -4991,7 +4991,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
 
 (ert-deftest difftastic--rerun:not-difftastic-mode-error-signaled ()
   (ert-with-test-buffer ()
-    (let ((data (cadr (should-error (difftastic--rerun nil nil)
+    (let ((data (cadr (should-error (difftastic--rerun nil)
                                     :type 'user-error))))
       (should (equal data "Nothing to rerun")))))
 
@@ -4999,7 +4999,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
   (ert-with-test-buffer ()
     (difftastic-mode)
     (setq difftastic--metadata nil)
-    (let ((data (cadr (should-error (difftastic--rerun nil nil)
+    (let ((data (cadr (should-error (difftastic--rerun nil)
                                     :type 'user-error))))
       (should (equal data "Nothing to rerun")))))
 
@@ -5027,7 +5027,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
                        (should (functionp sentinel))
                        (funcall sentinel)
                        ,(cl-incf run-command-call-count))))
-            (difftastic--rerun nil nil))))
+            (difftastic--rerun nil))))
       (should (eq run-command-call-count 1))
       (should-not (eq difftastic--metadata metadata))
       (should (equal difftastic--metadata metadata)))))
@@ -5057,7 +5057,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
                        (should (functionp sentinel))
                        (funcall sentinel)
                        ,(cl-incf run-command-call-count))))
-            (difftastic--rerun nil nil))))
+            (difftastic--rerun nil))))
       (should (eq run-command-call-count 1))
       (should-not (eq difftastic--metadata metadata))
       (should (equal difftastic--metadata metadata)))))
@@ -5088,7 +5088,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
                        (should (functionp sentinel))
                        (funcall sentinel)
                        ,(cl-incf run-command-call-count))))
-            (difftastic--rerun "test-lang-override-2" nil))))
+            (difftastic--rerun "test-lang-override-2"))))
       (should (eq run-command-call-count 1))
       (should-not (eq difftastic--metadata metadata))
       (should (equal difftastic--metadata metadata)))))
@@ -5118,7 +5118,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
                        (should (functionp sentinel))
                        (funcall sentinel)
                        ,(cl-incf run-command-call-count))))
-            (difftastic--rerun nil '("test-difftastic-args-2")))))
+            (difftastic--rerun '("test-difftastic-args-2")))))
       (should (eq run-command-call-count 1))
       (should-not (eq difftastic--metadata metadata))
       (should (equal difftastic--metadata metadata)))))
@@ -5148,7 +5148,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
                        (should (functionp sentinel))
                        (funcall sentinel)
                        ,(cl-incf run-command-call-count))))
-            (difftastic--rerun nil nil))))
+            (difftastic--rerun nil))))
       (should (eq run-command-call-count 1))
       (should-not (eq difftastic--metadata metadata))
       (should (equal difftastic--metadata metadata)))))
@@ -5179,7 +5179,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
                        (should (functionp sentinel))
                        (funcall sentinel)
                        ,(cl-incf run-command-call-count))))
-            (difftastic--rerun nil nil))))
+            (difftastic--rerun nil))))
       (should (eq run-command-call-count 1))
       (should-not (eq difftastic--metadata metadata))
       (should (equal difftastic--metadata metadata)))))
@@ -5211,7 +5211,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
                        (should (functionp sentinel))
                        (funcall sentinel)
                        ,(cl-incf run-command-call-count))))
-            (difftastic--rerun "test-lang-override-2" nil))))
+            (difftastic--rerun "test-lang-override-2"))))
       (should (eq run-command-call-count 1))
       (should-not (eq difftastic--metadata metadata))
       (should (equal difftastic--metadata metadata)))))
@@ -5242,19 +5242,20 @@ This only happens when `noninteractive' to avoid messing up with faces."
                        (should (functionp sentinel))
                        (funcall sentinel)
                        ,(cl-incf run-command-call-count))))
-            (difftastic--rerun nil '("test-difftastic-arg-2")))))
+            (difftastic--rerun '("test-difftastic-arg-2")))))
       (should (eq run-command-call-count 1))
       (should-not (eq difftastic--metadata metadata))
       (should (equal difftastic--metadata metadata)))))
 
+
 (ert-deftest difftastic-rerun:no-prefix ()
-  (mocklet (((difftastic--rerun nil nil)))
+  (mocklet (((difftastic--rerun nil)))
     (call-interactively #'difftastic-rerun)))
 
 (ert-deftest difftastic-rerun:with-prefix ()
   (mocklet (((completing-read "Language: " "test-languages" nil t) => "test-language")
             ((difftastic--get-languages) => "test-languages")
-            ((difftastic--rerun "test-language" nil)))
+            ((difftastic--rerun "test-language")))
     (let ((current-prefix-arg '(4)))
       (call-interactively #'difftastic-rerun))))
 
@@ -5262,7 +5263,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
   (mocklet (((completing-read "Language: " "test-languages" nil t) => "test-language")
             ((difftastic--get-languages) => "test-languages")
             (difftastic--rerun not-called)
-            ((difftastic--arguments-menu "test-language" #'difftastic--rerun nil)))
+            ((difftastic--arguments-menu "test-language" #'difftastic--rerun)))
     (let ((current-prefix-arg '(16)))
       (call-interactively #'difftastic-rerun))))
 
@@ -6464,7 +6465,6 @@ This only happens when `noninteractive' to avoid messing up with faces."
                                                  '("test-difftastic-arg"))))
             (difftastic--buffers ,(buffer-name buffer-A)
                                  ,(buffer-name buffer-B)
-                                 nil
                                  '("test-difftastic-arg"))))
       (when (buffer-name buffer-B)
         (kill-buffer buffer-B))
@@ -6491,8 +6491,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
               ((difftastic--arguments-menu "test-language"
                                            #'difftastic--buffers
                                            "test-buffer-A"
-                                           "test-buffer-B"
-                                           nil)))
+                                           "test-buffer-B")))
     (call-interactively #'difftastic-buffers))))
 
 
@@ -6705,13 +6704,35 @@ This only happens when `noninteractive' to avoid messing up with faces."
       (setq file-name-history orig-file-name-history))))
 
 
-(ert-deftest difftastic-files:basic ()
+(ert-deftest difftastic--files:with-lang-override ()
+  (mocklet (((get-buffer-create "*difftastic file-A file-B*") => "test-buffer")
+            ((difftastic--files-internal "test-buffer"
+                                         '("/dir/file-A" . nil)
+                                         '("/dir/file-B" . nil)
+                                         '("--override=*:test-lang"))))
+    (difftastic--files  "/dir/file-A" "/dir/file-B" "test-lang")))
+
+(ert-deftest difftastic--files:with-difftastic-args ()
+  (mocklet (((get-buffer-create "*difftastic file-A file-B*") => "test-buffer")
+            ((difftastic--files-internal "test-buffer"
+                                         '("/dir/file-A" . nil)
+                                         '("/dir/file-B" . nil)
+                                         '("test-difftastic-args"))))
+    (difftastic--files  "/dir/file-A" "/dir/file-B" '("test-difftastic-args"))))
+
+(ert-deftest difftastic-files:basic ()
   (mocklet (((difftastic--files-args) => '("/dir/file-A" "/dir/file-B" "test-lang"))
-            ((get-buffer-create "*difftastic file-A file-B*") => "test-buffer")
-            ((difftastic--files-internal
-              "test-buffer" '("/dir/file-A" . nil) '("/dir/file-B" . nil) "test-lang")
-             :times 1))
+            ((difftastic--files  "/dir/file-A" "/dir/file-B" "test-lang")))
     (call-interactively #'difftastic-files)))
+
+(ert-deftest difftastic--files:double-prefix ()
+  (let ((current-prefix-arg '(16)))
+    (mocklet (((difftastic--files-args) => '("/dir/file-A" "/dir/file-B" "test-lang"))
+              ((difftastic--arguments-menu "test-lang"
+                                           #'difftastic--files
+                                           "/dir/file-A"
+                                           "/dir/file-B")))
+    (call-interactively #'difftastic-files))))
 
 
 ;; LocalWords: README el

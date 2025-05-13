@@ -1810,11 +1810,11 @@ The LANG-OVERRIDE will be used to initialize language overrides."
   (transient-setup #'difftastic--arguments-menu nil nil
                    :scope (append (list lang-override fun) (list args))))
 
-(defun difftastic--format-override-arg (lang-override)
-  "Format LANG-OVERRIDE to be usable with difftastic call."
-  (if (stringp lang-override)
-      (list (format "--override=*:%s" lang-override))
-    lang-override))
+(defun difftastic--format-override-arg (lang-or-args)
+  "Format LANG-OR-ARGS to be usable with difftastic call."
+  (if (stringp lang-or-args)
+      (list (format "--override=*:%s" lang-or-args))
+    lang-or-args))
 
 ;;;###autoload
 (defun difftastic-git-diff-range (&optional rev-or-range args files)
@@ -2182,21 +2182,19 @@ error each symbol in FILE-BUFS will be passed to
                                (get-buffer bf-B))))
               (completing-read "Language: " languages nil t suggested))))))
 
-(defun difftastic--buffers (buffer-A buffer-B lang-override
-                                     &optional difftastic-args)
-                                        ; checkdoc-params: (buffer-A buffer-B lang-override difftastic-args)
+(defun difftastic--buffers (buffer-A buffer-B lang-or-args)
+                                        ; checkdoc-params: (buffer-A buffer-B lang-or-args)
   "Implementation of `difftastic-buffers', which see."
-    (difftastic--with-file-bufs ((file-buf-A (difftastic--get-file-buf
+  (difftastic--with-file-bufs ((file-buf-A (difftastic--get-file-buf
                                             "A" (get-buffer buffer-A)))
                                (file-buf-B (difftastic--get-file-buf
-                                             "B" (get-buffer buffer-B))))
+                                            "B" (get-buffer buffer-B))))
     (difftastic--files-internal
      (get-buffer-create
       (concat "*difftastic " buffer-A " " buffer-B "*"))
      file-buf-A
      file-buf-B
-     (or (difftastic--format-override-arg lang-override)
-         difftastic-args))))
+     (difftastic--format-override-arg lang-or-args))))
 
 ;;;###autoload
 (defun difftastic-buffers (buffer-A buffer-B &optional lang-override)
@@ -2215,8 +2213,7 @@ then ask for language before running difftastic."
       (difftastic--arguments-menu lang-override
                                   #'difftastic--buffers
                                   buffer-A
-                                  buffer-B
-                                  nil)
+                                  buffer-B)
     (difftastic--buffers buffer-A buffer-B lang-override)))
 
 (defun difftastic--files-args ()
@@ -2256,14 +2253,9 @@ then ask for language before running difftastic."
       (setq difftastic--last-dir-B (file-name-as-directory
                                     (file-name-directory ff))))))
 
-;;;###autoload
-(defun difftastic-files (file-A file-B &optional lang-override)
-  "Run difftastic on a pair of files, FILE-A and FILE-B.
-Optionally, provide a LANG-OVERRIDE to override language used.
-See \\='difft --list-languages\\=' for language list.  When
-function is called with a prefix arg then ask for language before
-running difftastic."
-  (interactive (difftastic--files-args))
+(defun difftastic--files (file-A file-B &optional lang-or-args)
+                            ; checkdoc-params: (file-A file-B lang-or-args)
+  "Implementation for `difftastic-files', which see."
   (difftastic--files-internal
    (get-buffer-create (concat "*difftastic "
                               (file-name-nondirectory file-A)
@@ -2272,7 +2264,24 @@ running difftastic."
                               "*"))
    (cons file-A nil)
    (cons file-B nil)
-   lang-override))
+   (difftastic--format-override-arg lang-or-args)))
+
+;;;###autoload
+(defun difftastic-files (file-A file-B &optional lang-override)
+  "Run difftastic on a pair of files, FILE-A and FILE-B.
+Optionally, provide a LANG-OVERRIDE to override language used.
+See \\='difft --list-languages\\=' for language list.  When
+function is called with a prefix arg then ask for language before
+running difftastic."
+  (interactive (difftastic--files-args))
+  (if (equal current-prefix-arg '(16))
+      (difftastic--arguments-menu lang-override
+                                  #'difftastic--files
+                                  file-A
+                                  file-B)
+      (difftastic--files file-A
+                         file-B
+                         lang-override)))
 
 (defun difftastic--dired-diff (file lang-override)
                                         ; checkdoc-params: (file lang-override)
@@ -2310,8 +2319,8 @@ temporary file or nil otherwise."
         (user-error "Buffer %s [%s] doesn't exist anymore" prefix buffer))
     file-buf))
 
-(defun difftastic--rerun (lang-override difftastic-args)
-                                        ; checkdoc-params: (lang-override difftastic-args)
+(defun difftastic--rerun (lang-or-args)
+                                        ; checkdoc-params: (lang-or-args)
   "Implementation for `difftastic-rerun', which see."
   (if-let* (((eq major-mode 'difftastic-mode))
             (metadata (copy-tree difftastic--metadata)))
@@ -2322,8 +2331,9 @@ temporary file or nil otherwise."
                                                   "B" .file-buf-B metadata)))
           (let* ((default-directory .default-directory)
                  (difftastic-args
-                   (if-let* ((override (difftastic--format-override-arg
-                                       lang-override)))
+                   (if-let* (((stringp lang-or-args))
+                             (override (difftastic--format-override-arg
+                                       lang-or-args)))
                       (save-match-data
                         (append override
                                 (cl-remove-if
@@ -2332,7 +2342,7 @@ temporary file or nil otherwise."
                                                      "--override=")
                                                  arg))
                                  .difftastic-args)))
-                     (or difftastic-args .difftastic-args)))
+                     (or lang-or-args .difftastic-args)))
                  (requested-width
                   (funcall (or ; TODO: deal with width in difftastic-args
                             difftastic-rerun-requested-window-width-function
@@ -2377,8 +2387,8 @@ the latter is set to nil the call is made to
                                    (difftastic--get-languages) nil t)))
                difftastic-mode)
   (if (equal current-prefix-arg '(16))
-      (difftastic--arguments-menu lang-override #'difftastic--rerun nil)
-    (difftastic--rerun lang-override nil)))
+      (difftastic--arguments-menu lang-override #'difftastic--rerun)
+    (difftastic--rerun lang-override)))
 
 ;;; LocalWords: unmerged unstaged smerge
 

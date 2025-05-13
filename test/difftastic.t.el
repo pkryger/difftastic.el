@@ -5751,10 +5751,10 @@ This only happens when `noninteractive' to avoid messing up with faces."
     (mocklet (((magit-diff-read-range-or-commit "Diff for range" nil nil) => "test-rev-or-range")
               ((magit-diff-arguments) => '("test-args" "test-files"))
               ((difftastic--with-extra-arguments nil
-                                           #'difftastic--git-diff-range
-                                           "test-rev-or-range"
-                                           "test-args"
-                                           "test-files")))
+                                                 #'difftastic--git-diff-range
+                                                 "test-rev-or-range"
+                                                 "test-args"
+                                                 "test-files")))
       (call-interactively #'difftastic-git-diff-range))))
 
 
@@ -6541,9 +6541,9 @@ This only happens when `noninteractive' to avoid messing up with faces."
                                                "test-buffer-B"
                                                "test-language"))
               ((difftastic--with-extra-arguments "test-language"
-                                           #'difftastic--buffers
-                                           "test-buffer-A"
-                                           "test-buffer-B")))
+                                                 #'difftastic--buffers
+                                                 "test-buffer-A"
+                                                 "test-buffer-B")))
       (call-interactively #'difftastic-buffers))))
 
 
@@ -6782,9 +6782,9 @@ This only happens when `noninteractive' to avoid messing up with faces."
   (let ((current-prefix-arg '(16)))
     (mocklet (((difftastic--files-args) => '("/dir/file-A" "/dir/file-B" "test-lang"))
               ((difftastic--with-extra-arguments "test-lang"
-                                           #'difftastic--files
-                                           "/dir/file-A"
-                                           "/dir/file-B")))
+                                                 #'difftastic--files
+                                                 "/dir/file-A"
+                                                 "/dir/file-B")))
       (call-interactively #'difftastic-files))))
 
 

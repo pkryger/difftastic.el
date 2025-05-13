@@ -31,6 +31,7 @@ coding environment.
 - Use difftastic do compare files and buffers (also directly from =dired=).
 - Rerun =difftastic= with ~g~ to use current window width to "reflow" content
   and/or to force language change (when called with prefix).
+- Use double prefix argument to specify all =difftastic= arguments.
 
 ** Installation
 :PROPERTIES:

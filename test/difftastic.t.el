@@ -347,7 +347,7 @@
 (ert-deftest difftastic--build-git-process-environment:with-difftastic-args-override ()
   (should (equal
            (format
-            "GIT_EXTERNAL_DIFF=%s --color=foo --width=bar --background=baz --override=*:C++"
+            "GIT_EXTERNAL_DIFF=%s --color=foo --width=bar --background=baz --override=*:Emacs\\ Lisp"
             difftastic-executable)
            (car
             (difftastic--build-git-process-environment
@@ -355,7 +355,7 @@
              '("--color=foo"
                "--width=bar"
                "--background=baz"
-               "--override=*:C++"))))))
+               "--override=*:Emacs Lisp"))))))
 
 
 (ert-deftest difftastic--build-files-command:without-difftastic-args ()

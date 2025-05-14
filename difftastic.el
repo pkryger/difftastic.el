@@ -1522,8 +1522,11 @@ It adds \\='--color=always\\=', \\='--background=(light|dark)\\=', and
   "Build a difftastic git command with REQUESTED-WIDTH.
 The DIFFTASTIC-ARGS is a list of extra arguments to pass to
 `difftastic-executable'."
-  (let ((difftastic-args (difftastic--add-standard-args difftastic-args
-                                                        requested-width)))
+  (let ((difftastic-args
+         (mapcar (lambda (arg)
+                   (replace-regexp-in-string (rx " ") "\\\\ " arg))
+                 (difftastic--add-standard-args difftastic-args
+                                                requested-width))))
     (cons (format
            "GIT_EXTERNAL_DIFF=%s%s"
            difftastic-executable

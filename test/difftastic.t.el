@@ -5097,8 +5097,8 @@ This only happens when `noninteractive' to avoid messing up with faces."
 (ert-deftest difftastic--rerun:git-command-with-lang-override ()
   (let ((metadata '((default-directory . "test-default-directory")
                     (git-command . "test-command")
-                    (difftastic-args . ("test-difftastic-args"
-                                        "--override=*:test-lang-override-1"))))
+                    (difftastic-args . ("--override=*:test-lang-override-1"
+                                        "test-difftastic-args"))))
         (difftastic-rerun-requested-window-width-function
          (lambda ()
            "test-difftastic-width"))
@@ -5123,6 +5123,8 @@ This only happens when `noninteractive' to avoid messing up with faces."
             (difftastic--rerun "test-lang-override-2"))))
       (should (eq run-command-call-count 1))
       (should-not (eq difftastic--metadata metadata))
+      (setcar (alist-get 'difftastic-args metadata)
+              "--override=*:test-lang-override-2")
       (should (equal difftastic--metadata metadata)))))
 
 (ert-deftest difftastic--rerun:git-command-with-difftastic-args ()
@@ -5153,6 +5155,8 @@ This only happens when `noninteractive' to avoid messing up with faces."
             (difftastic--rerun '("test-difftastic-args-2")))))
       (should (eq run-command-call-count 1))
       (should-not (eq difftastic--metadata metadata))
+      (setf (alist-get 'difftastic-args metadata)
+            '("test-difftastic-args-2"))
       (should (equal difftastic--metadata metadata)))))
 
 (ert-deftest difftastic--rerun:files-command-rerun-requested-width ()
@@ -5246,6 +5250,8 @@ This only happens when `noninteractive' to avoid messing up with faces."
             (difftastic--rerun "test-lang-override-2"))))
       (should (eq run-command-call-count 1))
       (should-not (eq difftastic--metadata metadata))
+      (setcar (alist-get 'difftastic-args metadata)
+              "--override=*:test-lang-override-2")
       (should (equal difftastic--metadata metadata)))))
 
 (ert-deftest difftastic--rerun:files-command-with-difftastic-args ()
@@ -5277,6 +5283,8 @@ This only happens when `noninteractive' to avoid messing up with faces."
             (difftastic--rerun '("test-difftastic-arg-2")))))
       (should (eq run-command-call-count 1))
       (should-not (eq difftastic--metadata metadata))
+      (setf (alist-get 'difftastic-args metadata)
+            '("test-difftastic-arg-2"))
       (should (equal difftastic--metadata metadata)))))
 
 
@@ -5699,13 +5707,19 @@ This only happens when `noninteractive' to avoid messing up with faces."
 
 
 (ert-deftest difftastic--extra-arguments-override-init-value:string ()
-  (let ((obj (transient-option)))
+  (let ((obj (transient-option))
+        (difftastic--metadata
+         '((difftastic-args . ("--override=*.1:test-language-3"
+                               "--override=*.2:test-language-4")))))
     (mocklet (((transient-scope) => '("test-language" "test-fun" "test-args")))
       (difftastic--extra-arguments-override-init-value obj))
     (should (equal (oref obj value) '("*:test-language")))))
 
 (ert-deftest difftastic--extra-arguments-override-init-value:list ()
-  (let ((obj (transient-option)))
+  (let ((obj (transient-option))
+        (difftastic--metadata
+         '((difftastic-args . ("--override=*.1:test-language-3"
+                               "--override=*.2:test-language-4")))))
     (mocklet (((transient-scope) => '(("--override=*.1:test-language-1"
                                        "--override=*.2:test-language-2")
                                       "test-fun" "test-args")))
@@ -5713,11 +5727,39 @@ This only happens when `noninteractive' to avoid messing up with faces."
     (should (equal (oref obj value) '("*.1:test-language-1"
                                       "*.2:test-language-2")))))
 
+(ert-deftest difftastic--extra-arguments-override-init-value:metadata ()
+  (let ((obj (transient-option))
+        (difftastic--metadata
+         '((difftastic-args . ("--override=*.1:test-language-1"
+                               "--override=*.2:test-language-2")))))
+    (mocklet (((transient-scope) => '(nil
+                                      "test-fun" "test-args")))
+      (difftastic--extra-arguments-override-init-value obj))
+    (should (equal (oref obj value) '("*.1:test-language-1"
+                                      "*.2:test-language-2")))))
+
 (ert-deftest difftastic--extra-arguments-override-init-value:nil ()
-  (let ((obj (transient-option)))
+  (let ((obj (transient-option))
+        difftastic--metadata)
     (mocklet (((transient-scope) => '(nil "test-fun" "test-args")))
       (difftastic--extra-arguments-override-init-value obj))
     (should-not (oref obj value))))
+
+
+(ert-deftest transient-init-value:no-metadata ()
+  (let ((obj (difftastic--extra-arguments-prefix)))
+    (transient-init-value obj)
+    (should (slot-boundp obj 'value))
+    (should-not (oref obj value))))
+
+(ert-deftest transient-init-value:metadata ()
+  (let ((obj (difftastic--extra-arguments-prefix))
+        (difftastic--metadata '((difftastic-args . ("--override=test-lang-2"
+                                                    "--context=5")))))
+    (transient-init-value obj)
+    (should (slot-boundp obj 'value))
+    (should (equal '("--context=5")
+                   (oref obj value)))))
 
 
 (ert-deftest difftastic--format-override-arg:basic ()

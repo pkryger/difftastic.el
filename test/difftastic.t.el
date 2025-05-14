@@ -5292,10 +5292,8 @@ This only happens when `noninteractive' to avoid messing up with faces."
       (call-interactively #'difftastic-rerun))))
 
 (ert-deftest difftastic-rerun:double-prefix ()
-  (mocklet (((completing-read "Language: " "test-languages" nil t) => "test-language")
-            ((difftastic--get-languages) => "test-languages")
-            (difftastic--rerun not-called)
-            ((difftastic--with-extra-arguments "test-language"
+  (mocklet ((difftastic--rerun not-called)
+            ((difftastic--with-extra-arguments nil
                                                #'difftastic--rerun)))
     (let ((current-prefix-arg '(16)))
       (call-interactively #'difftastic-rerun))))

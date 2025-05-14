@@ -2471,7 +2471,7 @@ latter is set to nil the call is made to
 `difftastic-requested-window-width-function'.  When called with double
 prefix argument ask for extra arguments for difftastic call."
   (interactive (list
-                (when current-prefix-arg ;; ask also when double prefix [sic!]
+                (when (equal current-prefix-arg '(4))
                   (completing-read "Language: "
                                    (difftastic--get-languages) nil t)))
                difftastic-mode)

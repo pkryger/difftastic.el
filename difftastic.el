@@ -1719,8 +1719,8 @@ argument extracted from ARGS with the one from DIFFTASTIC-ARGS."
                    (concat difftastic-executable " --list-languages"))
                   "\n" t))))
 
-(defun difftastic--read-overrides (prompt initial-input history)
-                                        ; checkdoc-params: (prompt initial-input history)
+(defun difftastic--extra-arguments-read-overrides (prompt initial-input history)
+                            ; checkdoc-params: (prompt initial-input history)
   "Read language overrides."
   (save-match-data
     (let ((crm-separator ",")
@@ -1748,8 +1748,8 @@ argument extracted from ARGS with the one from DIFFTASTIC-ARGS."
                     " for example *.h:C,*.ts:TypeScript TSX,CustomFile:JSON"))
           (sit-for 1))))))
 
-(defun difftastic--override-prompt (_obj)
-  "Return a prompt for `difftastic--override-infix'."
+(defun difftastic--extra-arguments-override-prompt (_obj)
+  "Return a prompt for `difftastic--extra-arguments-override-infix'."
   (with-temp-buffer
     (let ((overriding-local-map crm-local-completion-map))
       (concat
@@ -1757,7 +1757,7 @@ argument extracted from ARGS with the one from DIFFTASTIC-ARGS."
        (substitute-command-keys "\\[crm-complete]")
        " for languages: "))))
 
-(defun difftastic--override-init-value (obj)
+(defun difftastic--extra-arguments-override-init-value (obj)
   "Initialize value of override OBJ with language override from `transient-scope'.
 When the language override is a string, use it with * glob pattern.
 Otherwise, when the language override is a list use it removing
@@ -1769,16 +1769,16 @@ Otherwise, when the language override is a list use it removing
                                 (string-remove-prefix "--override=" o))
                               lang-override)))))
 
-(transient-define-infix difftastic--override-infix ()
-  :prompt #'difftastic--override-prompt
+(transient-define-infix difftastic--extra-arguments-override-infix ()
+  :prompt #'difftastic--extra-arguments-override-prompt
   :multi-value t
   :class 'transient-option
-  :reader #'difftastic--read-overrides
+  :reader #'difftastic--extra-arguments-read-overrides
   :argument "--override="
-  :init-value #'difftastic--override-init-value)
+  :init-value #'difftastic--extra-arguments-override-init-value)
 
-(transient-define-suffix difftastic--with-difftastic-args ()
-  "Call car of `transient-scope' with its cdr and extra difftastic arguments.
+(transient-define-suffix difftastic--extra-arguments-call-command ()
+  "Call command from `transient-scope' extra difftastic arguments.
 Difftastic arguments are like `transient-args', but ensure the
 `--override' argument is exploded."
   :transient 'transient--do-exit
@@ -1804,7 +1804,7 @@ Number of ARGS must be equal to number of arguments that FUN takes minus
 1. The last argument will be a list of extra difftastic arguments.
 The LANG-OVERRIDE will be used to initialize language overrides."
   ["Difftastic arguments"
-   ("-o" "language overrides" difftastic--override-infix)
+   ("-o" "language overrides" difftastic--extra-arguments-override-infix)
    ("-s" "strip cr" "--strip-cr="
     :choices ("on" "off"))
    ("-c" "context" "--context="
@@ -1838,7 +1838,7 @@ The LANG-OVERRIDE will be used to initialize language overrides."
     :reader transient-read-number-N+
     :level 5)]
 
-  [("C-c C-c" "run difftastic" difftastic--with-difftastic-args)]
+  [("C-c C-c" "run difftastic" difftastic--extra-arguments-call-command)]
   (interactive)
   (transient-setup #'difftastic--with-extra-arguments nil nil
                    :scope (append (list lang-override fun) (list args))))

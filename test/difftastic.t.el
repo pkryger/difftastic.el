@@ -5589,7 +5589,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
                        (difftastic--get-languages)))))))
 
 
-(ert-deftest difftastic--read-overrides:basic ()
+(ert-deftest difftastic--extra-arguments-read-overrides:basic ()
   (mocklet (((difftastic--get-languages) => "test-languages")
             ((sit-for 1)))
     (let ((call-count 0))
@@ -5611,45 +5611,47 @@ This only happens when `noninteractive' to avoid messing up with faces."
                        '("not-valid-association")
                      '("foo:bar" "baz:qux")))))
         (ert-with-message-capture messages
-          (should (equal (difftastic--read-overrides "test-prompt"
-                                                     "test-initial-input"
-                                                     "test-history")
-                         '("foo:bar" "baz:qux")))
-          (should (equal messages
-                         (concat
-                          "Please enter comma sparated list glob:language associations,"
-                          " for example *.h:C,*.ts:TypeScript TSX,CustomFile:JSON\n"))))
+          (should (equal
+                   (difftastic--extra-arguments-read-overrides "test-prompt"
+                                                               "test-initial-input"
+                                                               "test-history")
+                   '("foo:bar" "baz:qux")))
+          (should (equal
+                   messages
+                   (concat
+                    "Please enter comma sparated list glob:language associations,"
+                    " for example *.h:C,*.ts:TypeScript TSX,CustomFile:JSON\n"))))
         (should (eql call-count 2))))))
 
 
-(ert-deftest difftastic--override-prompt:basic ()
+(ert-deftest difftastic--extra-arguments-override-prompt:basic ()
   (should (equal (concat "Comma separated list of glob:language, type "
                          (propertize "TAB"
                                      'face 'help-key-binding
                                      'font-lock-face 'help-key-binding)
                          " for languages: ")
-                 (difftastic--override-prompt nil))))
+                 (difftastic--extra-arguments-override-prompt nil))))
 
 
-(ert-deftest difftastic--override-init-value:string ()
+(ert-deftest difftastic--extra-arguments-override-init-value:string ()
   (let ((obj (transient-option)))
     (mocklet (((transient-scope) => '("test-language" "test-fun" "test-args")))
-      (difftastic--override-init-value obj))
+      (difftastic--extra-arguments-override-init-value obj))
     (should (equal (oref obj value) '("*:test-language")))))
 
-(ert-deftest difftastic--override-init-value:list ()
+(ert-deftest difftastic--extra-arguments-override-init-value:list ()
   (let ((obj (transient-option)))
     (mocklet (((transient-scope) => '(("--override=*.1:test-language-1"
                                        "--override=*.2:test-language-2")
                                       "test-fun" "test-args")))
-      (difftastic--override-init-value obj))
+      (difftastic--extra-arguments-override-init-value obj))
     (should (equal (oref obj value) '("*.1:test-language-1"
                                       "*.2:test-language-2")))))
 
-(ert-deftest difftastic--override-init-value:nil ()
+(ert-deftest difftastic--extra-arguments-override-init-value:nil ()
   (let ((obj (transient-option)))
     (mocklet (((transient-scope) => '(nil "test-fun" "test-args")))
-      (difftastic--override-init-value obj))
+      (difftastic--extra-arguments-override-init-value obj))
     (should-not (oref obj value))))
 
 
@@ -5664,7 +5666,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
   (should-not (difftastic--format-override-arg nil)))
 
 
-(ert-deftest difftastic--with-difftastic-args:basic ()
+(ert-deftest difftastic--extra-arguments-call-command:basic ()
   (let ((transient-current-prefix (transient-prefix :command "test-command")))
     (mocklet (((transient-args "test-command")
                => '(("--override=" "foo" "bar")
@@ -5679,7 +5681,8 @@ This only happens when `noninteractive' to avoid messing up with faces."
                                       difftastic--test-fun
                                       ("test-arg1" "test-arg2"))))
       (should (equal "test-value"
-                     (call-interactively #'difftastic--with-difftastic-args))))))
+                     (call-interactively
+                      #'difftastic--extra-arguments-call-command))))))
 
 
 (ert-deftest difftastic--with-extra-arguments:basic ()

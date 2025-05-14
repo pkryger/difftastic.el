@@ -5589,41 +5589,106 @@ This only happens when `noninteractive' to avoid messing up with faces."
                          "SCSS" "Solidity" "SQL" "Swift" "TOML" "TypeScript"
                          "TypeScript TSX" "VHDL" "XML" "YAML" "Zig")
                        (difftastic--get-languages)))))))
+
+
+(ert-deftest difftastic--extra-arguments-completing-overrides:try ()
+  (let ((fun (difftastic--extra-arguments-completing-overrides '("bar" "baz" "qux"))))
+    (should (equal "*:" (funcall fun "" nil nil)))
+    (should (equal "*:" (funcall fun "*" nil nil)))
+    (should (equal "*:" (funcall fun "*:" nil nil)))
+    (should (equal "*:ba" (funcall fun ":b" nil nil)))
+    (should (equal "*:ba" (funcall fun "*:b" nil nil)))
+    (should (equal "*:ba" (funcall fun "*:ba" nil nil)))
+    (should (equal "*:qux" (funcall fun "*:q" nil nil)))
+    (should (eq t (funcall fun "*:qux" nil nil)))
+    (should-not (funcall fun "*:foo" nil nil))))
+
+
+(ert-deftest difftastic--extra-arguments-completing-overrides:all ()
+  (let ((fun (difftastic--extra-arguments-completing-overrides '("bar" "baz" "qux"))))
+    (should (equal '("*:bar" "*:baz" "*:qux")
+                   (funcall fun "" nil t)))
+    (should (equal '("*:bar" "*:baz" "*:qux")
+                   (funcall fun "*" nil t)))
+    (should (equal '("*:bar" "*:baz" "*:qux")
+                   (funcall fun "*:" nil t)))
+    (should (equal '("*:bar" "*:baz")
+                   (funcall fun ":b" nil t)))
+    (should (equal '("*:bar" "*:baz")
+                   (funcall fun "*:b" nil t)))
+    (should (equal '("*:bar" "*:baz")
+                   (funcall fun "*:ba" nil t)))
+    (should (equal '("*:qux")
+                   (funcall fun "*:q" nil t)))
+    (should (equal '("*:qux") (funcall fun "*:qux" nil t)))
+    (should-not (funcall fun "*:foo" nil t))))
+
+(ert-deftest difftastic--extra-arguments-completing-overrides:boundaries ()
+  (let* ((test-languages '("bar" "baz" "qux"))
+         (fun (difftastic--extra-arguments-completing-overrides test-languages)))
+    (should
+     (equal '(0 . 0)
+            (funcall fun "" nil '(boundaries . ""))))
+    (should
+     (equal '(0 . 1)
+            (funcall fun "*" nil '(boundaries . "*"))))
+    (should
+     (equal '(0 . 1)
+            (funcall fun "b" nil '(boundaries . "b"))))
+    (should
+     (equal '(0 . 3)
+            (funcall fun "*:b" nil '(boundaries . "*:b"))))))
+
+(ert-deftest difftastic--extra-arguments-completing-overrides:test ()
+  (mocklet ((sit-for))
+    (let ((text-quoting-style 'straight)
+          (fun (difftastic--extra-arguments-completing-overrides '("bar" "baz" "qux"))))
+      (ert-with-message-capture messages
+        (should-not (funcall fun "bar" nil 'lambda))
+        (should (equal
+                 messages
+                 "'bar' doesn't match GLOB:LANGUAGE pattern\n")))
+      (ert-with-message-capture messages
+        (should-not (funcall fun ":bar" nil 'lambda))
+        (should (equal
+                 messages
+                 "':bar' doesn't match GLOB:LANGUAGE pattern\n")))
+      (ert-with-message-capture messages
+        (should-not (funcall fun "*:b" nil 'lambda))
+        (should (equal
+                 messages
+                 "'*:b' doesn't match GLOB:LANGUAGE pattern\n")))
+      (ert-with-message-capture messages
+        (should-not (funcall fun "*:*:bar" nil 'lambda))
+        (should (equal
+                 messages
+                 "'*:*:bar' doesn't match GLOB:LANGUAGE pattern\n")))
+      (ert-with-message-capture messages
+        (should-not (funcall fun "*:foo" nil 'lambda))
+        (should (equal
+                 messages
+                 "'*:foo' doesn't match GLOB:LANGUAGE pattern\n")))
+      (ert-with-message-capture messages
+        (should (eq t (funcall fun "*:bar" nil 'lambda)))
+        (should (equal messages ""))))))
 
 
 (ert-deftest difftastic--extra-arguments-read-overrides:basic ()
   (mocklet (((difftastic--get-languages) => "test-languages")
-            ((sit-for 1)))
-    (let ((call-count 0))
-      (cl-letf (((symbol-function #'magit-completing-read-multiple)
-                 (lambda (prompt table &optional predicate require-match
-                                 initial-input hist def inherit-input-method
-                                 no-split)
-                   (cl-incf call-count)
-                   (should (equal prompt "test-prompt"))
-                   (should (equal table "test-languages"))
-                   (should-not predicate)
-                   (should-not require-match)
-                   (should (equal initial-input "test-initial-input"))
-                   (should (equal hist "test-history"))
-                   (should-not def)
-                   (should-not inherit-input-method)
-                   (should-not no-split)
-                   (if (eql 1 call-count)
-                       '("not-valid-association")
-                     '("foo:bar" "baz:qux")))))
-        (ert-with-message-capture messages
-          (should (equal
-                   (difftastic--extra-arguments-read-overrides "test-prompt"
-                                                               "test-initial-input"
-                                                               "test-history")
-                   '("foo:bar" "baz:qux")))
-          (should (equal
-                   messages
-                   (concat
-                    "Please enter comma sparated list glob:language associations,"
-                    " for example *.h:C,*.ts:TypeScript TSX,CustomFile:JSON\n"))))
-        (should (eql call-count 2))))))
+            ((difftastic--extra-arguments-completing-overrides "test-languages")
+             => "test-completing")
+            ((magit-completing-read-multiple "test-prompt"
+                                             "test-completing"
+                                             nil
+                                             t
+                                             "test-initial-input"
+                                             "test-history")
+             => '("foo:bar" "baz:qux")))
+    (should (equal
+             (difftastic--extra-arguments-read-overrides "test-prompt"
+                                                         "test-initial-input"
+                                                         "test-history")
+             '("foo:bar" "baz:qux")))))
 
 
 (ert-deftest difftastic--extra-arguments-override-prompt:basic ()

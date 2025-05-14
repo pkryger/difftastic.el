@@ -1719,34 +1719,65 @@ argument extracted from ARGS with the one from DIFFTASTIC-ARGS."
                    (concat difftastic-executable " --list-languages"))
                   "\n" t))))
 
+(defun difftastic--extra-arguments-completing-overrides (languages)
+  "Return a completion function for LANGUAGES overrides.
+The returned function is designed for `completing-read' family of
+functions to read language overrides."
+  (let ((languages languages))
+    (lambda (string predicate flag)
+      (let ((case-fold-search t))
+        (pcase (cons flag
+                     (if (string-match (rx string-start
+                                           (group (zero-or-more (not ":")))
+                                           ":"
+                                           (group (zero-or-more (not ":"))))
+                                       string)
+                         (list (if-let* ((glob (match-string 1 string))
+                                         ((not (equal glob ""))))
+                                   glob
+                                 "*")
+                               (match-string 2 string))
+                       (list (if (equal string "") "*" string)
+                             "")))
+          (`(nil ,glob ,language)
+           (let ((res (try-completion language languages predicate)))
+             (if (stringp res)
+                 (concat glob ":" res)
+               res)))
+          (`(t  ,glob ,language)
+           (let ((res (all-completions language languages predicate)))
+             (mapcar (lambda (c)
+                       (concat glob ":" c))
+                     res)))
+          (`(lambda ,_ ,_)
+           (if (string-match (rx-to-string `(seq
+                                             string-start
+                                             (one-or-more (not ":"))
+                                             ":"
+                                             (or ,@languages)))
+                             string)
+               t
+             (message "'%s' doesn't match GLOB:LANGUAGE pattern" string)
+             (sit-for 1)
+             nil))
+          (`((boundaries . ,suffix) ,_ ,language)
+           (completion-boundaries language languages predicate suffix)))))))
+
+(defvar helm-crm-default-separator)
+
 (defun difftastic--extra-arguments-read-overrides (prompt initial-input history)
   ;; checkdoc-params: (prompt initial-input history)
   "Read language overrides."
-  (save-match-data
-    (let ((crm-separator ",")
-          (languages (difftastic--get-languages)))
-      (cl-block nil
-        (while t
-          (let ((str (magit-completing-read-multiple
-                      prompt
-                      languages
-                      nil
-                      nil
-                      initial-input
-                      history)))
-            (when (cl-every (lambda (s)
-                              (string-match (rx string-start
-                                                (one-or-more (not ":"))
-                                                ":"
-                                                (one-or-more (not ":"))
-                                                string-end)
-                                            s))
-                            str)
-              (cl-return str)))
-          (message (concat
-                    "Please enter comma sparated list glob:language associations,"
-                    " for example *.h:C,*.ts:TypeScript TSX,CustomFile:JSON"))
-          (sit-for 1))))))
+  (let ((crm-separator ",")
+        (helm-crm-default-separator ","))
+    (magit-completing-read-multiple
+     prompt
+     (difftastic--extra-arguments-completing-overrides
+      (difftastic--get-languages))
+     nil
+     t
+     initial-input
+     history)))
 
 (defun difftastic--extra-arguments-override-prompt (_obj)
   "Return a prompt for `difftastic--extra-arguments-override-infix'."

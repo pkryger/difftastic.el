@@ -112,7 +112,7 @@
 ;;
 ;; [Installing from MELPA] See section Installing from MELPA
 ;;
-;; Manual installation
+;; Manual Installation
 ;; -------------------
 ;;
 ;; Note, that this method does not generate autoloads.  As a consequence it
@@ -226,7 +226,11 @@
 ;; Usage
 ;; =====
 ;;
-;; The following commands are meant to help to interact with `difftastic'.
+;; General Usage
+;; ~~~~~~~~~~~~~
+;;
+;; The following commands are meant to help invoking `difftastic' depending on
+;; context and desired outcome.
 ;;
 ;; - `difftastic-magit-diff' - show the result of `git diff ARGS -- FILES'
 ;;   with `difftastic'.  This is the main entry point for DWIM action, so it
@@ -249,17 +253,33 @@
 ;; - `difftastic-git-diff-range' - transform `ARGS' for difftastic and show
 ;;   the result of `git diff ARGS REV-OR-RANGE -- FILES' with `difftastic'.
 ;;
-;; All above commands (and `difftastic-rerun' described below) support
-;; specification of `difft' arguments when called with a double prefix
-;; argument.  This is in addition to a command specific handling of a single
-;; prefix argument.  In order to aid arguments entry, a `transient' menu is
-;; used, however some - less commonly used - arguments are not visible in
-;; default configuration.  Type `C-x l' in the menu to make them visible.
+;;
+;; Specifying `difftastic' Arguments
+;; ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+;;
+;; All [above] commands (and `difftastic-rerun' described [below]) support
+;; specification of `difft' arguments.  When a command is called with a double
+;; prefix argument a popup is presented allowing to specify desired arguments.
+;; This is in addition to a command specific handling of a single prefix
+;; argument.
+;;
+;; In order to aid arguments entry and provide similarity to workflows in
+;; `magit' and `forge', a `transient' prefix is used for the popup.  For
+;; example, some - less commonly used - arguments are not visible in default
+;; configuration.  Type `C-x l' in the menu to make them visible.  Type `C-h
+;; C-h' for `difftastic' help (`man difft').  Any other `transient' commands
+;; should work as well.
+;;
 ;; Note that in some cases arguments will take precedence over standard and
 ;; computed values, for example `--width' is one such a argument.
 ;;
 ;;
-;; `difftastic-mode' commands
+;; [above] See section General Usage
+;;
+;; [below] See section `difftastic-mode' Commands
+;;
+;;
+;; `difftastic-mode' Commands
 ;; ~~~~~~~~~~~~~~~~~~~~~~~~~~
 ;;
 ;; When a buffer shows `difftastic' output the following commands can be used.
@@ -330,7 +350,7 @@
 ;; (setq difftastic-highlight-alist nil)
 ;;
 ;;
-;; Window management
+;; Window Management
 ;; ~~~~~~~~~~~~~~~~~
 ;;
 ;; The `difftastic' relies on the `difft' command line tool to produce an
@@ -356,7 +376,7 @@
 ;;   mechanism to display the `difft' output.
 ;;
 ;;
-;; `difftastic-mode' behavior
+;; `difftastic-mode' Behavior
 ;; ~~~~~~~~~~~~~~~~~~~~~~~~~~
 ;;
 ;; - `difftastic-diff-visit-avoid-head-blob' - controls whether to avoid
@@ -388,7 +408,7 @@
 ;; - type `M-x ert <RET> t <RET>'
 ;;
 ;;
-;; Documentation autoring
+;; Documentation Autoring
 ;; ~~~~~~~~~~~~~~~~~~~~~~
 ;;
 ;; This package uses [org-commentary.el] (different from the one available on

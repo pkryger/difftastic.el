@@ -91,7 +91,7 @@ installation from GitHub or a an existing checkout.  That could be
 =package-vc=, or any of package managers listed in
 [[#installing-from-melpa][Installing from MELPA]].
 
-**** Manual installation
+**** Manual Installation
 Note, that this method does not generate autoloads.  As a consequence it will
 cause the whole package and it's dependencies (including =magit=) to be loaded
 at startup.  If you want to avoid this, ensure autoloads set up on Emacs
@@ -211,7 +211,14 @@ Or, if you use =use-package=:
 :PROPERTIES:
 :CUSTOM_ID: usage
 :END:
-The following commands are meant to help to interact with =difftastic=.
+
+*** General Usage
+:PROPERTIES:
+:CUSTOM_ID: general-usage
+:END:
+
+The following commands are meant to help invoking =difftastic= depending on
+context and desired outcome.
 
 - =difftastic-magit-diff= - show the result of =git diff ARGS -- FILES= with
   =difftastic=.  This is the main entry point for DWIM action, so it tries to
@@ -234,16 +241,27 @@ The following commands are meant to help to interact with =difftastic=.
 - =difftastic-git-diff-range= - transform =ARGS= for difftastic and show the
   result of =git diff ARGS REV-OR-RANGE -- FILES= with =difftastic=.
 
-All above commands (and =difftastic-rerun= described below) support
-specification of =difft= arguments when called with a double prefix argument.
-This is in addition to a command specific handling of a single prefix argument.
-In order to aid arguments entry, a =transient= menu is used, however some -
-less commonly used - arguments are not visible in default configuration.  Type
-~C-x l~ in the menu to make them visible.  Note that in some cases arguments
-will take precedence over standard and computed values, for example =--width=
-is one such a argument.
+*** Specifying =difftastic= Arguments
+:PROPERTIES:
+:CUSTOM_ID: specifying-difftastic-arguments
+:END:
 
-*** =difftastic-mode= commands
+All [[#general-usage][above]] commands (and =difftastic-rerun= described
+[[#difftastic-mode-commands][below]]) support specification of =difft=
+arguments.  When a command is called with a double prefix argument a popup is
+presented allowing to specify desired arguments.  This is in addition to a
+command specific handling of a single prefix argument.
+
+In order to aid arguments entry and provide similarity to workflows in =magit=
+and =forge=, a =transient= prefix is used for the popup.  For example, some -
+less commonly used - arguments are not visible in default configuration.  Type
+~C-x l~ in the menu to make them visible.  Type ~C-h C-h~ for =difftastic=
+help (=man difft=).  Any other =transient= commands should work as well.
+
+Note that in some cases arguments will take precedence over standard and
+computed values, for example =--width= is one such a argument.
+
+*** =difftastic-mode= Commands
 :PROPERTIES:
 :CUSTOM_ID: difftastic-mode-commands
 :END:
@@ -316,7 +334,7 @@ your configuration:
 (setq difftastic-highlight-alist nil)
 #+end_src
 
-*** Window management
+*** Window Management
 :PROPERTIES:
 :CUSTOM_ID: window-management
 :END:
@@ -341,7 +359,7 @@ interaction with =difft=:
   call to =difft=.  It is meant to select an appropriate Emacs mechanism to
   display the =difft= output.
 
-*** =difftastic-mode= behavior
+*** =difftastic-mode= Behavior
 :PROPERTIES:
 :CUSTOM_ID: difftastic-mode-behavior
 :END:
@@ -370,7 +388,7 @@ To run tests:
 - type ~M-x eval-buffer <RET>~
 - type ~M-x ert <RET> t <RET>~
 
-*** Documentation autoring
+*** Documentation Autoring
 :PROPERTIES:
 :CUSTOM_ID: documentation-authoring
 :END:
@@ -399,7 +417,7 @@ This all has been strongly influenced by - a class in itself -
 [[https://github.com/magit/transient][Transient]] Emacs packages by Jonas
 Bernoulli.
 
-** Similar packages                                                :noexport:
+** Similar Packages                                                :noexport:
 :PROPERTIES:
 :CUSTOM_ID: similar-packages
 :END:

@@ -5773,6 +5773,38 @@ This only happens when `noninteractive' to avoid messing up with faces."
   (should-not (difftastic--format-override-arg nil)))
 
 
+(ert-deftest difftastic--extra-arguments-call-command-description:basic ()
+  (let ((expected (concat "run difftastic ("
+                          (propertize "some-function"
+                                      'face 'font-lock-constant-face)
+                          ")")))
+    (eval
+     `(mocklet (((transient-scope) => '(nil some--function)))
+        (if (version< "29" emacs-version) ;; since Emacs-29
+            (should
+             (equal-including-properties
+              (difftastic--extra-arguments-call-command-description)
+              ,expected))
+          (should
+           (ert-equal-including-properties
+            (difftastic--extra-arguments-call-command-description)
+            ,expected)))))))
+
+(ert-deftest difftastic--extra-arguments-call-command-description:no-scope ()
+  (let ((expected "run difftastic"))
+    (eval
+     `(mocklet (((transient-scope)))
+        (if (version< "29" emacs-version) ;; since Emacs-29
+            (should
+             (equal-including-properties
+              (difftastic--extra-arguments-call-command-description)
+              ,expected))
+          (should
+           (ert-equal-including-properties
+            (difftastic--extra-arguments-call-command-description)
+            ,expected)))))))
+
+
 (ert-deftest difftastic--extra-arguments-call-command:basic ()
   (let ((transient-current-prefix (transient-prefix :command "test-command")))
     (mocklet (((transient-args "test-command")

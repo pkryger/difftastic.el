@@ -1855,11 +1855,24 @@ The \\='--override\\=' argument is handled in
   :argument "--override="
   :init-value #'difftastic--extra-arguments-override-init-value)
 
+(defun difftastic--extra-arguments-call-command-description ()
+  "Return description for call command suffix."
+  (format "run difftastic%s"
+          (if-let* ((command (cadr (transient-scope))))
+              (concat " ("
+                      (propertize (replace-regexp-in-string
+                                   (rx "--") "-" (symbol-name command))
+                                  'face 'font-lock-constant-face)
+                      ")")
+            "")))
+
 (transient-define-suffix difftastic--extra-arguments-call-command ()
   "Call command from `transient-scope' extra difftastic arguments.
 Difftastic arguments are like `transient-args', but ensure the
 \\='--override\\=' argument is exploded."
   :transient 'transient--do-exit
+  :key "C-c C-c"
+  :description #'difftastic--extra-arguments-call-command-description
   (interactive)
   (pcase-let ((`(,_ ,fun ,args) (transient-scope))
               (difft-args
@@ -1918,7 +1931,7 @@ The LANG-OVERRIDE will be used to initialize language overrides."
     :reader transient-read-number-N+
     :level 5)]
 
-  [("C-c C-c" "run difftastic" difftastic--extra-arguments-call-command)]
+  [(difftastic--extra-arguments-call-command)]
   (interactive)
   (transient-setup #'difftastic--with-extra-arguments nil nil
                    :scope (append (list lang-override fun) (list args))))

@@ -1862,6 +1862,7 @@ Number of ARGS must be equal to number of arguments that FUN takes minus
 1. The last argument will be a list of extra difftastic arguments.
 The LANG-OVERRIDE will be used to initialize language overrides."
   :class 'difftastic--extra-arguments-prefix
+  :man-page "difft"
   ["Difftastic arguments"
    ("-o" "language overrides" difftastic--extra-arguments-override-infix)
    ("-s" "strip cr" "--strip-cr="

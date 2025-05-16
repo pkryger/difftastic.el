@@ -400,12 +400,42 @@
 ;; <file:test/difftastic.t.el> are passing.  When adding a new functionality,
 ;; please strive to add tests for it as well.
 ;;
-;; To run tests:
+;; To run tests interactively:
 ;; - open the <file:test/difftastic.t.el>
 ;; - type `M-x eval-buffer <RET>'
 ;; - open the <file:test/difftastic-bindings.t.el>
 ;; - type `M-x eval-buffer <RET>'
 ;; - type `M-x ert <RET> t <RET>'
+;;
+;; Alternatively you can use [Cask] to run tests in batch mode.  There's a
+;; convenience <file:Makefile> with a `test' target, so you can just type
+;; `make test'.
+;;
+;; It seems that byte compilation interferres with [el-mock].  In order to get
+;; the tests to pass you may need to:
+;; - type `M-x eval-buffer <RET>' in <file:difftastic.el> and in
+;;   <file:difftastic-bindings.el> when running test interactively with `M-x
+;;   <RET> ert <RET>',
+;; - remove all `.elc' files in the development directory when running tests
+;;   in batch mode.
+;;
+;; This repository uses [Coveralls] to track test coverage.  After a PR has
+;; been approved for a Gighub Action run, a report will be published
+;; [Coveralls difftastic repo].  Please check it out if there's no outstanding
+;; relevant lines.
+;;
+;; You can run all checks performed by Github Actions, by typing: `make
+;; bytecompile lint relint checkdoc commentary test'.
+;;
+;;
+;; [Cask] <https://github.com/cask/cask>
+;;
+;; [el-mock] <https://github.com/rejeep/el-mock.el>
+;;
+;; [Coveralls] <https://coveralls.io>
+;;
+;; [Coveralls difftastic repo]
+;; <https://coveralls.io/github/pkryger/difftastic.el>
 ;;
 ;;
 ;; Documentation Autoring

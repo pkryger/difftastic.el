@@ -1551,23 +1551,22 @@ Utilise `difftastic--ansi-color-add-background-cache' to cache
   "Add standard arguments to DIFFTASTIC-ARGS, unless these are already present.
 It adds \\='--color=always\\=', \\='--background=(light|dark)\\=', and
 \\='--width=REQUESTED-WIDTH\\='."
-  (save-match-data
-    (unless (cl-find-if (lambda (arg)
-                          (string-match (rx string-start "--background=") arg))
-                        difftastic-args)
-      (setq difftastic-args (cons (format "--background=%s"
-                                          (frame-parameter nil 'background-mode))
-                                  difftastic-args)))
-    (unless (cl-find-if (lambda (arg)
-                          (string-match (rx string-start "--width=") arg))
-                        difftastic-args)
-      (setq difftastic-args (cons (format "--width=%s" requested-width)
-                                  difftastic-args)))
-    (unless (cl-find-if (lambda (arg)
-                          (string-match (rx string-start "--color=") arg))
-                        difftastic-args)
-      (setq difftastic-args (cons "--color=always"
-                                  difftastic-args))))
+  (unless (cl-find-if (lambda (arg)
+                        (string-match (rx string-start "--background=") arg))
+                      difftastic-args)
+    (setq difftastic-args (cons (format "--background=%s"
+                                        (frame-parameter nil 'background-mode))
+                                difftastic-args)))
+  (unless (cl-find-if (lambda (arg)
+                        (string-match (rx string-start "--width=") arg))
+                      difftastic-args)
+    (setq difftastic-args (cons (format "--width=%s" requested-width)
+                                difftastic-args)))
+  (unless (cl-find-if (lambda (arg)
+                        (string-match (rx string-start "--color=") arg))
+                      difftastic-args)
+    (setq difftastic-args (cons "--color=always"
+                                difftastic-args)))
   difftastic-args)
 
 (defun difftastic--build-git-process-environment (requested-width

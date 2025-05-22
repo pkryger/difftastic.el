@@ -2515,14 +2515,13 @@ temporary file or nil otherwise."
                   (if-let* (((stringp lang-or-args))
                             (override (difftastic--format-override-arg
                                        lang-or-args)))
-                      (save-match-data
-                        (append override
-                                (cl-remove-if
-                                 (lambda (arg)
-                                   (string-match (rx string-start
-                                                     "--override=")
-                                                 arg))
-                                 .difftastic-args)))
+                      (append override
+                              (cl-remove-if
+                               (lambda (arg)
+                                 (string-match (rx string-start
+                                                   "--override=")
+                                               arg))
+                               .difftastic-args))
                     (or lang-or-args .difftastic-args)))
                  (requested-width
                   (funcall (or

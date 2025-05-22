@@ -1705,36 +1705,35 @@ value is a list in a form of (GIT-ARGS DIFFT-ARGS), where GIT-ARGS are
 arguments to be passed to \\='git\\=', and DIFFT-ARGS are arguments to
 be passed to difftastic (merged with DIFFTASTIC-ARGS superseeding any
 argument extracted from ARGS with the one from DIFFTASTIC-ARGS."
-  (save-match-data
-    (let (case-fold-search)
-      (list
-       (cl-remove-if
-        (lambda (arg)
-          (cl-member arg
-                     (append
-                      difftastic--transform-incompatible
-                      (cl-mapcar #'car difftastic--transform-git-to-difft))
-                     :test (lambda (arg regexp)
-                             (string-match regexp arg))))
-        args)
-       (append
-        (cl-remove-if
+  (let (case-fold-search)
+    (list
+     (cl-remove-if
+      (lambda (arg)
+        (cl-member arg
+                   (append
+                    difftastic--transform-incompatible
+                    (cl-mapcar #'car difftastic--transform-git-to-difft))
+                   :test (lambda (arg regexp)
+                           (string-match regexp arg))))
+      args)
+     (append
+      (cl-remove-if
+       (lambda (arg)
+         (when-let* ((arg (car (string-split arg "=" t))))
+           (member arg
+                   (mapcar (lambda (difftastic-arg)
+                             (car (string-split difftastic-arg "=" t)))
+                           difftastic-args))))
+       (delq
+        nil
+        (cl-mapcar
          (lambda (arg)
-           (when-let* ((arg (car (string-split arg "=" t))))
-             (member arg
-                     (mapcar (lambda (difftastic-arg)
-                               (car (string-split difftastic-arg "=" t)))
-                             difftastic-args))))
-         (delq
-          nil
-          (cl-mapcar
-           (lambda (arg)
-             (cl-dolist (regexp-replacement difftastic--transform-git-to-difft)
-               (when (string-match (car regexp-replacement) arg)
-                 (cl-return
-                  (replace-match (cdr regexp-replacement) t nil arg)))))
-           args)))
-        difftastic-args)))))
+           (cl-dolist (regexp-replacement difftastic--transform-git-to-difft)
+             (when (string-match (car regexp-replacement) arg)
+               (cl-return
+                (replace-match (cdr regexp-replacement) t nil arg)))))
+         args)))
+      difftastic-args))))
 
 (defun difftastic--git-diff-range (rev-or-range args files &optional difftastic-args)
   ;; checkdoc-params: (rev-or-range args files difftastic-args)

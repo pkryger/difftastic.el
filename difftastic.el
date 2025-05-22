@@ -1557,17 +1557,17 @@ It adds \\='--color=always\\=', \\='--background=(light|dark)\\=', and
                         difftastic-args)
       (setq difftastic-args (cons (format "--background=%s"
                                           (frame-parameter nil 'background-mode))
-                                  difftastic-args))
-      (unless (cl-find-if (lambda (arg)
-                            (string-match (rx string-start "--width=") arg))
-                          difftastic-args)
-        (setq difftastic-args (cons (format "--width=%s" requested-width)
-                                    difftastic-args)))
-      (unless (cl-find-if (lambda (arg)
-                            (string-match (rx string-start "--color=") arg))
-                          difftastic-args)
-        (setq difftastic-args (cons "--color=always"
-                                    difftastic-args)))))
+                                  difftastic-args)))
+    (unless (cl-find-if (lambda (arg)
+                          (string-match (rx string-start "--width=") arg))
+                        difftastic-args)
+      (setq difftastic-args (cons (format "--width=%s" requested-width)
+                                  difftastic-args)))
+    (unless (cl-find-if (lambda (arg)
+                          (string-match (rx string-start "--color=") arg))
+                        difftastic-args)
+      (setq difftastic-args (cons "--color=always"
+                                  difftastic-args))))
   difftastic-args)
 
 (defun difftastic--build-git-process-environment (requested-width

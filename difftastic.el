@@ -809,11 +809,10 @@ regexp from `difftastic--chunk-regexp'."
   "Return whether a point is in added or removed line."
   (save-excursion
     (goto-char (compat-call pos-bol)) ; Since Emacs-29
-    (save-match-data
-      (looking-at (rx bol
+    (looking-at-p (rx bol
                       (or (1+ ".")
                           (1+ digit))
-                      " " (1+ any))))))
+                      " " (1+ any)))))
 
 (defun difftastic--next-chunk (&optional file-chunk)
   "Find line beginning position of next chunk.

@@ -27,7 +27,7 @@ coding environment.
 - Configure faces to your likening.  By default =magit-diff-*= faces from your
   user them are used for consistent visual experience.
 - Chunks and file navigation using ~n~ / ~N~ (or ~M-n~) and ~p~ / ~P~ (or
-  ~M-p~) in generated diffs.
+  ~M-p~), as well as ~C-M-f~, ~C-M-b~, and ~C-M-SPC~ in generated diffs.
 - DWIM workflows from =magit=.
 - Use difftastic do compare files and buffers (also directly from =dired=).
 - Rerun =difftastic= with ~g~ to use current window width to "reflow" content
@@ -285,6 +285,17 @@ used.  Commands are followed by their default keybindings (in parenthesis).
   point.  The point has to be in a chunk header.  When called with a prefix
   toggle all file chunks from the header to the end of the file.  See also
   =difftastic-hide-chunk= and =difftastic=show-chunk=.
+- =forward-sexp= (~C-M-f~) - move point to end of current chunk or to an end of
+  next chunk when point is already at the end of the chunk.  When called with
+  argument move by that many chunks.  Binding is from a default =global-map=.
+- =backward-sexp= (~C-M-b~) - move point to beginning of current chunk or to a
+  beginning of previous chunk when point is already at the beginning of the
+  chunk.  When called with argument move by that many chunks.  Binding is from
+  a default =global-map=.
+- =mark-sexp= (~C-M-SPC~) - set mark and move point to end of current chunk or
+  to an end of next chunk when point is already at the end of the chunk.  When
+  called with argument move by that many chunks.  Binding is from a default
+  =global-map=.
 - =difftastic-diff-visit-file= (~RET~),
   =difftastic-diff-visit-file-other-window=,
   =difftastic-diff-visit-file-other-frame= - from a diff visit appropriate

@@ -1588,6 +1588,19 @@ test/difftastic.t.el --- Emacs Lisp
           (should (equal-including-properties (buffer-string) ,expected)))))))
 
 
+(ert-deftest difftastic--forward-chunk:erts-scenarios ()
+  (when (fboundp 'ert-test-erts-file) ;; since Emacs-29
+    (mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
+      (let ((file "difftastic--forward-chunk.erts")
+            scenarios)
+        (should (or (file-exists-p file)
+                    (file-exists-p (format "test/%s" file))))
+        (setq scenarios (if (file-exists-p file)
+                            file
+                          (format "test/%s" file)))
+        (ert-test-erts-file scenarios)))))
+
+
 (ert-deftest difftastic--chunk-bounds:file-chunk-point-at-beginning ()
   (mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
     (ert-with-test-buffer ()

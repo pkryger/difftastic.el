@@ -42,7 +42,7 @@
 ;; - Configure faces to your likening.  By default `magit-diff-*' faces from
 ;;   your user them are used for consistent visual experience.
 ;; - Chunks and file navigation using `n' / `N' (or `M-n') and `p' / `P' (or
-;;   `M-p') in generated diffs.
+;;   `M-p'), as well as `C-M-f', `C-M-b', and `C-M-SPC' in generated diffs.
 ;; - DWIM workflows from `magit'.
 ;; - Use difftastic do compare files and buffers (also directly from `dired').
 ;; - Rerun `difftastic' with `g' to use current window width to "reflow"
@@ -302,6 +302,18 @@
 ;;   at point.  The point has to be in a chunk header.  When called with a
 ;;   prefix toggle all file chunks from the header to the end of the file.
 ;;   See also `difftastic-hide-chunk' and `difftastic=show-chunk'.
+;; - `forward-sexp' (`C-M-f') - move point to end of current chunk or to an
+;;   end of next chunk when point is already at the end of the chunk.  When
+;;   called with argument move by that many chunks.  Binding is from a default
+;;   `global-map'.
+;; - `backward-sexp' (`C-M-b') - move point to beginning of current chunk or
+;;   to a beginning of previous chunk when point is already at the beginning
+;;   of the chunk.  When called with argument move by that many chunks.
+;;   Binding is from a default `global-map'.
+;; - `mark-sexp' (`C-M-SPC') - set mark and move point to end of current chunk
+;;   or to an end of next chunk when point is already at the end of the chunk.
+;;   When called with argument move by that many chunks.  Binding is from a
+;;   default `global-map'.
 ;; - `difftastic-diff-visit-file' (`RET'),
 ;;   `difftastic-diff-visit-file-other-window',
 ;;   `difftastic-diff-visit-file-other-frame' - from a diff visit appropriate
@@ -747,6 +759,7 @@ behaviour to view diffs."
   :group 'difftastic
   (setq buffer-read-only t)
   (setq font-lock-defaults '(nil t))
+  (setq-local forward-sexp-function #'difftastic--forward-chunk)
   (add-to-invisibility-spec '(difftastic . t)))
 
 (defvar-local difftastic--chunk-regexp-chunk nil)
@@ -909,6 +922,37 @@ of the file."
                                  'difftastic))
         (difftastic-show-chunk)
       (difftastic-hide-chunk file-chunk))))
+
+(defun difftastic--forward-chunk (&optional arg)
+  "Move forward across ARG chunks.
+Negative arg -N means move backward N chunks.  This command has been
+designed to be used as a `forward-sexp-function' to allow chunk by chunk
+movement with \\[forward-sexp], \\[backward-sexp], as well as mark and
+move with \\[mark-sexp]."
+  (setq arg (or arg 1))
+  (goto-char
+   (save-excursion
+     (cl-block searching-point
+       (cond
+        ((< 0 arg)
+         ;; Chunks are separated by a blank line.  Try to move past such a gap
+         ;; so the `difftastic--next-chunk' gets to the following chunk in case
+         ;; point is at the very end of a chunk.  When point is at the end of
+         ;; the buffer do nothing.
+         (if (< (point) (1- (point-max)))
+             (forward-char 2)
+           (cl-return-from searching-point (point)))
+         (dotimes (_ arg)
+           (goto-char (or (difftastic--next-chunk)
+                          (point-max))))
+         (goto-char (compat-call pos-eol 0)) ; Since Emacs-29
+         (while (looking-at (rx line-start line-end))
+           (goto-char (compat-call pos-eol 0)))) ; Since Emacs-29
+        ((< arg 0)
+         (dotimes (_ (- arg))
+           (goto-char (or (difftastic--prev-chunk)
+                          (point-min)))))))
+     (point))))
 
 (defun difftastic--chunk-bounds ()
   "Find bounds of a chunk at point.

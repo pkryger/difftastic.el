@@ -1,0 +1,835 @@
+Name: difftastic--forward-chunk:at-beginning-zero
+Code: (lambda () (difftastic--forward-chunk 0))
+Point-Char: |
+=-=
+|difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:
+
+test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+
+
+=-=
+|difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:
+
+test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+
+
+=-=-=
+
+Name: difftastic--forward-chunk:in-the-middle-zero
+Code: (lambda () (difftastic--forward-chunk 0))
+Point-Char: |
+=-=
+difftastic.el |--- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:
+
+test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+
+
+=-=
+difftastic.el |--- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:
+
+test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+
+
+=-=-=
+
+Name: difftastic--forward-chunk:at-end-zero
+Code: (lambda () (difftastic--forward-chunk 0))
+Point-Char: |
+=-=
+difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-|
+
+difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:
+
+test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+
+
+=-=
+difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-|
+
+difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:
+
+test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+
+
+=-=-=
+
+Name: difftastic--forward-chunk:between-zero
+Code: (lambda () (difftastic--forward-chunk 0))
+Point-Char: |
+=-=
+difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+|
+difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:
+
+test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+
+
+=-=
+difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+|
+difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:
+
+test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+
+
+=-=-=
+
+Name: difftastic--forward-chunk:last-zero
+Code: (lambda () (difftastic--forward-chunk 0))
+Point-Char: |
+=-=
+difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:
+
+test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-|
+
+
+=-=
+difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:
+
+test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-|
+
+
+=-=-=
+
+Name: difftastic--forward-chunk:eob-zero
+Code: (lambda () (difftastic--forward-chunk 0))
+Point-Char: |
+=-=
+difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:
+
+test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+
+|
+=-=
+difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:
+
+test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+
+|
+=-=-=
+
+Name: difftastic--forward-chunk:at-beginning-one
+Code: (lambda () (difftastic--forward-chunk 1))
+Point-Char: |
+=-=
+|difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:
+
+test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+
+
+=-=
+difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-|
+
+difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:
+
+test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+
+
+=-=-=
+
+Name: difftastic--forward-chunk:in-the-middle-one
+Code: (lambda () (difftastic--forward-chunk 1))
+Point-Char: |
+=-=
+difftastic.el |--- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:
+
+test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+
+
+=-=
+difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-|
+
+difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:
+
+test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+
+
+=-=-=
+
+Name: difftastic--forward-chunk:at-end-one
+Code: (lambda () (difftastic--forward-chunk 1))
+Point-Char: |
+=-=
+difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-|
+
+difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:
+
+test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+
+
+=-=
+difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:|
+
+test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+
+
+=-=-=
+
+Name: difftastic--forward-chunk:between-one
+Code: (lambda () (difftastic--forward-chunk 1))
+Point-Char: |
+=-=
+difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+|
+difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:
+
+test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+
+
+=-=
+difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:|
+
+test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+
+
+=-=-=
+
+Name: difftastic--forward-chunk:eob-one
+Code: (lambda () (difftastic--forward-chunk 1))
+Point-Char: |
+=-=
+difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:
+
+test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+
+|
+=-=
+difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:
+
+test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+
+|
+=-=-=
+
+Name: difftastic--forward-chunk:last-one
+Code: (lambda () (difftastic--forward-chunk 1))
+Point-Char: |
+=-=
+difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:
+
+test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-|
+
+
+=-=
+difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:
+
+test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-|
+
+
+=-=-=
+Name: difftastic--forward-chunk:at-beginning-two
+Code: (lambda () (difftastic--forward-chunk 2))
+Point-Char: |
+=-=
+|difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:
+
+test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+
+
+=-=
+difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:|
+
+test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+
+
+=-=-=
+
+Name: difftastic--forward-chunk:in-the-middle-two
+Code: (lambda () (difftastic--forward-chunk 2))
+Point-Char: |
+=-=
+difftastic.el |--- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:
+
+test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+
+
+=-=
+difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:|
+
+test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+
+
+=-=-=
+
+Name: difftastic--forward-chunk:at-end-two
+Code: (lambda () (difftastic--forward-chunk 2))
+Point-Char: |
+=-=
+difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-|
+
+difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:
+
+test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+
+
+=-=
+difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:
+
+test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-|
+
+
+=-=-=
+
+Name: difftastic--forward-chunk:between-two
+Code: (lambda () (difftastic--forward-chunk 2))
+Point-Char: |
+=-=
+difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+|
+difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:
+
+test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+
+
+=-=
+difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:
+
+test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-|
+
+
+=-=-=
+
+Name: difftastic--forward-chunk:eob-two
+Code: (lambda () (difftastic--forward-chunk 2))
+Point-Char: |
+=-=
+difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:
+
+test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+
+|
+=-=
+difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:
+
+test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+
+|
+=-=-=
+
+Name: difftastic--forward-chunk:last-two
+Code: (lambda () (difftastic--forward-chunk 2))
+Point-Char: |
+=-=
+difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:
+
+test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-|
+
+
+=-=
+difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:
+
+test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-|
+
+
+=-=-=
+
+Name: difftastic--forward-chunk:one-before-last-two
+Code: (lambda () (difftastic--forward-chunk 2))
+Point-Char: |
+=-=
+difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:|
+
+test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+
+
+=-=
+difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:
+
+test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-|
+
+
+=-=-=
+
+Name: difftastic--forward-chunk:at-beginning-minus-one
+Code: (lambda () (difftastic--forward-chunk -1))
+Point-Char: |
+=-=
+|difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:
+
+test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+
+
+=-=
+|difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:
+
+test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+
+
+=-=-=
+
+Name: difftastic--forward-chunk:in-the-middle-minus-one
+Code: (lambda () (difftastic--forward-chunk -1))
+Point-Char: |
+=-=
+difftastic.el |--- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:
+
+test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+
+
+=-=
+|difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:
+
+test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+
+
+=-=-=
+
+Name: difftastic--forward-chunk:at-end-minus-one
+Code: (lambda () (difftastic--forward-chunk -1))
+Point-Char: |
+=-=
+difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-|
+
+difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:
+
+test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+
+
+=-=
+|difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:
+
+test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+
+
+=-=-=
+
+Name: difftastic--forward-chunk:between-minus-one
+Code: (lambda () (difftastic--forward-chunk -1))
+Point-Char: |
+=-=
+difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+|
+difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:
+
+test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+
+
+=-=
+|difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:
+
+test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+
+
+=-=-=
+
+Name: difftastic--forward-chunk:eob-minus-one
+Code: (lambda () (difftastic--forward-chunk -1))
+Point-Char: |
+=-=
+difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:
+
+test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+
+|
+=-=
+difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:
+
+|test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+
+
+=-=-=
+
+Name: difftastic--forward-chunk:last-minus-one
+Code: (lambda () (difftastic--forward-chunk -1))
+Point-Char: |
+=-=
+difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:
+
+test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-|
+
+
+=-=
+difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:
+
+|test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+
+
+=-=-=
+
+Name: difftastic--forward-chunk:at-beginning-minus-two
+Code: (lambda () (difftastic--forward-chunk -2))
+Point-Char: |
+=-=
+|difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:
+
+test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+
+
+=-=
+|difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:
+
+test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+
+
+=-=-=
+
+Name: difftastic--forward-chunk:in-the-middle-minus-two
+Code: (lambda () (difftastic--forward-chunk -2))
+Point-Char: |
+=-=
+difftastic.el |--- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:
+
+test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+
+
+=-=
+|difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:
+
+test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+
+
+=-=-=
+
+Name: difftastic--forward-chunk:at-end-minus-two
+Code: (lambda () (difftastic--forward-chunk -2))
+Point-Char: |
+=-=
+difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-|
+
+difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:
+
+test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+
+
+=-=
+|difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:
+
+test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+
+
+=-=-=
+
+Name: difftastic--forward-chunk:between-minus-two
+Code: (lambda () (difftastic--forward-chunk -2))
+Point-Char: |
+=-=
+difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+|
+difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:
+
+test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+
+
+=-=
+|difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:
+
+test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+
+
+=-=-=
+
+Name: difftastic--forward-chunk:eob-minus-two
+Code: (lambda () (difftastic--forward-chunk -2))
+Point-Char: |
+=-=
+difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:
+
+test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+
+|
+=-=
+difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+|difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:
+
+test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+
+
+=-=-=
+
+Name: difftastic--forward-chunk:last-minus-two
+Code: (lambda () (difftastic--forward-chunk -2))
+Point-Char: |
+=-=
+difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:
+
+test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-|
+
+
+=-=
+difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+|difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:
+
+test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-
+
+
+=-=-=

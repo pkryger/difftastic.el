@@ -1660,7 +1660,8 @@ It applies ANSI colors with `apply-ansi-colors' using difftastic
 custom colors vectors.  The PROCESS and STRING are filter
 arguments, like in `make-process''s filter."
   (when-let* ((buffer (and string
-                           (process-buffer process))))
+                           (process-buffer process)))
+              ((buffer-live-p buffer)))
     (with-current-buffer buffer
       (let ((inhibit-read-only t)
             (ansi-color-normal-colors-vector

@@ -1654,6 +1654,26 @@ process sentinel."
        (when action (funcall action))
        (funcall difftastic-display-buffer-function buffer requested-width)))))
 
+(defun difftastic--ansi-color-apply (string)
+  "Apply ANSI colorrs to STRING using difftastic colors."
+  (let ((ansi-color-normal-colors-vector
+         difftastic-normal-colors-vector)
+        (ansi-color-bright-colors-vector
+         difftastic-bright-colors-vector))
+    (ignore ansi-color-normal-colors-vector
+            ansi-color-bright-colors-vector) ;; Until Emacs-28
+    (if (fboundp 'ansi-color--face-vec-face) ;; Since Emacs-29
+        (difftastic--with-temp-advice
+            'ansi-color--face-vec-face
+            :around
+            #'difftastic--ansi-color-add-background-cached
+          (ansi-color-apply string))
+      (difftastic--with-temp-advice
+          'ansi-color-get-face-1
+          :filter-return
+          #'difftastic--ansi-color-add-background
+        (ansi-color-apply string)))))
+
 (defun difftastic--run-command-filter (process string)
   "A process filter for `difftastic--run-command'.
 It applies ANSI colors with `apply-ansi-colors' using difftastic
@@ -1664,25 +1684,14 @@ arguments, like in `make-process''s filter."
               ((buffer-live-p buffer)))
     (with-current-buffer buffer
       (let* ((inhibit-read-only t)
-             (ansi-color-normal-colors-vector
-              difftastic-normal-colors-vector)
-             (ansi-color-bright-colors-vector
-              difftastic-bright-colors-vector)
-             (string
-              (if (fboundp 'ansi-color--face-vec-face) ;; Since Emacs-29
-                  (difftastic--with-temp-advice
-                      'ansi-color--face-vec-face
-                      :around
-                      #'difftastic--ansi-color-add-background-cached
-                    (ansi-color-apply string))
-                (difftastic--with-temp-advice
-                    'ansi-color-get-face-1
-                    :filter-return
-                    #'difftastic--ansi-color-add-background
-                  (ansi-color-apply string)))))
-        (ignore ansi-color-normal-colors-vector
-                ansi-color-bright-colors-vector)
-        (insert string)))))
+             (string (difftastic--ansi-color-apply string)))
+        (let ((moving (= (process-mark process) (point))))
+          (save-excursion
+            (goto-char (process-mark process))
+            (insert string)
+            (set-marker (process-mark process) (point)))
+          (when moving
+            (goto-char (process-mark process))))))))
 
 (defun difftastic--run-command-sentinel (process action command)
   "A sentinel for `difftastic--run-command'.

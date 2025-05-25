@@ -394,6 +394,8 @@
 ;; `difftastic-mode' Behavior
 ;; ~~~~~~~~~~~~~~~~~~~~~~~~~~
 ;;
+;; - `difftastic-visibility-indicator' - controls whether and how to show
+;;   hidden/visible chunk/files.
 ;; - `difftastic-diff-visit-avoid-head-blob' - controls whether to avoid
 ;;   visiting blob of a `HEAD' revision when visiting file form a
 ;;   `difftastic-mode' buffer.
@@ -474,10 +476,10 @@
 (require 'view)
 (require 'transient)
 (require 'crm)
+(require 'fringe)
 
 (eval-when-compile
-  (require 'compat)
-  (require 'fringe))
+  (require 'compat))
 
 (defgroup difftastic nil
   "Integration with difftastic."
@@ -595,6 +597,23 @@ highlight.  When a distinct highlight face is used (i.e., defined
 in `difftastic-highlight-alist'), then some of these properties
 may be cluttering output."
   :type '(set (const :bold) (const :underline) (const :italic) (const :faint))
+  :group 'difftastic)
+
+(defcustom difftastic-visibility-indicator
+  (when (window-system)
+    '(difftastic-fringe-bitmap-> . difftastic-fringe-bitmap-v))
+  "Whether and how to idicate that a chunk can be hidden/shown.
+If nil, then don't show any indicators.  Otherwise the value should be a
+cons in a from of (HIDDEN . VISIBLE), where HIDDEN is a fringe bitmap to
+be used to indicate a hidden chunk, and VISIBLE is a fringe bitmap to be
+used to indicate a visible chunk."
+  :type '(radio (const :tag "No indicators" nil)
+                (cons :tag "Use >v indicators"
+                      (const difftastic-fringe-bitmap->)
+                      (const difftastic-fringe-bitmap-v))
+                (cons  :tag "Use custom indicators"
+                        (variable :tag "Hidden chunk bitmap variable")
+                        (variable :tag "Visible chunk bitmap variable")))
   :group 'difftastic)
 
 (defcustom difftastic-requested-window-width-function
@@ -866,6 +885,20 @@ When FILE-CHUNK is non nil the header has to be a file header."
       (and (looking-at-p (difftastic--chunk-regexp file-chunk))
            (not (difftastic--point-at-added-removed-p))))))
 
+(defun difftastic--update-visibility-indcators (indicator from to)
+  ;; checkdoc-params: (from to)
+  "Update visibility indicators in region to INDICATOR."
+  (when (fringe-bitmap-p indicator)
+    (dolist (ov (cl-remove-if-not
+                 (lambda (ov)
+                   (overlay-get ov 'difftastic-visibility-indicator))
+                 (overlays-in from to)))
+      (overlay-put ov
+                   'before-string
+                   (propertize "fringe"
+                               'display
+                               (list 'left-fringe indicator 'fringe))))))
+
 (defun difftastic-hide-chunk (&optional file-chunk)
   "Hide chunk at point.
 The point needs to be in chunk header.  When called with
@@ -873,44 +906,46 @@ FILE-CHUNK prefix hide all file chunks from the header to the end
 of the file."
   (interactive "P" difftastic-mode)
   (when (difftastic--point-at-chunk-header-p file-chunk)
-    (let ((inhibit-read-only t))
+    (let ((inhibit-read-only t)
+          (from (compat-call pos-bol))       ; Since Emacs-29
+          (hide-from  (compat-call pos-eol)) ; Since Emacs-29
+          (to (if-let*  ((next-chunk
+                          (difftastic--next-chunk file-chunk)))
+                  (save-excursion
+                    (goto-char next-chunk)
+                    (compat-call pos-eol -1)) ; Since Emacs-29
+                (point-max))))
+      (difftastic--update-visibility-indcators
+       (car-safe difftastic-visibility-indicator) from to)
       (add-text-properties
-       (compat-call pos-bol) ; Since Emacs-29
-       (compat-call pos-eol) ; Since Emacs-29
+       from hide-from
        `(difftastic (:hidden ,(if file-chunk :file :chunk))))
-      (add-text-properties
-       (compat-call pos-eol) ; Since Emacs-29
-       (if-let*  ((next-chunk
-                   (difftastic--next-chunk file-chunk)))
-           (save-excursion
-             (goto-char next-chunk)
-             (compat-call pos-eol -1)) ; Since Emacs-29
-         (point-max))
-       '(invisible difftastic)))))
+      (add-text-properties hide-from  to
+                           '(invisible difftastic)))))
 
 (defun difftastic-show-chunk ()
   "Show chunk at point.
 The point needs to be in chunk header."
   (interactive nil difftastic-mode)
   (when (difftastic--point-at-chunk-header-p)
-    (let ((inhibit-read-only t)
-          (file-chunk
-           (memq :file
-                 (get-text-property (compat-call pos-bol) ; Since Emacs-29
-                                    'difftastic))))
+    (let* ((inhibit-read-only t)
+           (from (compat-call pos-bol)) ; Since Emacs-29
+           (file-chunk
+            (memq :file (get-text-property from
+                                           'difftastic)))
+           (to (if-let* ((next-chunk
+                  (difftastic--next-chunk file-chunk)))
+                   (save-excursion
+                     (goto-char next-chunk)
+                     (compat-call pos-eol -1))  ; Since Emacs-29
+                 (point-max))))
       ;; This is not ideal as it doesn't just undo how the chunk has been
       ;; hidden, but it bluntly shows everything when showing a file.  But it
       ;; allows to show all chunks that were hidden twice - first time as a
       ;; chunk, second as a file.
-      (remove-list-of-text-properties
-       (compat-call pos-bol) ; Since Emacs-29
-       (if-let* ((next-chunk
-                  (difftastic--next-chunk file-chunk)))
-           (save-excursion
-             (goto-char next-chunk)
-             (compat-call pos-eol -1)) ; Since Emacs-29
-         (point-max))
-       '(invisible difftastic)))))
+      (remove-list-of-text-properties from to '(invisible difftastic))
+      (difftastic--update-visibility-indcators
+       (cdr-safe difftastic-visibility-indicator) from to))))
 
 (defun difftastic-toggle-chunk (&optional file-chunk)
   "Toggle visibility of chunk at point.
@@ -1676,6 +1711,30 @@ process sentinel."
           #'difftastic--ansi-color-add-background
         (ansi-color-apply string)))))
 
+(defun difftastic--add-visibility-indicators (from)
+  "Add visibility indicators starting at beginning of the line at FROM.
+Indicators are added up to the current line (exclusive)."
+  (when-let* ((indicator (cdr-safe difftastic-visibility-indicator))
+              ((fringe-bitmap-p indicator))
+              (bol (compat-call pos-bol)) ;; Since Emacs-29
+              ((< from bol))
+              (to (max (point-min)
+                       ;; last line is never a chunk header, so no need to check it
+                       (1- bol))))
+    (save-excursion
+      (goto-char from)
+      (goto-char (compat-call pos-bol)) ;; Since Emacs-29
+      (while (re-search-forward (difftastic--chunk-regexp nil) to t)
+        (let* ((bol (compat-call pos-bol)) ;; Since Emacs-29
+               (ov (make-overlay bol (1+ bol) nil t)))
+          (overlay-put ov 'difftastic-visibility-indicator t)
+          (overlay-put ov 'evaporate t)
+          (overlay-put ov
+                       'before-string
+                       (propertize "fringe"
+                                   'display
+                                   (list 'left-fringe indicator 'fringe))))))))
+
 (defun difftastic--run-command-filter (process string)
   "A process filter for `difftastic--run-command'.
 It applies ANSI colors with `apply-ansi-colors' using difftastic
@@ -1687,11 +1746,13 @@ arguments, like in `make-process''s filter."
     (with-current-buffer buffer
       (let* ((inhibit-read-only t)
              (string (difftastic--ansi-color-apply string)))
-        (let ((moving (= (process-mark process) (point))))
+        (let* ((from (marker-position (process-mark process)))
+               (moving (= from (point))))
           (save-excursion
-            (goto-char (process-mark process))
+            (goto-char from)
             (insert string)
-            (set-marker (process-mark process) (point)))
+            (set-marker (process-mark process) (point))
+            (difftastic--add-visibility-indicators from))
           (when moving
             (goto-char (process-mark process))))))))
 
@@ -2629,6 +2690,26 @@ prefix argument ask for extra arguments for difftastic call."
   (if (equal current-prefix-arg '(16))
       (difftastic--with-extra-arguments lang-override #'difftastic--rerun)
     (difftastic--rerun lang-override)))
+
+(define-fringe-bitmap 'difftastic-fringe-bitmap->
+  [#b01100000
+   #b00110000
+   #b00011000
+   #b00001100
+   #b00011000
+   #b00110000
+   #b01100000
+   #b00000000])
+
+(define-fringe-bitmap 'difftastic-fringe-bitmap-v
+  [#b00000000
+   #b10000010
+   #b11000110
+   #b01101100
+   #b00111000
+   #b00010000
+   #b00000000
+   #b00000000])
 
 ;;; LocalWords: unmerged unstaged smerge
 

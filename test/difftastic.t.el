@@ -901,8 +901,67 @@ test/difftastic.t.el --- Emacs Lisp
       (should (equal (point-min) (point))))))
 
 
+(ert-deftest difftastic--update-visibility-indcators:basic ()
+  (ert-with-test-buffer ()
+    (insert "foobar")
+    (let ((ov-1 (make-overlay 1 2))
+          (ov-2 (make-overlay 2 3))
+          (ov-3 (make-overlay 3 4))
+          (ov-4 (make-overlay 4 5))
+          (ov-5 (make-overlay 5 6)))
+      (overlay-put ov-1 'before-string "test-ov-1")
+      (overlay-put ov-1 'difftastic-visibility-indicator t)
+      (overlay-put ov-2 'before-string "test-ov-2")
+      (overlay-put ov-2 'difftastic-visibility-indicator t)
+      (overlay-put ov-3 'before-string "test-ov-3")
+      (overlay-put ov-4 'before-string "test-ov-4")
+      (overlay-put ov-4 'difftastic-visibility-indicator t)
+      (overlay-put ov-5 'before-string "test-ov-5")
+      (overlay-put ov-5 'difftastic-visibility-indicator t)
+      (mocklet (((fringe-bitmap-p "test-indicator") => t))
+        (difftastic--update-visibility-indcators "test-indicator" 2 5))
+      (if (and (fboundp 'ert-equal-including-properties)
+               (not (get 'ert-equal-including-properties 'byte-obsolete-info))) ; Until Emacs-28
+          (progn
+            (should (ert-equal-including-properties
+                     (overlay-get ov-1 'before-string)
+                     "test-ov-1"))
+            (should (ert-equal-including-properties
+                     (overlay-get ov-2 'before-string)
+                     (propertize "fringe"
+                                 'display '(left-fringe "test-indicator" fringe))))
+            (should (ert-equal-including-properties
+                     (overlay-get ov-3 'before-string)
+                     "test-ov-3"))
+            (should (ert-equal-including-properties
+                     (overlay-get ov-4 'before-string)
+                     (propertize "fringe"
+                                 'display '(left-fringe "test-indicator" fringe))))
+            (should (ert-equal-including-properties
+                     (overlay-get ov-5 'before-string)
+                     "test-ov-5")))
+        (should (equal-including-properties
+                 (overlay-get ov-1 'before-string)
+                 "test-ov-1"))
+        (should (equal-including-properties
+                 (overlay-get ov-2 'before-string)
+                 (propertize "fringe"
+                             'display '(left-fringe "test-indicator" fringe))))
+        (should (equal-including-properties
+                 (overlay-get ov-3 'before-string)
+                 "test-ov-3"))
+        (should (equal-including-properties
+                 (overlay-get ov-4 'before-string)
+                 (propertize "fringe"
+                             'display '(left-fringe "test-indicator" fringe))))
+        (should (equal-including-properties
+                 (overlay-get ov-5 'before-string)
+                 "test-ov-5"))))))
+
+
 (ert-deftest difftastic-hide-chunk:chunk-hidden ()
-  (let ((expected
+  (let ((difftastic-visibility-indicator (cons "test-hidden" "test-shown"))
+        (expected
          (concat
           "difftastic.el --- 1/2 --- Emacs Lisp
 1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
@@ -918,7 +977,8 @@ test/difftastic.t.el --- Emacs Lisp
 test/difftastic.t.el --- Emacs Lisp
 1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-")))
     (eval
-     `(mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
+     `(mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java"))
+                ((difftastic--update-visibility-indcators "test-hidden" 121 176)))
         (ert-with-test-buffer ()
           (insert "difftastic.el --- 1/2 --- Emacs Lisp
 1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
@@ -938,7 +998,8 @@ test/difftastic.t.el --- Emacs Lisp
              (ert-equal-including-properties (buffer-string) ,expected))))))))
 
 (ert-deftest difftastic-hide-chunk:last-chunk-hidden ()
-  (let ((expected
+  (let ((difftastic-visibility-indicator (cons "test-hidden" "test-shown"))
+        (expected
          (concat
           "difftastic.el --- 1/2 --- Emacs Lisp
 1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
@@ -950,7 +1011,8 @@ test/difftastic.t.el --- Emacs Lisp
 24 ;;; Commentary:"
                       'invisible 'difftastic))))
     (eval
-     `(mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
+     `(mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java"))
+                ((difftastic--update-visibility-indcators "test-hidden" 121 176)))
         (ert-with-test-buffer ()
           (insert "difftastic.el --- 1/2 --- Emacs Lisp
 1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
@@ -967,7 +1029,8 @@ difftastic.el --- 2/2 --- Emacs Lisp
              (ert-equal-including-properties (buffer-string) ,expected))))))))
 
 (ert-deftest difftastic-hide-chunk:file-chunk-hidden ()
-  (let ((expected
+  (let ((difftastic-visibility-indicator (cons "test-hidden" "test-shown"))
+        (expected
          (concat
           (propertize "difftastic.el --- 1/2 --- Emacs Lisp"
                       'difftastic '(:hidden :chunk))
@@ -982,7 +1045,8 @@ difftastic.el --- 2/2 --- Emacs Lisp
 test/difftastic.t.el --- Emacs Lisp
 1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-")))
     (eval
-     `(mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
+     `(mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java"))
+                ((difftastic--update-visibility-indcators "test-hidden" 1 119)))
         (ert-with-test-buffer ()
           (insert "difftastic.el --- 1/2 --- Emacs Lisp
 1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
@@ -1002,7 +1066,8 @@ test/difftastic.t.el --- Emacs Lisp
              (ert-equal-including-properties (buffer-string) ,expected))))))))
 
 (ert-deftest difftastic-hide-chunk:file-header-with-file-file-hidden ()
-  (let ((expected
+  (let ((difftastic-visibility-indicator (cons "test-hidden" "test-shown"))
+        (expected
          (concat (propertize "difftastic.el --- 1/2 --- Emacs Lisp"
                              'difftastic '(:hidden :file))
                  (propertize "
@@ -1015,7 +1080,8 @@ difftastic.el --- 2/2 --- Emacs Lisp
 
 test/difftastic.t.el --- Emacs Lisp
 1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-")))
-    (eval `(mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
+    (eval `(mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java"))
+                ((difftastic--update-visibility-indcators "test-hidden" 1 176)))
              (ert-with-test-buffer ()
                (insert "difftastic.el --- 1/2 --- Emacs Lisp
 1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
@@ -1035,7 +1101,8 @@ test/difftastic.t.el --- Emacs Lisp
                   (ert-equal-including-properties (buffer-string) ,expected))))))))
 
 (ert-deftest difftastic-hide-chunk:last-file-header-with-file-file-hidden ()
-  (let ((expected
+  (let ((difftastic-visibility-indicator (cons "test-hidden" "test-shown"))
+        (expected
          (concat (propertize "difftastic.el --- 1/2 --- Emacs Lisp"
                              'difftastic '(:hidden :file))
                  (propertize "
@@ -1044,7 +1111,8 @@ test/difftastic.t.el --- Emacs Lisp
 difftastic.el --- 2/2 --- Emacs Lisp
 24 ;;; Commentary:"
                              'invisible 'difftastic))))
-    (eval `(mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
+    (eval `(mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java"))
+                ((difftastic--update-visibility-indcators "test-hidden" 1 176)))
              (ert-with-test-buffer ()
                (insert "difftastic.el --- 1/2 --- Emacs Lisp
 1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
@@ -1061,7 +1129,8 @@ difftastic.el --- 2/2 --- Emacs Lisp
                   (ert-equal-including-properties (buffer-string) ,expected))))))))
 
 (ert-deftest difftastic-hide-chunk:chunk-header-with-file-rest-of-file-hidden ()
-  (let ((expected
+  (let ((difftastic-visibility-indicator (cons "test-hidden" "test-shown"))
+        (expected
          (concat "difftastic.el --- 1/3 --- Emacs Lisp
 1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
 
@@ -1078,7 +1147,8 @@ difftastic.el --- 3/3 --- Emacs Lisp
 
 test/difftastic.t.el --- Emacs Lisp
 1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-")))
-    (eval `(mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
+    (eval `(mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java"))
+                ((difftastic--update-visibility-indcators "test-hidden" 121 228)))
              (ert-with-test-buffer ()
                (insert "difftastic.el --- 1/3 --- Emacs Lisp
 1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
@@ -1101,7 +1171,8 @@ test/difftastic.t.el --- Emacs Lisp
                   (ert-equal-including-properties (buffer-string) ,expected))))))))
 
 (ert-deftest difftastic-hide-chunk:with-file-with-chunk-hidden-file-hidden ()
-  (let ((expected
+  (let ((difftastic-visibility-indicator (cons "test-hidden" "test-shown"))
+        (expected
          (concat (propertize "difftastic.el --- 1/2 --- Emacs Lisp"
                              'difftastic '(:hidden :file))
                  (propertize "
@@ -1119,7 +1190,8 @@ test/difftastic.t.el --- Emacs Lisp
 
 test/difftastic.t.el --- Emacs Lisp
 1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-")))
-    (eval `(mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
+    (eval `(mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java"))
+                ((difftastic--update-visibility-indcators "test-hidden" 1 176)))
              (ert-with-test-buffer ()
                (insert "difftastic.el --- 1/2 --- Emacs Lisp
 1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
@@ -1145,7 +1217,8 @@ test/difftastic.t.el --- Emacs Lisp
 
 
 (ert-deftest difftastic-show-chunk:chunk-header-chunk-shown ()
-  (let ((expected "difftastic.el --- 1/2 --- Emacs Lisp
+  (let ((difftastic-visibility-indicator (cons "test-hidden" "test-shown"))
+        (expected "difftastic.el --- 1/2 --- Emacs Lisp
 1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
 
 difftastic.el --- 2/2 --- Emacs Lisp
@@ -1154,7 +1227,8 @@ difftastic.el --- 2/2 --- Emacs Lisp
 test/difftastic.t.el --- Emacs Lisp
 1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-"))
     (eval
-     `(mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
+     `(mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java"))
+                ((difftastic--update-visibility-indcators "test-shown" 121 176)))
         (ert-with-test-buffer ()
           (insert "difftastic.el --- 1/2 --- Emacs Lisp
 1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
@@ -1176,13 +1250,15 @@ test/difftastic.t.el --- Emacs Lisp
           (should (equal-including-properties (buffer-string) ,expected)))))))
 
 (ert-deftest difftastic-show-chunk:last-chunk-header-chunk-shown ()
-  (let ((expected "difftastic.el --- 1/2 --- Emacs Lisp
+  (let ((difftastic-visibility-indicator (cons "test-hidden" "test-shown"))
+        (expected "difftastic.el --- 1/2 --- Emacs Lisp
 1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
 
 difftastic.el --- 2/2 --- Emacs Lisp
 24 ;;; Commentary:"))
     (eval
-     `(mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
+     `(mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java"))
+                ((difftastic--update-visibility-indcators "test-shown" 121 176)))
         (ert-with-test-buffer ()
           (insert "difftastic.el --- 1/2 --- Emacs Lisp
 1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
@@ -1200,7 +1276,8 @@ difftastic.el --- 2/2 --- Emacs Lisp
           (should (equal-including-properties (buffer-string) ,expected)))))))
 
 (ert-deftest difftastic-show-chunk:file-header-chunk-shown ()
-  (let ((expected
+  (let ((difftastic-visibility-indicator (cons "test-hidden" "test-shown"))
+        (expected
          (concat "difftastic.el --- 1/2 --- Emacs Lisp
 1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
 
@@ -1216,7 +1293,8 @@ difftastic.el --- 2/2 --- Emacs Lisp
 test/difftastic.t.el --- Emacs Lisp
 1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-")))
     (eval
-     `(mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
+     `(mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java"))
+                ((difftastic--update-visibility-indcators "test-shown" 1 119)))
         (ert-with-test-buffer ()
           (insert (propertize "difftastic.el --- 1/2 --- Emacs Lisp"
                               'difftastic '(:hidden :chunk))
@@ -1246,7 +1324,8 @@ test/difftastic.t.el --- Emacs Lisp
              (ert-equal-including-properties (buffer-string) ,expected))))))))
 
 (ert-deftest difftastic-show-chunk:file-header-file-shown ()
-  (let ((expected "difftastic.el --- 1/2 --- Emacs Lisp
+  (let ((difftastic-visibility-indicator (cons "test-hidden" "test-shown"))
+        (expected "difftastic.el --- 1/2 --- Emacs Lisp
 1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
 
 difftastic.el --- 2/2 --- Emacs Lisp
@@ -1255,7 +1334,8 @@ difftastic.el --- 2/2 --- Emacs Lisp
 test/difftastic.t.el --- Emacs Lisp
 1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-"))
     (eval
-     `(mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
+     `(mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java"))
+                ((difftastic--update-visibility-indcators "test-shown" 1 176)))
         (ert-with-test-buffer ()
           (insert (propertize "difftastic.el --- 1/2 --- Emacs Lisp"
                               'difftastic '(:hidden :file))
@@ -1275,13 +1355,15 @@ test/difftastic.t.el --- Emacs Lisp
           (should (equal-including-properties (buffer-string) ,expected)))))))
 
 (ert-deftest difftastic-show-chunk:last-file-header-file-shown ()
-  (let ((expected "difftastic.el --- 1/2 --- Emacs Lisp
+  (let ((difftastic-visibility-indicator (cons "test-hidden" "test-shown"))
+        (expected "difftastic.el --- 1/2 --- Emacs Lisp
 1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
 
 difftastic.el --- 2/2 --- Emacs Lisp
 24 ;;; Commentary:"))
     (eval
-     `(mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
+     `(mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java"))
+                ((difftastic--update-visibility-indcators "test-shown" 1 176)))
         (ert-with-test-buffer ()
           (insert (propertize "difftastic.el --- 1/2 --- Emacs Lisp"
                               'difftastic '(:hidden :file))
@@ -1297,7 +1379,8 @@ difftastic.el --- 2/2 --- Emacs Lisp
           (should (equal-including-properties (buffer-string) ,expected)))))))
 
 (ert-deftest difftastic-show-chunk:file-header-with-hidden-chunk-file-shown ()
-  (let ((expected "difftastic.el --- 1/2 --- Emacs Lisp
+  (let ((difftastic-visibility-indicator (cons "test-hidden" "test-shown"))
+        (expected "difftastic.el --- 1/2 --- Emacs Lisp
 1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
 
 difftastic.el --- 2/2 --- Emacs Lisp
@@ -1306,7 +1389,8 @@ difftastic.el --- 2/2 --- Emacs Lisp
 test/difftastic.t.el --- Emacs Lisp
 1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-"))
     (eval
-     `(mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
+     `(mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java"))
+                ((difftastic--update-visibility-indcators "test-shown" 1 176)))
         (ert-with-test-buffer ()
           (insert (propertize "difftastic.el --- 1/2 --- Emacs Lisp"
                               'difftastic '(:hidden :file))
@@ -1332,7 +1416,8 @@ test/difftastic.t.el --- Emacs Lisp
 
 
 (ert-deftest difftastic-toggle-chunk:chunk-hidden ()
-  (let ((expected
+  (let ((difftastic-visibility-indicator (cons "test-hidden" "test-shown"))
+        (expected
          (concat
           "difftastic.el --- 1/2 --- Emacs Lisp
 1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
@@ -1348,7 +1433,8 @@ test/difftastic.t.el --- Emacs Lisp
 test/difftastic.t.el --- Emacs Lisp
 1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-")))
     (eval
-     `(mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
+     `(mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java"))
+                ((difftastic--update-visibility-indcators "test-hidden" 121 176)))
         (ert-with-test-buffer ()
           (insert "difftastic.el --- 1/2 --- Emacs Lisp
 1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
@@ -1368,7 +1454,8 @@ test/difftastic.t.el --- Emacs Lisp
              (ert-equal-including-properties (buffer-string) ,expected))))))))
 
 (ert-deftest difftastic-toggle-chunk:file-chunk-hidden ()
-  (let ((expected
+  (let ((difftastic-visibility-indicator (cons "test-hidden" "test-shown"))
+        (expected
          (concat
           (propertize "difftastic.el --- 1/2 --- Emacs Lisp"
                       'difftastic '(:hidden :chunk))
@@ -1383,7 +1470,8 @@ difftastic.el --- 2/2 --- Emacs Lisp
 test/difftastic.t.el --- Emacs Lisp
 1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-")))
     (eval
-     `(mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
+     `(mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java"))
+                ((difftastic--update-visibility-indcators "test-hidden" 1 119)))
         (ert-with-test-buffer ()
           (insert "difftastic.el --- 1/2 --- Emacs Lisp
 1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
@@ -1403,7 +1491,8 @@ test/difftastic.t.el --- Emacs Lisp
              (ert-equal-including-properties (buffer-string) ,expected))))))))
 
 (ert-deftest difftastic-toggle-chunk:visible-file-header-with-file-rest-of-file-hidden ()
-  (let ((expected
+  (let ((difftastic-visibility-indicator (cons "test-hidden" "test-shown"))
+        (expected
          (concat (propertize "difftastic.el --- 1/3 --- Emacs Lisp"
                              'difftastic '(:hidden :file))
                  (propertize "
@@ -1419,9 +1508,11 @@ difftastic.el --- 3/3 --- Emacs Lisp
 
 test/difftastic.t.el --- Emacs Lisp
 1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-")))
-    (eval `(mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
-             (ert-with-test-buffer ()
-               (insert "difftastic.el --- 1/3 --- Emacs Lisp
+    (eval
+     `(mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java"))
+                ((difftastic--update-visibility-indcators "test-hidden" 1 228)))
+        (ert-with-test-buffer ()
+          (insert "difftastic.el --- 1/3 --- Emacs Lisp
 1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
 
 difftastic.el --- 2/3 --- Emacs Lisp
@@ -1432,17 +1523,18 @@ difftastic.el --- 3/3 --- Emacs Lisp
 
 test/difftastic.t.el --- Emacs Lisp
 1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-")
-               (difftastic-mode)
-               (goto-char (point-min))
-               (difftastic-toggle-chunk t)
-               (if (version< "29" emacs-version) ;; since Emacs-29
-                   (should
-                    (equal-including-properties (buffer-string) ,expected))
-                 (should
-                  (ert-equal-including-properties (buffer-string) ,expected))))))))
+          (difftastic-mode)
+          (goto-char (point-min))
+          (difftastic-toggle-chunk t)
+          (if (version< "29" emacs-version) ;; since Emacs-29
+              (should
+               (equal-including-properties (buffer-string) ,expected))
+            (should
+             (ert-equal-including-properties (buffer-string) ,expected))))))))
 
 (ert-deftest difftastic-toggle-chunk:visible-chunk-header-with-file-rest-of-file-hidden ()
-  (let ((expected
+  (let ((difftastic-visibility-indicator (cons "test-hidden" "test-shown"))
+        (expected
          (concat "difftastic.el --- 1/3 --- Emacs Lisp
 1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
 
@@ -1459,9 +1551,11 @@ difftastic.el --- 3/3 --- Emacs Lisp
 
 test/difftastic.t.el --- Emacs Lisp
 1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-")))
-    (eval `(mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
-             (ert-with-test-buffer ()
-               (insert "difftastic.el --- 1/3 --- Emacs Lisp
+    (eval
+     `(mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java"))
+                ((difftastic--update-visibility-indcators "test-hidden" 121 228)))
+        (ert-with-test-buffer ()
+          (insert "difftastic.el --- 1/3 --- Emacs Lisp
 1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
 
 difftastic.el --- 2/3 --- Emacs Lisp
@@ -1472,17 +1566,18 @@ difftastic.el --- 3/3 --- Emacs Lisp
 
 test/difftastic.t.el --- Emacs Lisp
 1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-")
-               (difftastic-mode)
-               (goto-char 121)
-               (difftastic-toggle-chunk t)
-               (if (version< "29" emacs-version) ;; since Emacs-29
-                   (should
-                    (equal-including-properties (buffer-string) ,expected))
-                 (should
-                  (ert-equal-including-properties (buffer-string) ,expected))))))))
+          (difftastic-mode)
+          (goto-char 121)
+          (difftastic-toggle-chunk t)
+          (if (version< "29" emacs-version) ;; since Emacs-29
+              (should
+               (equal-including-properties (buffer-string) ,expected))
+            (should
+             (ert-equal-including-properties (buffer-string) ,expected))))))))
 
 (ert-deftest difftastic-toggle-chunk:chunk-header-chunk-shown ()
-  (let ((expected "difftastic.el --- 1/2 --- Emacs Lisp
+  (let ((difftastic-visibility-indicator (cons "test-hidden" "test-shown"))
+        (expected "difftastic.el --- 1/2 --- Emacs Lisp
 1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
 
 difftastic.el --- 2/2 --- Emacs Lisp
@@ -1491,7 +1586,8 @@ difftastic.el --- 2/2 --- Emacs Lisp
 test/difftastic.t.el --- Emacs Lisp
 1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-"))
     (eval
-     `(mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
+     `(mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java"))
+                ((difftastic--update-visibility-indcators "test-shown" 121 176)))
         (ert-with-test-buffer ()
           (insert "difftastic.el --- 1/2 --- Emacs Lisp
 1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
@@ -1513,7 +1609,8 @@ test/difftastic.t.el --- Emacs Lisp
           (should (equal-including-properties (buffer-string) ,expected)))))))
 
 (ert-deftest difftastic-toggle-chunk:file-header-chunk-shown ()
-  (let ((expected
+  (let ((difftastic-visibility-indicator (cons "test-hidden" "test-shown"))
+        (expected
          (concat "difftastic.el --- 1/2 --- Emacs Lisp
 1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
 
@@ -1529,7 +1626,8 @@ test/difftastic.t.el --- Emacs Lisp
 test/difftastic.t.el --- Emacs Lisp
 1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-")))
     (eval
-     `(mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
+     `(mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java"))
+                ((difftastic--update-visibility-indcators "test-shown" 1 119)))
         (ert-with-test-buffer ()
           (insert (propertize "difftastic.el --- 1/2 --- Emacs Lisp"
                               'difftastic '(:hidden :chunk))
@@ -1559,7 +1657,8 @@ test/difftastic.t.el --- Emacs Lisp
              (ert-equal-including-properties (buffer-string) ,expected))))))))
 
 (ert-deftest difftastic-toggle-chunk:file-header-file-shown ()
-  (let ((expected "difftastic.el --- 1/2 --- Emacs Lisp
+  (let ((difftastic-visibility-indicator (cons "test-hidden" "test-shown"))
+        (expected "difftastic.el --- 1/2 --- Emacs Lisp
 1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
 
 difftastic.el --- 2/2 --- Emacs Lisp
@@ -1568,7 +1667,8 @@ difftastic.el --- 2/2 --- Emacs Lisp
 test/difftastic.t.el --- Emacs Lisp
 1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-"))
     (eval
-     `(mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
+     `(mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java"))
+                ((difftastic--update-visibility-indcators "test-shown" 1 176)))
         (ert-with-test-buffer ()
           (insert (propertize "difftastic.el --- 1/2 --- Emacs Lisp"
                               'difftastic '(:hidden :file))
@@ -4826,6 +4926,128 @@ This only happens when `noninteractive' to avoid messing up with faces."
                       (:foreground ,difftastic-t-string-fg))))))))
 
 
+(ert-deftest difftastic--add-visibility-indicators:from-beginning ()
+  (ert-with-test-buffer ()
+    (insert "difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:
+
+test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-")
+    (let ((difftastic-visibility-indicator '("test-hidden" . "test-shown")))
+      (mocklet (((fringe-bitmap-p "test-shown") => t)
+                ((difftastic--get-languages) => '("Text" "Emacs Lisp" "C++" "Java")))
+        (difftastic--add-visibility-indicators (point-min))))
+    (let ((overlays (cl-remove-if-not
+                     (lambda (ov)
+                       (overlay-get ov 'difftastic-visibility-indicator))
+                     (overlays-in (point-min) (point-max)))))
+      (should (= 3 (length overlays)))
+      (should (equal nil
+                     (cl-find-if-not
+                      (lambda (ov)
+                        (overlay-get ov 'evaporate))
+                      overlays)))
+      (should (equal nil
+                     (cl-find-if-not
+                      (lambda (ov)
+                        (if (and (fboundp 'ert-equal-including-properties)
+                                 (not (get 'ert-equal-including-properties 'byte-obsolete-info))) ; Until Emacs-28
+                            (ert-equal-including-properties
+                             (overlay-get ov 'before-string)
+                             (propertize "fringe"
+                                         'display '(left-fringe "test-shown" fringe)))
+                          (equal-including-properties
+                           (overlay-get ov 'before-string)
+                           (propertize "fringe"
+                                       'display '(left-fringe "test-shown" fringe)))))
+                      overlays))))))
+
+(ert-deftest difftastic--add-visibility-indicators:from-middle-of-a-line ()
+  (ert-with-test-buffer ()
+    (insert "difftastic.el --- 1/2 --- Emacs Lisp
+1 ;;; difftastic.el --- Wrapper for difftastic        -*- lexical-binding: t; -*-
+
+difftastic.el --- 2/2 --- Emacs Lisp
+24 ;;; Commentary:
+
+test/difftastic.t.el --- Emacs Lisp
+1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-")
+    (let ((difftastic-visibility-indicator '("test-hidden" . "test-shown")))
+      (mocklet (((fringe-bitmap-p "test-shown") => t)
+                ((difftastic--get-languages) => '("Text" "Emacs Lisp" "C++" "Java")))
+        (difftastic--add-visibility-indicators 125)))
+    (let ((overlays (cl-remove-if-not
+                     (lambda (ov)
+                       (overlay-get ov 'difftastic-visibility-indicator))
+                     (overlays-in (point-min) (point-max)))))
+      (should (= 2 (length overlays)))
+      (should (equal nil
+                     (cl-find-if-not
+                      (lambda (ov)
+                        (overlay-get ov 'evaporate))
+                      overlays)))
+      (should (equal nil
+                     (cl-find-if-not
+                      (lambda (ov)
+                        (if (and (fboundp 'ert-equal-including-properties)
+                                 (not (get 'ert-equal-including-properties 'byte-obsolete-info))) ; Until Emacs-28
+                            (ert-equal-including-properties
+                             (overlay-get ov 'before-string)
+                             (propertize "fringe"
+                                         'display '(left-fringe "test-shown" fringe)))
+                          (equal-including-properties
+                           (overlay-get ov 'before-string)
+                           (propertize "fringe"
+                                       'display '(left-fringe "test-shown" fringe)))))
+                      overlays))))))
+
+(ert-deftest difftastic--add-visibility-indicators:header-in-last-line ()
+  (ert-with-test-buffer ()
+    (insert "difftastic.el --- 1/2 --- Emacs Lisp")
+    (let ((difftastic-visibility-indicator '("test-hidden" . "test-shown")))
+      (mocklet (((fringe-bitmap-p "test-shown") => t))
+        (difftastic--add-visibility-indicators (point-min))))
+    (should-not (cl-remove-if-not
+                     (lambda (ov)
+                       (overlay-get ov 'difftastic-visibility-indicator))
+                     (overlays-in (point-min) (point-max))))))
+
+(ert-deftest difftastic--add-visibility-indicators:split-header-in-last-line ()
+  (ert-with-test-buffer ()
+    (insert "difftastic.el --- 1/2 --- Emacs Lisp\n")
+    (let ((difftastic-visibility-indicator '("test-hidden" . "test-shown")))
+      (mocklet (((fringe-bitmap-p "test-shown") => t)
+                ((difftastic--get-languages) => '("Text" "Emacs Lisp" "C++" "Java")))
+        (difftastic--add-visibility-indicators (point-min))))
+    (let ((overlays (cl-remove-if-not
+                     (lambda (ov)
+                       (overlay-get ov 'difftastic-visibility-indicator))
+                     (overlays-in (point-min) (point-max)))))
+      (should (= 1 (length overlays)))
+      (should (equal nil
+                     (cl-find-if-not
+                      (lambda (ov)
+                        (overlay-get ov 'evaporate))
+                      overlays)))
+      (should (equal nil
+                     (cl-find-if-not
+                      (lambda (ov)
+                        (if (and (fboundp 'ert-equal-including-properties)
+                                 (not (get 'ert-equal-including-properties 'byte-obsolete-info))) ; Until Emacs-28
+                            (ert-equal-including-properties
+                             (overlay-get ov 'before-string)
+                             (propertize "fringe"
+                                         'display '(left-fringe "test-shown" fringe)))
+                          (equal-including-properties
+                           (overlay-get ov 'before-string)
+                           (propertize "fringe"
+                                       'display '(left-fringe "test-shown" fringe)))))
+                      overlays))))))
+
+
 (ert-deftest difftastic--run-command-filter:no-movement ()
   (ert-with-test-buffer ()
     (let ((process (make-process :name "test-process"
@@ -4833,15 +5055,19 @@ This only happens when `noninteractive' to avoid messing up with faces."
                                  :command nil
                                  :noquery t)))
       (unwind-protect
-          (mocklet (((difftastic--ansi-color-apply "test-string") => "test-buffer-string"))
-            (insert "foo\n")
-            (let ((point (point)))
-              (insert "bar\n")
-              (set-marker (process-mark process) (point))
-              (goto-char point)
-              (difftastic--run-command-filter process "test-string")
-              (should (equal (buffer-string) "foo\nbar\ntest-buffer-string"))
-              (should (equal (point) point))))
+          (eval
+           `(mocklet (((difftastic--ansi-color-apply "test-string") => "test-buffer-string")
+                      ((difftastic--add-visibility-indicators 9)))
+              (insert "foo\n")
+              (let ((point (point)))
+                (insert "bar\n")
+                (set-marker (process-mark ,process) (point))
+                (goto-char point)
+                (difftastic--run-command-filter ,process "test-string")
+                (should (equal (buffer-string) "foo\nbar\ntest-buffer-string"))
+                (should (equal (marker-position (process-mark ,process))
+                               (point-max)))
+                (should (equal (point) point)))))
         (when (process-live-p process)
           (kill-process process))))))
 
@@ -4852,13 +5078,17 @@ This only happens when `noninteractive' to avoid messing up with faces."
                                  :command nil
                                  :noquery t)))
       (unwind-protect
-          (mocklet (((difftastic--ansi-color-apply "test-string") => "test-buffer-string"))
-            (insert "foo\n")
-            (insert "bar\n")
-            (set-marker (process-mark process) (point))
-            (difftastic--run-command-filter process "test-string")
-            (should (equal (buffer-string) "foo\nbar\ntest-buffer-string"))
-            (should (equal (point) (point-max))))
+          (eval
+           `(mocklet (((difftastic--ansi-color-apply "test-string") => "test-buffer-string")
+                      ((difftastic--add-visibility-indicators 9)))
+              (insert "foo\n")
+              (insert "bar\n")
+              (set-marker (process-mark ,process) (point))
+              (difftastic--run-command-filter ,process "test-string")
+              (should (equal (buffer-string) "foo\nbar\ntest-buffer-string"))
+              (should (equal (marker-position (process-mark ,process))
+                             (point-max)))
+              (should (equal (point) (point-max)))))
         (when (process-live-p process)
           (kill-process process))))))
 

@@ -4833,15 +4833,19 @@ This only happens when `noninteractive' to avoid messing up with faces."
                                  :command nil
                                  :noquery t)))
       (unwind-protect
-          (mocklet (((difftastic--ansi-color-apply "test-string") => "test-buffer-string"))
-            (insert "foo\n")
-            (let ((point (point)))
-              (insert "bar\n")
-              (set-marker (process-mark process) (point))
-              (goto-char point)
-              (difftastic--run-command-filter process "test-string")
-              (should (equal (buffer-string) "foo\nbar\ntest-buffer-string"))
-              (should (equal (point) point))))
+          (eval
+           `(mocklet (((difftastic--ansi-color-apply "test-string") => "test-buffer-string")
+                      ((difftastic--add-fringe-indicators ,(current-buffer) 9)))
+              (insert "foo\n")
+              (let ((point (point)))
+                (insert "bar\n")
+                (set-marker (process-mark ,process) (point))
+                (goto-char point)
+                (difftastic--run-command-filter ,process "test-string")
+                (should (equal (buffer-string) "foo\nbar\ntest-buffer-string"))
+                (should (equal (marker-position (process-mark ,process))
+                               (point-max)))
+                (should (equal (point) point)))))
         (when (process-live-p process)
           (kill-process process))))))
 
@@ -4852,13 +4856,17 @@ This only happens when `noninteractive' to avoid messing up with faces."
                                  :command nil
                                  :noquery t)))
       (unwind-protect
-          (mocklet (((difftastic--ansi-color-apply "test-string") => "test-buffer-string"))
-            (insert "foo\n")
-            (insert "bar\n")
-            (set-marker (process-mark process) (point))
-            (difftastic--run-command-filter process "test-string")
-            (should (equal (buffer-string) "foo\nbar\ntest-buffer-string"))
-            (should (equal (point) (point-max))))
+          (eval
+           `(mocklet (((difftastic--ansi-color-apply "test-string") => "test-buffer-string")
+                      ((difftastic--add-fringe-indicators ,(current-buffer) 9)))
+              (insert "foo\n")
+              (insert "bar\n")
+              (set-marker (process-mark ,process) (point))
+              (difftastic--run-command-filter ,process "test-string")
+              (should (equal (buffer-string) "foo\nbar\ntest-buffer-string"))
+              (should (equal (marker-position (process-mark ,process))
+                             (point-max)))
+              (should (equal (point) (point-max)))))
         (when (process-live-p process)
           (kill-process process))))))
 

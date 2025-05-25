@@ -874,6 +874,26 @@ of the file."
   (interactive "P" difftastic-mode)
   (when (difftastic--point-at-chunk-header-p file-chunk)
     (let ((inhibit-read-only t))
+
+      (when-let* ((ov (car (overlays-at (compat-call pos-bol)))) ; Since Emacs-29
+                  (indicator (car-safe magit-section-visibility-indicator)))
+        ;; TODO: This is still flaky.  Sometimes indicator is updated,
+        ;; sometimes not ¯\_(ツ)_/¯.  But in theory, only the whole
+        ;; `delete-overlay' and `make-overlay' is unnecessary and only the last
+        ;; `overlay-put' (with `before-string') should be sufficient.  Yet when
+        ;; doing only that then indicator is not updated at all, but hen moving
+        ;; point to a next line it that line shows desired indicator.
+        (delete-overlay ov)
+        (let ((ov (make-overlay (compat-call pos-bol)
+                                (compat-call pos-eol)
+                                (current-buffer) t)))
+          (overlay-put ov 'evaporate t)
+          (overlay-put ov
+                       'before-string
+                       (propertize "fringe"
+                                   'display
+                                   (list 'left-fringe indicator 'fringe)))))
+
       (add-text-properties
        (compat-call pos-bol) ; Since Emacs-29
        (compat-call pos-eol) ; Since Emacs-29
@@ -898,6 +918,29 @@ The point needs to be in chunk header."
            (memq :file
                  (get-text-property (compat-call pos-bol) ; Since Emacs-29
                                     'difftastic))))
+
+      (when-let* ((ov (car (overlays-at (compat-call pos-bol)))) ; Since Emacs-29
+                  (indicator (cdr-safe magit-section-visibility-indicator)))
+        ;; TODO: This is still flaky.  Sometimes indicator is updated,
+        ;; sometimes not ¯\_(ツ)_/¯.  But in theory, only the whole
+        ;; `delete-overlay' and `make-overlay' is unnecessary and only the last
+        ;; `overlay-put' (with `before-string') should be sufficient.  Yet when
+        ;; doing only that then indicator is not updated at all, but hen moving
+        ;; point to a next line it that line shows desired indicator.
+        (delete-overlay ov)
+        (let ((ov (make-overlay (compat-call pos-bol)
+                                (compat-call pos-eol)
+                                (current-buffer) t)))
+          (overlay-put ov 'evaporate t)
+          ;; TODO: need to do it chunk by chunk such that all following chunks
+          ;; have correct indicator as well. Incorrect indicator happens when a
+          ;; chunk was hidden and then hidden again with a part of file chunk.
+          (overlay-put ov
+                       'before-string
+                       (propertize "fringe"
+                                   'display
+                                   (list 'left-fringe indicator 'fringe)))))
+
       ;; This is not ideal as it doesn't just undo how the chunk has been
       ;; hidden, but it bluntly shows everything when showing a file.  But it
       ;; allows to show all chunks that were hidden twice - first time as a
@@ -1676,6 +1719,28 @@ process sentinel."
           #'difftastic--ansi-color-add-background
         (ansi-color-apply string)))))
 
+(defun difftastic--add-fringe-indicators (buffer from)
+  "Add fringe indicators in BUFFER, starting at beginning of the line at FROM."
+  (when-let* ((indicator (cdr-safe magit-section-visibility-indicator)) ;; TODO: use own variable
+              (bol (compat-call pos-bol)) ;; Since Emacs-29
+              ((< from bol))
+              (to (max (point-min)
+                       ;; last line is never a chunk header, so no need to check it
+                       (1- bol))))
+    (save-excursion
+      (goto-char from)
+      (goto-char (compat-call pos-bol)) ;; Since Emacs-29
+      (while (re-search-forward (difftastic--chunk-regexp nil) to t)
+        (let ((ov (make-overlay (compat-call pos-bol)
+                                (compat-call pos-eol)
+                                buffer t)))
+          (overlay-put ov 'evaporate t)
+          (overlay-put ov
+                       'before-string
+                       (propertize "fringe"
+                                   'display
+                                   (list 'left-fringe indicator 'fringe))))))))
+
 (defun difftastic--run-command-filter (process string)
   "A process filter for `difftastic--run-command'.
 It applies ANSI colors with `apply-ansi-colors' using difftastic
@@ -1687,11 +1752,13 @@ arguments, like in `make-process''s filter."
     (with-current-buffer buffer
       (let* ((inhibit-read-only t)
              (string (difftastic--ansi-color-apply string)))
-        (let ((moving (= (process-mark process) (point))))
+        (let* ((from (marker-position (process-mark process)))
+               (moving (= from (point))))
           (save-excursion
-            (goto-char (process-mark process))
+            (goto-char from)
             (insert string)
-            (set-marker (process-mark process) (point)))
+            (set-marker (process-mark process) (point))
+            (difftastic--add-fringe-indicators buffer from))
           (when moving
             (goto-char (process-mark process))))))))
 

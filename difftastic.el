@@ -873,39 +873,29 @@ FILE-CHUNK prefix hide all file chunks from the header to the end
 of the file."
   (interactive "P" difftastic-mode)
   (when (difftastic--point-at-chunk-header-p file-chunk)
-    (let ((inhibit-read-only t))
-
-      (when-let* ((ov (car (overlays-at (compat-call pos-bol)))) ; Since Emacs-29
-                  (indicator (car-safe magit-section-visibility-indicator)))
-        ;; TODO: This is still flaky.  Sometimes indicator is updated,
-        ;; sometimes not ¯\_(ツ)_/¯.  But in theory, only the whole
-        ;; `delete-overlay' and `make-overlay' is unnecessary and only the last
-        ;; `overlay-put' (with `before-string') should be sufficient.  Yet when
-        ;; doing only that then indicator is not updated at all, but hen moving
-        ;; point to a next line it that line shows desired indicator.
-        (delete-overlay ov)
-        (let ((ov (make-overlay (compat-call pos-bol)
-                                (compat-call pos-eol)
-                                (current-buffer) t)))
-          (overlay-put ov 'evaporate t)
-          (overlay-put ov
-                       'before-string
-                       (propertize "fringe"
-                                   'display
-                                   (list 'left-fringe indicator 'fringe)))))
-
+    (let ((inhibit-read-only t)
+          (bol (compat-call pos-bol)) ; Since Emacs-29
+          (from  (compat-call pos-eol)) ; Since Emacs-29
+          (to (if-let*  ((next-chunk
+                          (difftastic--next-chunk file-chunk)))
+                  (save-excursion
+                    (goto-char next-chunk)
+                    (compat-call pos-eol -1)) ; Since Emacs-29
+                (point-max))))
+      (when-let* ((indicator (car-safe magit-section-visibility-indicator))
+                  (ov (cl-find-if (lambda (ov)
+                                    (overlay-get ov 'difftastic-fringe-indicator))
+                                  (overlays-at bol))))
+        (message "*** hide ov: %S %S" ov (overlay-get ov 'before-string))
+        (overlay-put ov
+             'before-string
+             (propertize "fringe"
+                         'display
+                         (list 'left-fringe indicator 'fringe))))
       (add-text-properties
-       (compat-call pos-bol) ; Since Emacs-29
-       (compat-call pos-eol) ; Since Emacs-29
+       bol (1+ bol)
        `(difftastic (:hidden ,(if file-chunk :file :chunk))))
-      (add-text-properties
-       (compat-call pos-eol) ; Since Emacs-29
-       (if-let*  ((next-chunk
-                   (difftastic--next-chunk file-chunk)))
-           (save-excursion
-             (goto-char next-chunk)
-             (compat-call pos-eol -1)) ; Since Emacs-29
-         (point-max))
+      (add-text-properties from  to
        '(invisible difftastic)))))
 
 (defun difftastic-show-chunk ()
@@ -913,47 +903,32 @@ of the file."
 The point needs to be in chunk header."
   (interactive nil difftastic-mode)
   (when (difftastic--point-at-chunk-header-p)
-    (let ((inhibit-read-only t)
-          (file-chunk
-           (memq :file
-                 (get-text-property (compat-call pos-bol) ; Since Emacs-29
-                                    'difftastic))))
-
-      (when-let* ((ov (car (overlays-at (compat-call pos-bol)))) ; Since Emacs-29
-                  (indicator (cdr-safe magit-section-visibility-indicator)))
-        ;; TODO: This is still flaky.  Sometimes indicator is updated,
-        ;; sometimes not ¯\_(ツ)_/¯.  But in theory, only the whole
-        ;; `delete-overlay' and `make-overlay' is unnecessary and only the last
-        ;; `overlay-put' (with `before-string') should be sufficient.  Yet when
-        ;; doing only that then indicator is not updated at all, but hen moving
-        ;; point to a next line it that line shows desired indicator.
-        (delete-overlay ov)
-        (let ((ov (make-overlay (compat-call pos-bol)
-                                (compat-call pos-eol)
-                                (current-buffer) t)))
-          (overlay-put ov 'evaporate t)
-          ;; TODO: need to do it chunk by chunk such that all following chunks
-          ;; have correct indicator as well. Incorrect indicator happens when a
-          ;; chunk was hidden and then hidden again with a part of file chunk.
-          (overlay-put ov
-                       'before-string
-                       (propertize "fringe"
-                                   'display
-                                   (list 'left-fringe indicator 'fringe)))))
-
+    (let* ((inhibit-read-only t)
+           (from (compat-call pos-bol)) ; Since Emacs-29
+           (file-chunk
+            (memq :file (get-text-property from
+                                           'difftastic)))
+           (to (if-let* ((next-chunk
+                  (difftastic--next-chunk file-chunk)))
+                   (save-excursion
+                     (goto-char next-chunk)
+                     (compat-call pos-eol -1))  ; Since Emacs-29
+                 (point-max))))
       ;; This is not ideal as it doesn't just undo how the chunk has been
       ;; hidden, but it bluntly shows everything when showing a file.  But it
       ;; allows to show all chunks that were hidden twice - first time as a
       ;; chunk, second as a file.
-      (remove-list-of-text-properties
-       (compat-call pos-bol) ; Since Emacs-29
-       (if-let* ((next-chunk
-                  (difftastic--next-chunk file-chunk)))
-           (save-excursion
-             (goto-char next-chunk)
-             (compat-call pos-eol -1)) ; Since Emacs-29
-         (point-max))
-       '(invisible difftastic)))))
+      (remove-list-of-text-properties from to '(invisible difftastic))
+
+      (when-let* ((indicator (cdr-safe magit-section-visibility-indicator)))
+        (dolist (ov (overlays-in from to))
+          (when (overlay-get ov 'difftastic-fringe-indicator)
+            (message "*** show ov: %S %S" ov (overlay-get ov 'before-string))
+            (overlay-put ov
+                         'before-string
+                         (propertize "fringe"
+                                     'display
+                                     (list 'left-fringe indicator 'fringe)))))))))
 
 (defun difftastic-toggle-chunk (&optional file-chunk)
   "Toggle visibility of chunk at point.
@@ -1731,15 +1706,16 @@ process sentinel."
       (goto-char from)
       (goto-char (compat-call pos-bol)) ;; Since Emacs-29
       (while (re-search-forward (difftastic--chunk-regexp nil) to t)
-        (let ((ov (make-overlay (compat-call pos-bol)
-                                (compat-call pos-eol)
-                                buffer t)))
+        (let* ((bol (compat-call pos-bol)) ;; Since Emacs-29
+               (ov (make-overlay bol (1+ bol) buffer t)))
+          (overlay-put ov 'difftastic-fringe-indicator t)
           (overlay-put ov 'evaporate t)
           (overlay-put ov
                        'before-string
                        (propertize "fringe"
                                    'display
-                                   (list 'left-fringe indicator 'fringe))))))))
+                                   (list 'left-fringe indicator 'fringe)))
+          (message "*** create: %S %S" ov (overlay-get ov 'before-string)))))))
 
 (defun difftastic--run-command-filter (process string)
   "A process filter for `difftastic--run-command'.

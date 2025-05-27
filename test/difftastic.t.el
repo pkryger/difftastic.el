@@ -4835,7 +4835,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
       (unwind-protect
           (eval
            `(mocklet (((difftastic--ansi-color-apply "test-string") => "test-buffer-string")
-                      ((difftastic--add-fringe-indicators ,(current-buffer) 9)))
+                      ((difftastic--add-visibility-indicators ,(current-buffer) 9)))
               (insert "foo\n")
               (let ((point (point)))
                 (insert "bar\n")
@@ -4858,7 +4858,7 @@ This only happens when `noninteractive' to avoid messing up with faces."
       (unwind-protect
           (eval
            `(mocklet (((difftastic--ansi-color-apply "test-string") => "test-buffer-string")
-                      ((difftastic--add-fringe-indicators ,(current-buffer) 9)))
+                      ((difftastic--add-visibility-indicators ,(current-buffer) 9)))
               (insert "foo\n")
               (insert "bar\n")
               (set-marker (process-mark ,process) (point))

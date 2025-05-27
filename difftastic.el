@@ -874,8 +874,8 @@ of the file."
   (interactive "P" difftastic-mode)
   (when (difftastic--point-at-chunk-header-p file-chunk)
     (let ((inhibit-read-only t)
-          (bol (compat-call pos-bol)) ; Since Emacs-29
-          (from  (compat-call pos-eol)) ; Since Emacs-29
+          (from (compat-call pos-bol)) ; Since Emacs-29
+          (hide-from  (compat-call pos-eol)) ; Since Emacs-29
           (to (if-let*  ((next-chunk
                           (difftastic--next-chunk file-chunk)))
                   (save-excursion
@@ -885,7 +885,7 @@ of the file."
       (when-let* ((indicator (car-safe magit-section-visibility-indicator))
                   (ov (cl-find-if (lambda (ov)
                                     (overlay-get ov 'difftastic-fringe-indicator))
-                                  (overlays-at bol))))
+                                  (overlays-at from))))
         (message "*** hide ov: %S %S" ov (overlay-get ov 'before-string))
         (overlay-put ov
              'before-string
@@ -893,9 +893,9 @@ of the file."
                          'display
                          (list 'left-fringe indicator 'fringe))))
       (add-text-properties
-       bol (1+ bol)
+       from hide-from
        `(difftastic (:hidden ,(if file-chunk :file :chunk))))
-      (add-text-properties from  to
+      (add-text-properties hide-from  to
        '(invisible difftastic)))))
 
 (defun difftastic-show-chunk ()

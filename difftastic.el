@@ -476,10 +476,10 @@
 (require 'view)
 (require 'transient)
 (require 'crm)
+(require 'fringe)
 
 (eval-when-compile
-  (require 'compat)
-  (require 'fringe))
+  (require 'compat))
 
 (defgroup difftastic nil
   "Integration with difftastic."
@@ -888,7 +888,7 @@ When FILE-CHUNK is non nil the header has to be a file header."
 (defun difftastic--update-visibility-indcators (indicator from to)
   ;; checkdoc-params: (from to)
   "Update visibility indicators in region to INDICATOR."
-  (when indicator
+  (when (fringe-bitmap-p indicator)
     (dolist (ov (cl-remove-if-not
                  (lambda (ov)
                    (overlay-get ov 'difftastic-visibility-indicator))
@@ -1711,10 +1711,11 @@ process sentinel."
           #'difftastic--ansi-color-add-background
         (ansi-color-apply string)))))
 
-(defun difftastic--add-visibility-indicators (buffer from)
-  "Add visibility indicators in BUFFER, starting at beginning of the line at FROM.
+(defun difftastic--add-visibility-indicators (from)
+  "Add visibility indicators starting at beginning of the line at FROM.
 Indicators are added up to the current line (exclusive)."
   (when-let* ((indicator (cdr-safe difftastic-visibility-indicator))
+              ((fringe-bitmap-p indicator))
               (bol (compat-call pos-bol)) ;; Since Emacs-29
               ((< from bol))
               (to (max (point-min)
@@ -1725,7 +1726,7 @@ Indicators are added up to the current line (exclusive)."
       (goto-char (compat-call pos-bol)) ;; Since Emacs-29
       (while (re-search-forward (difftastic--chunk-regexp nil) to t)
         (let* ((bol (compat-call pos-bol)) ;; Since Emacs-29
-               (ov (make-overlay bol (1+ bol) buffer t)))
+               (ov (make-overlay bol (1+ bol) nil t)))
           (overlay-put ov 'difftastic-visibility-indicator t)
           (overlay-put ov 'evaporate t)
           (overlay-put ov
@@ -1751,7 +1752,7 @@ arguments, like in `make-process''s filter."
             (goto-char from)
             (insert string)
             (set-marker (process-mark process) (point))
-            (difftastic--add-visibility-indicators buffer from))
+            (difftastic--add-visibility-indicators from))
           (when moving
             (goto-char (process-mark process))))))))
 

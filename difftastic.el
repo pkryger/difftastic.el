@@ -394,6 +394,8 @@
 ;; `difftastic-mode' Behavior
 ;; ~~~~~~~~~~~~~~~~~~~~~~~~~~
 ;;
+;; - `difftastic-visibility-indicator' - controls whether and how to show
+;;   hidden/visible chunk/files.
 ;; - `difftastic-diff-visit-avoid-head-blob' - controls whether to avoid
 ;;   visiting blob of a `HEAD' revision when visiting file form a
 ;;   `difftastic-mode' buffer.

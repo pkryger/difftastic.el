@@ -4937,7 +4937,8 @@ difftastic.el --- 2/2 --- Emacs Lisp
 test/difftastic.t.el --- Emacs Lisp
 1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-")
     (let ((difftastic-visibility-indicator '("test-hidden" . "test-shown")))
-      (mocklet (((fringe-bitmap-p "test-shown") => t))
+      (mocklet (((fringe-bitmap-p "test-shown") => t)
+                ((difftastic--get-languages) => '("Text" "Emacs Lisp" "C++" "Java")))
         (difftastic--add-visibility-indicators (point-min))))
     (let ((overlays (cl-remove-if-not
                      (lambda (ov)
@@ -4975,7 +4976,8 @@ difftastic.el --- 2/2 --- Emacs Lisp
 test/difftastic.t.el --- Emacs Lisp
 1 ;;; difftastic.t.el --- Tests for difftastic        -*- lexical-binding: t; -*-")
     (let ((difftastic-visibility-indicator '("test-hidden" . "test-shown")))
-      (mocklet (((fringe-bitmap-p "test-shown") => t))
+      (mocklet (((fringe-bitmap-p "test-shown") => t)
+                ((difftastic--get-languages) => '("Text" "Emacs Lisp" "C++" "Java")))
         (difftastic--add-visibility-indicators 125)))
     (let ((overlays (cl-remove-if-not
                      (lambda (ov)
@@ -5017,7 +5019,8 @@ test/difftastic.t.el --- Emacs Lisp
   (ert-with-test-buffer ()
     (insert "difftastic.el --- 1/2 --- Emacs Lisp\n")
     (let ((difftastic-visibility-indicator '("test-hidden" . "test-shown")))
-      (mocklet (((fringe-bitmap-p "test-shown") => t))
+      (mocklet (((fringe-bitmap-p "test-shown") => t)
+                ((difftastic--get-languages) => '("Text" "Emacs Lisp" "C++" "Java")))
         (difftastic--add-visibility-indicators (point-min))))
     (let ((overlays (cl-remove-if-not
                      (lambda (ov)

@@ -2331,7 +2331,11 @@ difftastic call."
           (setq limit (1+ (match-end 0)))))
       (make-temp-file (format "difftastic-%s-%s-" prefix buffer-name)
                       nil
-                      (difftastic--file-extension-for-mode major-mode)
+                      (or
+                       (when-let* ((buffer-file (buffer-file-name buffer))
+                                   (extension (file-name-extension buffer-file)))
+                         (concat "." extension))
+                       (difftastic--file-extension-for-mode major-mode))
                       (buffer-string)))))
 
 (defun difftastic--get-file-buf (prefix buffer)

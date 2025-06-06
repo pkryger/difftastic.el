@@ -147,6 +147,7 @@
         (mocklet ((difftastic--file-extension-for-mode not-called))
           (ert-with-test-buffer ()
             (setq temp-file (make-temp-file "difftastic.t"))
+            (set-visited-file-name temp-file t)
             (write-region (point-min) (point-max) temp-file nil t)
             (should (equal `(,(buffer-file-name) . nil)
                            (difftastic--get-file-buf "test" (current-buffer))))))
@@ -160,10 +161,11 @@
     (unwind-protect
         (mocklet (((difftastic--file-extension-for-mode 'c-mode) => ".c"))
           (ert-with-test-buffer ()
-            (c-mode)
             (insert "foo")
-            (setq temp-file (make-temp-file "difftastic.t"))
+            (setq temp-file (make-temp-file "difftastic-t"))
+            (set-visited-file-name temp-file t)
             (write-region (point-min) (point-max) temp-file nil t)
+            (c-mode)
             (insert "bar")
             (setq file-buf (difftastic--get-file-buf "test" (current-buffer)))
             (should (consp file-buf))
@@ -173,6 +175,33 @@
                                 "difftastic-test-"
                                 (one-or-more (not "/"))
                                 ".c"
+                                string-end))
+                     (car file-buf)))
+            (should (equal (current-buffer) (cdr file-buf)))))
+
+      (when (file-exists-p temp-file)
+        (delete-file temp-file)))))
+
+(ert-deftest difftastic--get-file-buf:modified-buffer-visiting-file-with-extension--temporary-created ()
+  (let (temp-file
+        file-buf)
+    (unwind-protect
+        (mocklet ((difftastic--file-extension-for-mode not-called))
+          (ert-with-test-buffer ()
+            (insert "foo")
+            (setq temp-file (make-temp-file "difftastic-t" nil ".el"))
+            (set-visited-file-name temp-file t)
+            (write-region (point-min) (point-max) temp-file nil t)
+            (c-mode)
+            (insert "bar")
+            (setq file-buf (difftastic--get-file-buf "test" (current-buffer)))
+            (should (consp file-buf))
+            (should (string-match-p
+                     (eval '(rx string-start
+                                (literal temporary-file-directory)
+                                "difftastic-test-"
+                                (one-or-more (not "/"))
+                                ".el"
                                 string-end))
                      (car file-buf)))
             (should (equal (current-buffer) (cdr file-buf)))))

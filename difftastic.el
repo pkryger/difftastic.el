@@ -2614,15 +2614,24 @@ argument ask for extra arguments for difftastic call."
                                         file)
     (difftastic--dired-diff file lang-override)))
 
-(defun difftastic--rerun-file-buf (prefix file-buf metadata)
-  "Create a new temporary file for the FILE-BUF with PREFIX if needed.
-The new FILE-BUF is additionally set in RERUN-ALIST.  The FILE-BUF
-is a cons where car is the file and cdr is a buffer when it is a
-temporary file or nil otherwise."
+(defun difftastic--rerun-file-buf (prefix file-buf metadata &optional other-file)
+  "Create a new temporary file for the FILE-BUF if needed.
+The new temporary file will use PREFIX unless OTHER-FILE is the same as
+file visited by buffer in FILE-BUF.  The new FILE-BUF is additionally
+set in METADATA as file-buf-PREFIX.  The FILE-BUF is a cons where car is
+the file and cdr is a buffer when it is a temporary file or nil
+otherwise."
   (if-let* ((buffer (cdr file-buf)))
       (if (buffer-live-p buffer)
           (setf (alist-get (intern (concat "file-buf-" prefix)) metadata)
-                (difftastic--get-file-buf prefix buffer))
+                (if (and other-file
+                         (equal (buffer-file-name buffer) other-file))
+                    (if (buffer-modified-p buffer)
+                        (cons (difftastic--make-temp-file "buffer-content"
+                                                          buffer)
+                              buffer)
+                      (user-error "Buffer has the same contents a visited file"))
+                  (difftastic--get-file-buf prefix buffer)))
         (user-error "Buffer %s [%s] doesn't exist anymore" prefix buffer))
     file-buf))
 
@@ -2635,7 +2644,8 @@ temporary file or nil otherwise."
         (difftastic--with-file-bufs ((file-buf-A (difftastic--rerun-file-buf
                                                   "A" .file-buf-A metadata))
                                      (file-buf-B (difftastic--rerun-file-buf
-                                                  "B" .file-buf-B metadata)))
+                                                  "B" .file-buf-B metadata
+                                                  (car .file-buf-A))))
           (let* ((default-directory .default-directory)
                  (difftastic-args
                   (if-let* (((stringp lang-or-args))

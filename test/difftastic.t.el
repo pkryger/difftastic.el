@@ -497,6 +497,59 @@
       (when (and (cdr file-buf) (file-exists-p (car file-buf)))
         (delete-file (car file-buf))))))
 
+(ert-deftest difftastic--rerun-file-buf:temporary-live-modified-buffer-matching-other-new-temporary-created ()
+  (let (file-buf
+        (test-file (make-temp-file "difftastic-t")))
+    (unwind-protect
+        (let ((metadata '((file-buf-test . (test-file . t)))))
+          (ert-with-test-buffer ()
+            (insert "foo")
+            (set-visited-file-name test-file)
+            (setq file-buf
+                  (difftastic--rerun-file-buf
+                   "test"
+                   (cons test-file (current-buffer))
+                   metadata
+                   test-file))
+            (should-not (equal test-file (car file-buf)))
+            (should (file-exists-p (car file-buf)))
+            (should (equal file-buf
+                           (alist-get 'file-buf-test metadata)))))
+
+      (when (and (cdr file-buf) (file-exists-p (car file-buf)))
+        (delete-file (car file-buf)))
+      (when (file-exists-p test-file)
+        (delete-file test-file)))))
+
+(ert-deftest difftastic--rerun-file-buf:temporary-live-non-modified-buffer-matching-error-signaled ()
+  (let (file-buf
+        (test-file (make-temp-file "difftastic-t")))
+    (unwind-protect
+        (let* ((metadata '((file-buf-test . (test-file . t))))
+               (orig-rerun-alist (copy-tree metadata))
+               (text-quoting-style 'straight))
+          (ert-with-test-buffer ()
+            (set-visited-file-name test-file)
+            (set-buffer-modified-p nil)
+            (let ((data (cadr
+                         (should-error
+                          (setq file-buf
+                                (difftastic--rerun-file-buf
+                                 "test"
+                                 (cons test-file (current-buffer))
+                                 metadata
+                                 test-file))
+                          :type 'user-error))))
+              (should
+               (equal data
+                      "Buffer has the same contents a visited file")))
+            (should (equal orig-rerun-alist metadata))))
+
+      (when (and (cdr file-buf) (file-exists-p (car file-buf)))
+        (delete-file (car file-buf)))
+      (when (file-exists-p test-file)
+        (delete-file test-file)))))
+
 (ert-deftest difftastic--rerun-file-buf:temporary-non-live-buffer-error-signaled ()
   (let (file-buf)
     (unwind-protect

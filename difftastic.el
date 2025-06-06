@@ -2335,13 +2335,15 @@ difftastic call."
                       (buffer-string)))))
 
 (defun difftastic--get-file-buf (prefix buffer)
-  "If BUFFER visits a file return it else create a temporary file with PREFIX.
-The return value is a cons in a form of (FILE . BUF) where FILE
-is the file and BUF either is  nil if this is non temporary file,
-or BUF is set to BUFFER if this is a temporary file."
+  "Get a file-buf for BUFFER with PREFIX if creating a temporary file.
+If BUFFER visits a file and is non modified use it.  Else create a
+temporary file with PREFIX.  The return value is a cons in a form
+of (FILE . BUF) where FILE is the file and BUF either is nil if this is
+non temporary file, or BUF is set to BUFFER if this is a temporary file."
   (let* (buf
          (file
-          (if-let* ((buffer-file (buffer-file-name buffer)))
+          (if-let* ((buffer-file (buffer-file-name buffer))
+                    ((not (buffer-modified-p buffer))))
               (progn
                 (save-buffer buffer)
                 buffer-file)

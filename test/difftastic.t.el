@@ -154,6 +154,32 @@
       (when (file-exists-p temp-file)
         (delete-file temp-file)))))
 
+(ert-deftest difftastic--get-file-buf:modified-buffer-visiting-file--temporary-created ()
+  (let (temp-file
+        file-buf)
+    (unwind-protect
+        (mocklet (((difftastic--file-extension-for-mode 'c-mode) => ".c"))
+          (ert-with-test-buffer ()
+            (c-mode)
+            (insert "foo")
+            (setq temp-file (make-temp-file "difftastic.t"))
+            (write-region (point-min) (point-max) temp-file nil t)
+            (insert "bar")
+            (setq file-buf (difftastic--get-file-buf "test" (current-buffer)))
+            (should (consp file-buf))
+            (should (string-match-p
+                     (eval '(rx string-start
+                                (literal temporary-file-directory)
+                                "difftastic-test-"
+                                (one-or-more (not "/"))
+                                ".c"
+                                string-end))
+                     (car file-buf)))
+            (should (equal (current-buffer) (cdr file-buf)))))
+
+      (when (file-exists-p temp-file)
+        (delete-file temp-file)))))
+
 (ert-deftest difftastic--get-file-buf:buffer-not-visiting-file-temporary-created ()
   (let (file-buf)
     (unwind-protect

@@ -2357,15 +2357,16 @@ when it is a temporary or nil otherwise."
     (when (and (cdr file-buf) (stringp file) (file-exists-p file))
       (delete-file file))))
 
-(defun difftastic--make-suggestion (languages buffer-A buffer-B)
+(defun difftastic--make-suggestion (languages buffer-A &optional buffer-B)
   "Suggest one of LANGUAGES based on mode of BUFFER-A and BUFFER-B."
   (when-let* ((mode
                (or (with-current-buffer buffer-A
                      (when (derived-mode-p 'prog-mode)
                        major-mode))
-                   (with-current-buffer buffer-B
-                     (when (derived-mode-p 'prog-mode)
-                       major-mode)))))
+                   (when buffer-B
+                     (with-current-buffer buffer-B
+                       (when (derived-mode-p 'prog-mode)
+                         major-mode))))))
     (cl-find-if (lambda (language)
                   (string= (downcase language)
                            (downcase (string-replace

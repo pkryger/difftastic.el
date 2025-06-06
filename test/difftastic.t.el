@@ -69,6 +69,14 @@
           (should
            (string= "Emacs Lisp"
                     (difftastic--make-suggestion languages
+                                                 elisp-buffer)))
+          (should-not
+           (difftastic--make-suggestion languages
+                                        org-buffer))
+
+          (should
+           (string= "Emacs Lisp"
+                    (difftastic--make-suggestion languages
                                                  elisp-buffer c++-buffer)))
           (should
            (string= "Emacs Lisp"

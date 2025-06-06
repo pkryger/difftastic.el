@@ -1790,6 +1790,7 @@ perform cleanup.  It returns a process created by `make-process'."
    :command command
    :noquery t
    :filter #'difftastic--run-command-filter
+   :file-handler t
    :sentinel
    (lambda (process _event)
      (difftastic--run-command-sentinel process action command))))

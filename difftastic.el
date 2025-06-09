@@ -2462,19 +2462,31 @@ error each symbol in FILE-BUFS will be passed to
           (difftastic--delete-temp-file-buf file-buf))
         (signal (car err) (cdr err))))))
 
+(defun difftastic--buffers-args-read-buffer-predicate (bf-A)
+  "Return a predicate that doesn't match BF-A.
+The predicate is designed to be used in `read-buffer', which see."
+  (lambda (buf)
+    (not (equal (if (stringp buf)
+                    buf
+                  (car buf))
+                bf-A))))
+
 (defun difftastic--buffers-args ()
   "Return arguments for `difftastic-buffers'."
   ;; adapted from `ediff-buffers'
   (let (bf-A bf-B)
-    (list (setq bf-A (read-buffer "Buffer A to compare: "
-                                  (ediff-other-buffer "") t))
-          (setq bf-B (read-buffer "Buffer B to compare: "
-                                  (progn
-                                    ;; realign buffers so that two visible
-                                    ;; buffers will be at the top
-                                    (save-window-excursion (other-window 1))
-                                    (ediff-other-buffer bf-A))
-                                  t))
+    (list (setq bf-A
+                (read-buffer "Buffer A to compare: "
+                             (ediff-other-buffer "") t))
+          (setq bf-B
+                (read-buffer "Buffer B to compare: "
+                             (progn
+                               ;; realign buffers so that two visible
+                               ;; buffers will be at the top
+                               (save-window-excursion (other-window 1))
+                               (ediff-other-buffer bf-A))
+                             t
+                             (difftastic--buffers-args-read-buffer-predicate bf-A)))
           (when (or (equal current-prefix-arg '(4))
                     (and (not (buffer-file-name (get-buffer bf-A)))
                          (not (buffer-file-name (get-buffer bf-B)))))
@@ -2488,16 +2500,18 @@ error each symbol in FILE-BUFS will be passed to
 (defun difftastic--buffers (buffer-A buffer-B lang-or-args)
   ;; checkdoc-params: (buffer-A buffer-B lang-or-args)
   "Implementation of `difftastic-buffers', which see."
-  (difftastic--with-file-bufs ((file-buf-A (difftastic--get-file-buf
-                                            "A" (get-buffer buffer-A)))
-                               (file-buf-B (difftastic--get-file-buf
-                                            "B" (get-buffer buffer-B))))
-    (difftastic--files-internal
-     (get-buffer-create
-      (concat "*difftastic " buffer-A " " buffer-B "*"))
-     file-buf-A
-     file-buf-B
-     (difftastic--format-override-arg lang-or-args))))
+  (if (equal buffer-A buffer-B)
+      (user-error "Buffers have to be different")
+    (difftastic--with-file-bufs ((file-buf-A (difftastic--get-file-buf
+                                              "A" (get-buffer buffer-A)))
+                                 (file-buf-B (difftastic--get-file-buf
+                                                "B" (get-buffer buffer-B))))
+      (difftastic--files-internal
+       (get-buffer-create
+        (concat "*difftastic " buffer-A " " buffer-B "*"))
+       file-buf-A
+       file-buf-B
+       (difftastic--format-override-arg lang-or-args)))))
 
 ;;;###autoload
 (defun difftastic-buffers (buffer-A buffer-B &optional lang-override)

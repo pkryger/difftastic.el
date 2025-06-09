@@ -6782,6 +6782,15 @@ test/difftastic.t.el --- Emacs Lisp
       (should (equal display-buffer-called 1)))))
 
 
+(ert-deftest difftstic--buffers-args-read-buffer-predicate ()
+  (let ((pred (difftastic--buffers-args-read-buffer-predicate "test-buffer-A")))
+    (should (functionp pred))
+    (should (funcall pred "test-buffer-B"))
+    (should (funcall pred (cons "test-buffer-C" nil)))
+    (should-not (funcall pred "test-buffer-A"))
+    (should-not (funcall pred (cons "test-buffer-A" nil)))))
+
+
 (ert-deftest difftastic--buffers-args:buffers-with-files ()
   (cl-letf* ((file-A (make-temp-file "difftastic.t"))
              (file-B (make-temp-file "difftastic.t"))
@@ -6796,8 +6805,12 @@ test/difftastic.t.el --- Emacs Lisp
              (read-buffer-args `((,(buffer-name buffer-A)
                                   "Buffer A to compare: " "default-buffer-A" t)
                                  (,(buffer-name buffer-B)
-                                  "Buffer B to compare: " "default-buffer-B" t)))
+                                  "Buffer B to compare: " "default-buffer-B" t "test-predicate")))
              (read-buffer-called 0)
+             ((symbol-function #'difftastic--buffers-args-read-buffer-predicate)
+              (lambda (buf)
+                (should (equal buf (buffer-name buffer-A)))
+                "test-predicate"))
              ((symbol-function #'read-buffer)
               (lambda (&rest args)
                 (let ((current (car read-buffer-args)))
@@ -6847,8 +6860,12 @@ test/difftastic.t.el --- Emacs Lisp
              (read-buffer-args `((,(buffer-name buffer-A)
                                   "Buffer A to compare: " "default-buffer-A" t)
                                  (,(buffer-name buffer-B)
-                                  "Buffer B to compare: " "default-buffer-B" t)))
+                                  "Buffer B to compare: " "default-buffer-B" t "test-predicate")))
              (read-buffer-called 0)
+             ((symbol-function #'difftastic--buffers-args-read-buffer-predicate)
+              (lambda (buf)
+                (should (equal buf (buffer-name buffer-A)))
+                "test-predicate"))
              ((symbol-function #'read-buffer)
               (lambda (&rest args)
                 (let ((current (car read-buffer-args)))
@@ -6904,8 +6921,12 @@ test/difftastic.t.el --- Emacs Lisp
              (read-buffer-args `((,(buffer-name buffer-A)
                                   "Buffer A to compare: " "default-buffer-A" t)
                                  (,(buffer-name buffer-B)
-                                  "Buffer B to compare: " "default-buffer-B" t)))
+                                  "Buffer B to compare: " "default-buffer-B" t "test-predicate")))
              (read-buffer-called 0)
+             ((symbol-function #'difftastic--buffers-args-read-buffer-predicate)
+              (lambda (buf)
+                (should (equal buf (buffer-name buffer-A)))
+                "test-predicate"))
              ((symbol-function #'read-buffer)
               (lambda (&rest args)
                 (let ((current (car read-buffer-args)))
@@ -6949,8 +6970,12 @@ test/difftastic.t.el --- Emacs Lisp
              (read-buffer-args `((,(buffer-name buffer-A)
                                   "Buffer A to compare: " "default-buffer-A" t)
                                  (,(buffer-name buffer-B)
-                                  "Buffer B to compare: " "default-buffer-B" t)))
+                                  "Buffer B to compare: " "default-buffer-B" t "test-predicate")))
              (read-buffer-called 0)
+             ((symbol-function #'difftastic--buffers-args-read-buffer-predicate)
+              (lambda (buf)
+                (should (equal buf (buffer-name buffer-A)))
+                "test-predicate"))
              ((symbol-function #'read-buffer)
               (lambda (&rest args)
                 (let ((current (car read-buffer-args)))
@@ -6990,8 +7015,12 @@ test/difftastic.t.el --- Emacs Lisp
              (read-buffer-args `((,(buffer-name buffer-A)
                                   "Buffer A to compare: " "default-buffer-A" t)
                                  (,(buffer-name buffer-B)
-                                  "Buffer B to compare: " "default-buffer-B" t)))
+                                  "Buffer B to compare: " "default-buffer-B" t "test-predicate")))
              (read-buffer-called 0)
+             ((symbol-function #'difftastic--buffers-args-read-buffer-predicate)
+              (lambda (buf)
+                (should (equal buf (buffer-name buffer-A)))
+                "test-predicate"))
              ((symbol-function #'read-buffer)
               (lambda (&rest args)
                 (let ((current (car read-buffer-args)))
@@ -7098,6 +7127,15 @@ test/difftastic.t.el --- Emacs Lisp
         (delete-file file-B))
       (when (file-exists-p file-A)
         (delete-file file-A)))))
+
+(ert-deftest difftastic--buffers:same-buffer ()
+  (let ((data (cadr
+               (should-error
+                (difftastic--buffers "test-buffer" "test-buffer" nil)
+                :type 'user-error))))
+    (should
+     (equal data
+            "Buffers have to be different"))))
 
 
 (ert-deftest difftastic-buffers:basic ()

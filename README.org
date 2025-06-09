@@ -239,6 +239,9 @@ context and desired outcome.
 - =difftastic-buffers= - show the result of =difft BUFFER-A BUFFER-B=.
   Language is guessed based on buffers modes.  When called with prefix argument
   it will ask for language to use.
+- =difftastic-file-bufer= - show the result of =difft BUFFER BUFFER-FILE.
+  Language is guessed based on buffer mode.  When called with prefix argument
+  it will ask for language to use.
 - =difftastic-dired-diff= - same as =dired-diff=, but with =difftastic-files=
   instead of the built-in =diff=.
 - =difftastic-git-diff-range= - transform =ARGS= for difftastic and show the

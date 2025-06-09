@@ -6555,6 +6555,114 @@ test/difftastic.t.el --- Emacs Lisp
     (funcall-interactively #'difftastic-quit-all)))
 
 
+(ert-deftest difftastic--file-buffer-args:basic ()
+  (ert-with-test-buffer ()
+    (eval
+     `(mocklet (((difftastic--get-languages) => "test-languages")
+                ((difftastic--make-suggestion "test-languages"
+                                              ,(current-buffer))
+                 => "test-language")
+                ((completing-read "Language: "
+                                  "test-languages"
+                                  nil
+                                  t
+                                  "test-language")
+                 => "test-lang"))
+        (let ((current-prefix-arg '(4)))
+          (should (equal '("test-lang")
+                         (difftastic--file-buffer-args))))))))
+
+(ert-deftest difftastic--file-buffer-args:no-prefix ()
+  (should-not (difftastic--file-buffer-args)))
+
+
+(ert-deftest difftastic--file-buffer:basic ()
+  (let (temp-file)
+    (unwind-protect
+        (ert-with-test-buffer ()
+          (setq temp-file (make-temp-file "difftastic-t"))
+          (set-visited-file-name temp-file)
+          (should (buffer-modified-p))
+          (eval
+           `(mocklet (((get-buffer-create (format "*difftastic file buffer %s*"
+                                                  (buffer-name)))
+                       => "test-buffer")
+                      ((difftastic--make-temp-file "buffer-content"
+                                                   ,(current-buffer))
+                       => "test-file-buf")
+                      ((difftastic--files-internal "test-buffer"
+                                                   (cons ,temp-file nil)
+                                                   (cons "test-file-buf"
+                                                         ,(current-buffer))
+                                                   '("--override=*:test-lang"))
+                       => "test-val"))
+              (should (equal "test-val"
+                             (difftastic--file-buffer "test-lang")))))
+          (set-buffer-modified-p nil))
+      (when (and temp-file (file-exists-p temp-file))
+        (delete-file temp-file)))))
+
+(ert-deftest difftastic--file-buffer:buffer-not-modified ()
+  (let (temp-file)
+    (unwind-protect
+        (ert-with-test-buffer ()
+          (setq temp-file (make-temp-file "difftastic-t"))
+          (write-file temp-file)
+          (should-not (buffer-modified-p))
+          (let ((data (cadr
+                       (should-error
+                        (difftastic--file-buffer "test-lang")
+                        :type 'user-error))))
+            (should
+             (equal data
+                    "Buffer has the same contents as a visited file"))))
+      (when (and temp-file (file-exists-p temp-file))
+        (delete-file temp-file)))))
+
+
+(ert-deftest difftastic-file-buffer:basic ()
+  (mocklet (((buffer-file-name) => "test-file-name")
+            ((difftastic--file-buffer nil)))
+    (difftastic-file-buffer)))
+
+(ert-deftest difftastic-file-buffer:basic-with-lang-override ()
+  (mocklet (((buffer-file-name) => "test-file-name")
+            ((difftastic--file-buffer "test-lang")))
+    (difftastic-file-buffer "test-lang")))
+
+(ert-deftest difftastic-file-buffer:interactive ()
+  (mocklet (((buffer-file-name) => "test-file-name")
+            ((difftastic--file-buffer-args))
+            ((difftastic--file-buffer nil)))
+    (call-interactively #'difftastic-file-buffer)))
+
+(ert-deftest difftastic-file-buffer:interactive-with-lang-override ()
+  (let ((current-prefix-arg '(4)))
+    (mocklet (((buffer-file-name) => "test-file-name")
+              ((difftastic--file-buffer-args) => '("test-lang"))
+              ((difftastic--file-buffer "test-lang")))
+      (call-interactively #'difftastic-file-buffer))))
+
+(ert-deftest difftastic-file-buffer:basic-with-double-prefix ()
+  (let ((current-prefix-arg '(16)))
+    (mocklet (((buffer-file-name) => "test-file-name")
+              (difftastic--file-buffer not-called)
+              ((difftastic--with-extra-arguments nil
+                                                 #'difftastic--file-buffer)))
+      (call-interactively #'difftastic-file-buffer))))
+
+(ert-deftest difftastic-file-buffer:buffer-not-visiting-a-file ()
+  (mocklet (((buffer-file-name))
+            ((buffer-name) => "test-buffer-name"))
+    (let ((data (cadr
+                 (should-error
+                  (difftastic-file-buffer)
+                  :type 'user-error))))
+      (should
+       (equal data
+              (concat "Buffer [test-buffer-name] is not visiting a file"))))))
+
+
 (ert-deftest difftastic--dired-diff:basic ()
   (mocklet (((dired-diff "test-file")))
     (difftastic--dired-diff "test-file" nil)))

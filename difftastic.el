@@ -250,6 +250,9 @@
 ;; - `difftastic-buffers' - show the result of `difft BUFFER-A BUFFER-B'.
 ;;   Language is guessed based on buffers modes.  When called with prefix
 ;;   argument it will ask for language to use.
+;; - `difftastic-file-bufer' - show the result of =difft BUFFER BUFFER-FILE.
+;;   Language is guessed based on buffer mode.  When called with prefix
+;;   argument it will ask for language to use.
 ;; - `difftastic-dired-diff' - same as `dired-diff', but with
 ;;   `difftastic-files' instead of the built-in `diff'.
 ;; - `difftastic-git-diff-range' - transform `ARGS' for difftastic and show
@@ -2595,6 +2598,48 @@ arguments for difftastic call."
     (if (eq file 'interactive)
         (call-interactively #'dired-diff)
       (funcall #'dired-diff file))))
+
+(defun difftastic--file-buffer-args ()
+  "Return arguments for `difftastic-file-buffer'."
+  (when (equal current-prefix-arg '(4))
+    (let* ((languages (difftastic--get-languages))
+           (suggested (difftastic--make-suggestion
+                       languages
+                       (current-buffer))))
+      (list (completing-read "Language: " languages nil t suggested)))))
+
+(defun difftastic--file-buffer (lang-or-args)
+  ;; checkdoc-params: (lang-or-args)
+  "Implementation of `difftastitc-file-buffer', which see."
+  (if (buffer-modified-p (current-buffer))
+      (difftastic--with-file-bufs ((file-A (cons (buffer-file-name) nil))
+                                   (file-buf-B (cons (difftastic--make-temp-file
+                                                      "buffer-content"
+                                                      (current-buffer))
+                                                     (current-buffer))))
+        (difftastic--files-internal
+         (get-buffer-create
+          (concat "*difftastic file buffer " (buffer-name) "*"))
+         file-A
+         file-buf-B
+         (difftastic--format-override-arg lang-or-args)))
+    (user-error "Buffer has the same contents as a visited file")))
+
+;;;###autoload
+(defun difftastic-file-buffer (&optional lang-override)
+  "Compare current buffer with its visiting file.
+Optionally, provide a LANG-OVERRIDE to override language used.  See
+\\='difft --list-languages\\=' for language list.  When function is
+called with a prefix arg then ask for language before running
+difftastic.  When called with double prefix argument ask for extra
+arguments for difftastic call."
+  (interactive (difftastic--file-buffer-args))
+  (if (buffer-file-name)
+      (if (equal current-prefix-arg '(16))
+          (difftastic--with-extra-arguments lang-override
+                                            #'difftastic--file-buffer)
+        (difftastic--file-buffer lang-override))
+    (user-error "Buffer [%s] is not visiting a file" (buffer-name))))
 
 ;;;###autoload
 (defun difftastic-dired-diff (file &optional lang-override)

@@ -1,3 +1,16 @@
+;; -*- mode: lisp-data -*-
+;; Until Emacs-29
+
+;;; Commentary:
+;;
+;; This is a Cask file for Emacs-28.  It is needed, since `forge' is not
+;; installable on Emacs-28. Example usage:
+;;
+;; cask eval "(progn
+;;              (require 'cask)
+;;              (let ((cask-filename \"Cask-28\"))
+;;                (cask-install (cask-setup \"~/gh/pkryger/difftastic.el\"))))"
+
 (source gnu)
 (source melpa)
 
@@ -7,7 +20,6 @@
  (depends-on "org" "9.7.17")
  (depends-on "org-commentary"
              :git "https://github.com/pkryger/org-commentary.el.git")
- (depends-on "forge")
  (depends-on "package-lint")
  (depends-on "relint")
  (depends-on "checkdoc-batch"

@@ -4,8 +4,21 @@ CASK_DIR := $(shell cask package-directory)
 files = $$(cask files | grep -Ev 'difftastic-(pkg|autoloads).el')
 test_files = $(wildcard test/difftastic*.t.el)
 
-$(CASK_DIR): Cask
-	cask install
+cask_filename = $(or $(CASK_FILENAME),Cask) # Until Emacs-28
+
+cask-install:
+	if [ -z "${CASK_FILENAME}" ]; then \
+       cask install; \
+    else \
+       cask eval "(progn \
+                    (require 'cask) \
+                    (let ((cask-filename \"${CASK_FILENAME}\")) \
+                      (cask-install (cask-setup \"${GITHUB_WORKSPACE}\"))))"; \
+    fi
+
+$(CASK_DIR): $(cask_filename)
+    # Since Emacs-29: cask install
+	$(MAKE) cask-install
 	@touch $(CASK_DIR)
 
 .PHONY: cask

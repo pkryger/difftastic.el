@@ -231,8 +231,8 @@
 ;; General Usage
 ;; ~~~~~~~~~~~~~
 ;;
-;; The following commands are meant to help invoking `difftastic' depending on
-;; context and desired outcome.
+;; The following commands and functions are meant to help invoking
+;; `difftastic' depending on context and desired outcome.
 ;;
 ;; - `difftastic-magit-diff' - show the result of `git diff ARGS -- FILES'
 ;;   with `difftastic'.  This is the main entry point for DWIM action, so it
@@ -244,6 +244,12 @@
 ;;   visited in the current buffer with `difftastic'.  When the buffer visits
 ;;   a blob, then show the respective commit.  When the buffer visits a file,
 ;;   then show the differences between `HEAD' and the working tree.
+;; - `difftastic-forge-pullreq-show-diff' - show the result of `git diff
+;;     BASE...HEAD' with `difftastic'.  When buffer is a `forge' pull request
+;;     buffer, of point is at a pull-request, then show diff for that pull
+;;     request.  Otherwise, ask for pull request branches to compare.
+;; - `difftastic-forge-create-pulreq-show-diff' - show diff for a new pull
+;;   request.  This has been designed to be used in `forge-edit-post-hook'.
 ;; - `difftastic-files' - show the result of `difft FILE-A FILE-B'.  When
 ;;   called with prefix argument it will ask for language to use, instead of
 ;;   relaying on `difftastic''s detection mechanism.
@@ -483,6 +489,8 @@
 
 (eval-when-compile
   (require 'compat))
+
+(require 'forge nil t)
 
 (defgroup difftastic nil
   "Integration with difftastic."
@@ -2228,6 +2236,74 @@ difftastic call."
   (if (equal current-prefix-arg '(16))
       (difftastic--with-extra-arguments nil #'difftastic--magit-show rev)
     (difftastic--magit-show rev)))
+
+(declare-function forge--get-remote "ext:forge") ;; Until Emacs 29
+(declare-function forge--pullreq-ref "ext:forge") ;; Until Emacs 29
+(declare-function forge-create-pullreq--read-args "ext:forge") ;; Until Emacs 29
+(declare-function forge-current-topic "ext:forge") ;; Until Emacs 29
+(declare-function forge-pullreq-p "ext:forge") ;; Until Emacs 29
+(defvar forge--buffer-base-branch) ;; Until Emacs 29
+(defvar forge--buffer-head-branch) ;; Until Emacs 29
+(defvar forge--buffer-post-object) ;; Until Emacs 29
+(defvar forge-edit-post-action) ;; Until Emacs 29
+(eieio-declare-slots base-ref) ;; Until Emacs 29
+
+(defun difftastic--forge-pullreq-show-diff-args ()
+  "Return arguments for `difftastic--forge-pullreq-show-diff'."
+  (when (featurep 'forge)
+    (cond
+     ((member current-prefix-arg '((4) (64)))
+      (nreverse (forge-create-pullreq--read-args)))
+     ((and forge--buffer-base-branch forge--buffer-head-branch
+           (eq forge-edit-post-action 'new-pullreq))
+      (list forge--buffer-base-branch forge--buffer-head-branch))
+     ((when-let* ((topic (or (forge-current-topic)
+                             forge--buffer-post-object))
+                  ((forge-pullreq-p topic))
+                  (head (forge--pullreq-ref topic)))
+        (list (format "%s/%s" (forge--get-remote) (oref topic base-ref))
+              head))))))
+
+(defun difftastic--forge-pullreq-show-diff (&optional base head difftastic-args)
+  ;; checkdoc-params: (base head difftastic-args)
+  "Implementation of `difftastic-forge-pullreq-show-diff', which see."
+  (when (and base head)
+    (difftastic--git-diff-range (format "%s...%s" base head)
+                                nil
+                                nil
+                                difftastic-args)))
+
+;;;###autoload
+(defun difftastic-forge-create-pulreq-show-diff ()
+  "When creating a pull-request, show difftastic diff.
+This function is meant to be used in a `forge-edit-post-hook', for
+example as a replacement for (or in addition to)
+`forge-create-pulreq-show-diff'."
+  (when (eq (bound-and-true-p forge-edit-post-action)
+            'new-pullreq)
+    (difftastic--forge-pullreq-show-diff forge--buffer-base-branch
+                                         forge--buffer-head-branch)))
+
+;;;###autoload
+(defun difftastic-forge-pullreq-show-diff (&optional base head)
+  "Show the result of \\='git diff BASE..HEAD\\=' with difftastic.
+When called from a pull request buffer the BASE and HEAD branches are
+determined based on the current pull request.  When not called from a
+pull request buffer When called with a prefix argument force to ask for
+branches to compare.  When called with double prefix argument ask for
+extra arguments for difftastic call.  When called with triple prefix
+argument force to ask for branches to compare and ask for extra
+arguments for difftastic call."
+  (interactive (difftastic--forge-pullreq-show-diff-args))
+  (if (featurep 'forge)
+      (if (member current-prefix-arg '((16) (64)))
+          (difftastic--with-extra-arguments
+           nil
+           #'difftastic--forge-pullreq-show-diff
+           base
+           head)
+        (difftastic--forge-pullreq-show-diff base head))
+    (user-error "Package forge is not available")))
 
 (defun difftastic--goto-line-col-in-chunk (line col)
   "Goto LINE and COLUMN in a `difftastic' buffer.

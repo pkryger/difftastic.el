@@ -220,8 +220,8 @@ Or, if you use =use-package=:
 :CUSTOM_ID: general-usage
 :END:
 
-The following commands are meant to help invoking =difftastic= depending on
-context and desired outcome.
+The following commands and functions are meant to help invoking =difftastic=
+depending on context and desired outcome.
 
 - =difftastic-magit-diff= - show the result of =git diff ARGS -- FILES= with
   =difftastic=.  This is the main entry point for DWIM action, so it tries to
@@ -233,6 +233,12 @@ context and desired outcome.
   in the current buffer with =difftastic=.  When the buffer visits a blob, then
   show the respective commit.  When the buffer visits a file, then show the
   differences between ~HEAD~ and the working tree.
+- =difftastic-forge-pullreq-show-diff= - show the result of =git diff
+  BASE...HEAD= with =difftastic=.  When buffer is a =forge= pull request
+  buffer, of point is at a pull-request, then show diff for that pull request.
+  Otherwise, ask for pull request branches to compare.
+- =difftastic-forge-create-pulreq-show-diff= - show diff for a new pull
+  request.  This has been designed to be used in =forge-edit-post-hook=.
 - =difftastic-files= - show the result of =difft FILE-A FILE-B=.  When called
   with prefix argument it will ask for language to use, instead of relaying on
   =difftastic='s detection mechanism.

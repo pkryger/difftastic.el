@@ -54,24 +54,48 @@ jobs:
         version: ${{ matrix.emacs_version }}
     - uses: actions/checkout@v4
 
+    - name: Determine Cask filename # Until Emacs-28
+      id: cask-filename
+      run: |
+        if [[ "${{ matrix.emacs_version }}" == "28."* ]]; then
+          echo "value=Cask-28" >> "$GITHUB_OUTPUT"
+        else
+          echo "value=Cask" >> "$GITHUB_OUTPUT"
+        fi
+
     - uses: pkryger/setup-cached-cask@main
       with:
         emacs-version: ${{ matrix.emacs_version }}
+        cask-filename: ${{ steps.cask-filename.outputs.value }} # Until Emacs-28
 
     - name: Install dependencies
-      run: 'cask install'
+      run: 'make cask-install' # Since Emacs-29: cask install
+      env:
+        CASK_FILENAME: ${{ steps.cask-filename.outputs.value }} # Until Emacs-28
     - name: Byte compation
       run: 'make bytecompile'
+      env:
+        CASK_FILENAME: ${{ steps.cask-filename.outputs.value }} # Until Emacs-28
     - name: 'Lint: package-lint'
       run: 'make lint'
+      env:
+        CASK_FILENAME: ${{ steps.cask-filename.outputs.value }} # Until Emacs-28
     - name: 'Lint: relint'
       run: 'make relint'
+      env:
+        CASK_FILENAME: ${{ steps.cask-filename.outputs.value }} # Until Emacs-28
     - name: 'Lint: checkdoc'
       run: 'make checkdoc'
+      env:
+        CASK_FILENAME: ${{ steps.cask-filename.outputs.value }} # Until Emacs-28
     - name: 'Lint: commentary'
       run: 'make commentary'
+      env:
+        CASK_FILENAME: ${{ steps.cask-filename.outputs.value }} # Until Emacs-28
     - name: Run tests
       run: 'make test'
+      env:
+        CASK_FILENAME: ${{ steps.cask-filename.outputs.value }} # Until Emacs-28
 
     - name: Publish test report
       uses: mikepenz/action-junit-report@v5

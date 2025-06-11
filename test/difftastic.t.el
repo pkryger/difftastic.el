@@ -5738,6 +5738,154 @@ test/difftastic.t.el --- Emacs Lisp
       (call-interactively #'difftastic-magit-show))))
 
 
+(ert-deftest difftastic--forge-pullreq-show-diff-args:single-prefix-argument ()
+  :expected-result (if (version< "29" emacs-version) ;; since Emacs-29
+                       :passed
+                     :failed)
+  (mocklet (((forge-create-pullreq--read-args) => '("head" "base")))
+    (let ((current-prefix-arg '(4)))
+      (should (equal '("base" "head")
+                     (difftastic--forge-pullreq-show-diff-args))))))
+
+(ert-deftest difftastic--forge-pullreq-show-diff-args:triple-prefix-argument ()
+  :expected-result (if (version< "29" emacs-version) ;; since Emacs-29
+                       :passed
+                     :failed)
+  (mocklet (((forge-create-pullreq--read-args) => '("head" "base")))
+    (let ((current-prefix-arg '(64)))
+      (should (equal '("base" "head")
+                     (difftastic--forge-pullreq-show-diff-args))))))
+
+(ert-deftest difftastic--forge-pullreq-show-diff-args:new-pullreq-with-base-and-head ()
+  :expected-result (if (version< "29" emacs-version) ;; since Emacs-29
+                       :passed
+                     :failed)
+  (let ((forge--buffer-base-branch "base")
+        (forge--buffer-head-branch "head")
+        (forge-edit-post-action 'new-pullreq))
+    (ignore forge--buffer-base-branch ;; until Emacs-29
+            forge--buffer-head-branch
+            forge-edit-post-action)
+    (should (equal '("base" "head")
+                   (difftastic--forge-pullreq-show-diff-args)))))
+
+
+(ert-deftest difftastic--forge-pullreq-show-diff-args:current-topic ()
+  :expected-result (if (version< "29" emacs-version) ;; since Emacs-29
+                       :passed
+                     :failed)
+  (let ((topic (when (fboundp 'forge-pullreq) ;; until Emacs-29
+                 (forge-pullreq))))
+    (oset topic base-ref "test-ref")
+    (eval
+     `(mocklet (((forge-current-topic) => ,topic)
+                ((forge--get-remote) => "test-remote")
+                ((forge--pullreq-ref ,topic) => "test-pullreq-ref"))
+        (should (equal '("test-remote/test-ref" "test-pullreq-ref")
+                       (difftastic--forge-pullreq-show-diff-args)))))))
+
+(ert-deftest difftastic--forge-pullreq-show-diff-args:buffer-post-object ()
+  :expected-result (if (version< "29" emacs-version) ;; since Emacs-29
+                       :passed
+                     :failed)
+  (let* ((topic (when (fboundp 'forge-pullreq) ;; until Emacs-29
+                  (forge-pullreq)))
+         (forge--buffer-post-object topic))
+    (ignore forge--buffer-post-object) ;; until Emacs-29
+    (oset topic base-ref "test-ref")
+    (eval
+     `(mocklet ((forge-current-topic)
+                ((forge--get-remote) => "test-remote")
+                ((forge--pullreq-ref ,topic) => "test-pullreq-ref"))
+        (should (equal '("test-remote/test-ref" "test-pullreq-ref")
+                       (difftastic--forge-pullreq-show-diff-args)))))))
+
+
+(ert-deftest difftastic--forge-pullreq-show-diff:basic ()
+  (mocklet (((difftastic--git-diff-range "base...head" nil nil nil)))
+    (difftastic--forge-pullreq-show-diff "base" "head")))
+
+(ert-deftest difftastic--forge-pullreq-show-diff:basic-with-args ()
+  (mocklet (((difftastic--git-diff-range "base...head" nil nil "test-args")))
+    (difftastic--forge-pullreq-show-diff "base" "head" "test-args")))
+
+(ert-deftest difftastic--forge-pullreq-show-diff:no-head ()
+  (mocklet ((difftastic--git-diff-range not-called))
+    (difftastic--forge-pullreq-show-diff "base")))
+
+(ert-deftest difftastic--forge-pullreq-show-diff:no-base ()
+  (mocklet ((difftastic--git-diff-range not-called))
+    (difftastic--forge-pullreq-show-diff nil "head")))
+
+(ert-deftest difftastic--forge-pullreq-show-diff:no-base-no-head ()
+  (mocklet ((difftastic--git-diff-range not-called))
+    (difftastic--forge-pullreq-show-diff nil nil "test-args")))
+
+
+(ert-deftest difftastic-forge-create-pulreq-show-diff:basic ()
+  :expected-result (if (version< "29" emacs-version) ;; since Emacs-29
+                       :passed
+                     :failed)
+  (let ((forge--buffer-base-branch "base")
+        (forge--buffer-head-branch "head")
+        (forge-edit-post-action 'new-pullreq))
+    (ignore forge--buffer-base-branch ;; until Emacs-29
+            forge--buffer-head-branch
+            forge-edit-post-action)
+    (mocklet (((difftastic--forge-pullreq-show-diff "base" "head")))
+      (difftastic-forge-create-pulreq-show-diff))))
+
+(ert-deftest difftastic-forge-create-pulreq-show-diff:not-new-pullreq ()
+  :expected-result (if (version< "29" emacs-version) ;; since Emacs-29
+                       :passed
+                     :failed)
+  (let ((forge--buffer-base-branch "base")
+        (forge--buffer-head-branch "head")
+        (forge-edit-post-action 'not-new-pullreq))
+    (ignore forge--buffer-base-branch ;; until Emacs-29
+            forge--buffer-head-branch
+            forge-edit-post-action)
+    (mocklet ((difftastic--forge-pullreq-show-diff not-called))
+      (difftastic-forge-create-pulreq-show-diff))))
+
+
+(ert-deftest difftastic-forge-pullreq-show-diff:basic ()
+  (skip-unless (version< "29" emacs-version)) ;; Since Emacs-29
+  (mocklet (((difftastic--forge-pullreq-show-diff-args) => '("base" "head"))
+            ((difftastic--forge-pullreq-show-diff "base" "head")))
+    (call-interactively #'difftastic-forge-pullreq-show-diff)))
+
+(ert-deftest difftastic-forge-pullreq-show-diff:single-prefix-arg ()
+  (skip-unless (version< "29" emacs-version)) ;; Since Emacs-29
+  (let ((current-prefix-arg '(4)))
+    (mocklet (((difftastic--forge-pullreq-show-diff-args) => '("base" "head"))
+              ((difftastic--forge-pullreq-show-diff "base" "head")))
+      (call-interactively #'difftastic-forge-pullreq-show-diff))))
+
+(ert-deftest difftastic-forge-pullreq-show-diff:double-prefix-arg ()
+  (skip-unless (version< "29" emacs-version)) ;; Since Emacs-29
+  (let ((current-prefix-arg '(16)))
+    (mocklet (((difftastic--forge-pullreq-show-diff-args) => '("base" "head"))
+              ((difftastic--with-extra-arguments
+                nil #'difftastic--forge-pullreq-show-diff "base" "head")))
+      (call-interactively #'difftastic-forge-pullreq-show-diff))))
+
+(ert-deftest difftastic-forge-pullreq-show-diff:triple-prefix-arg ()
+  (skip-unless (version< "29" emacs-version)) ;; Since Emacs-29
+  (let ((current-prefix-arg '(64)))
+    (mocklet (((difftastic--forge-pullreq-show-diff-args) => '("base" "head"))
+              ((difftastic--with-extra-arguments
+                nil #'difftastic--forge-pullreq-show-diff "base" "head")))
+      (call-interactively #'difftastic-forge-pullreq-show-diff))))
+
+(ert-deftest difftastic-forge-pullreq-show-diff:error-when-no-forge ()
+  (mocklet (((featurep 'forge)))
+    (let* ((text-quoting-style 'straight)
+           (data
+            (cadr (should-error (difftastic-forge-pullreq-show-diff)))))
+      (should (equal data "Package forge is not available")))))
+
+
 (ert-deftest difftastic--goto-line-col-in-chunk:single-column ()
   (ert-with-test-buffer ()
     (insert "1 1 foo

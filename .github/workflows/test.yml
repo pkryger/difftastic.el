@@ -53,9 +53,22 @@ jobs:
       with:
         version: ${{ matrix.emacs_version }}
     - uses: actions/checkout@v4
-    - uses: cask/setup-cask@master
+
+    - name: Setup cask
+      uses: cask/setup-cask@master
       with:
         version: snapshot
+    - name: 'Cache: get keys'
+      if: ${{ matrix.emacs_version != 'snapshot' }}
+      id: get-cache-keys
+      run: |
+        echo CASK_KEY=$(cask emacs -batch --load .github/workflows/cask-cache-hash.el --funcall cask-cache-hash) >> "$GITHUB_OUTPUT"
+    - name: 'Cache: cask packages'
+      if: ${{ matrix.emacs_version != 'snapshot' }}
+      uses: actions/cache@v4
+      with:
+        path: .cask
+        key: cask-packages-${{ steps.get-cache-keys.outputs.CASK_KEY }}
 
     - name: Install dependencies
       run: 'cask install'

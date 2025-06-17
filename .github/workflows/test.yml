@@ -62,7 +62,13 @@ jobs:
       if: ${{ matrix.emacs_version != 'snapshot' }}
       id: get-cache-keys
       run: |
-        echo "CASK_KEY=$(cask emacs -batch --load .github/workflows/cask-cache-hash.el --funcall cask-cache-hash)" >> "$GITHUB_OUTPUT"
+        echo "CASK_KEY=$(if [ "${{ matrix.emacs_version }}" == "snapshot" ]; then
+                             git ls-remote https://github.com/purcell/nix-emacs-ci.git refs/heads/master \
+                                 | sed -e 's|[[:space:]]*refs/heads/master||' \
+                                 | tr -d '\n'
+                         else
+                             echo "${{ matrix.emacs_version }}"
+                         fi)-$(cask emacs -batch --load .github/workflows/cask-cache-hash.el --funcall cask-cache-hash)" >> "$GITHUB_OUTPUT"
     - name: 'Cache: cask packages'
       if: ${{ matrix.emacs_version != 'snapshot' }}
       uses: actions/cache@v4

@@ -62,7 +62,7 @@ jobs:
       if: ${{ matrix.emacs_version != 'snapshot' }}
       id: get-cache-keys
       run: |
-        echo CASK_KEY=$(cask emacs -batch --load .github/workflows/cask-cache-hash.el --funcall cask-cache-hash) >> "$GITHUB_OUTPUT"
+        echo "CASK_KEY=$(cask emacs -batch --load .github/workflows/cask-cache-hash.el --funcall cask-cache-hash)" >> "$GITHUB_OUTPUT"
     - name: 'Cache: cask packages'
       if: ${{ matrix.emacs_version != 'snapshot' }}
       uses: actions/cache@v4

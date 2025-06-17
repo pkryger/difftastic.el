@@ -60,33 +60,13 @@
 (defun cask-cache-hash ()
   "Calculate hash for a cask install in current git repository.
 The hash is a sha256 of all dependencies that would be installed from
-archives, including their would be installed versions, concatenated with
-variable `emacs-version'.  This is to allow different Emacs versions
-install a different set of dependencies from exactly the same archives
-snapshots.  When variable `emacs-version' consists of 3 or more numbers,
-it is a developmen version of Emacs and installed packages may differ
-between different builds.  Using `current-time-string' to provide more
-unique-ness."
+archives, including their would be installed versions."
   (let* ((default-directory (string-trim
                              (shell-command-to-string
                               "git rev-parse --show-toplevel")))
          (bundle (cask-setup default-directory))
-         (packages (cask-cache-hash--packages-to-install bundle))
-         (emacs (format "emacs-%s%s"
-                        emacs-version
-                        ;; Adding current time such that hash is unique(ish)
-                        ;; when `emacs-version' consists of 3 (or more)
-                        ;; numbers.
-                        (if (string-match (rx string-start
-                                              (one-or-more digit)
-                                              (>= 2 "." (one-or-more digit))
-                                              string-end)
-                                          emacs-version)
-                            (format "%s" (current-time-string))
-                          ""))))
-    (princ (secure-hash 'sha256
-                        (format "%S"
-                                (cons emacs packages))))))
+         (packages (cask-cache-hash--packages-to-install bundle)))
+    (princ (secure-hash 'sha256 (format "%S"  packages)))))
 
 (provide 'cask-cache-hash)
 

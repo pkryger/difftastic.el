@@ -392,17 +392,24 @@
 
 (ert-deftest difftastic--build-git-process-environment:without-difftastic-args ()
   (should (equal
-           (format "GIT_EXTERNAL_DIFF=%s --color=always --width=42 --background=%s"
+           (format "GIT_EXTERNAL_DIFF=%s %s %s %s"
                    difftastic-executable
-                   (frame-parameter nil 'background-mode))
+                   (shell-quote-argument "--color=always")
+                   (shell-quote-argument "--width=42")
+                   (shell-quote-argument (format "--background=%s"
+                                                 (frame-parameter nil 'background-mode))))
            (car (difftastic--build-git-process-environment 42)))))
 
 (ert-deftest difftastic--build-git-process-environment:with-difftastic-args ()
   (should (equal
            (format
-            "GIT_EXTERNAL_DIFF=%s --color=always --width=42 --background=%s --override=*:C++"
+            "GIT_EXTERNAL_DIFF=%s %s %s %s %s"
             difftastic-executable
-            (frame-parameter nil 'background-mode))
+            (shell-quote-argument "--color=always")
+            (shell-quote-argument "--width=42")
+            (shell-quote-argument (format "--background=%s"
+                                          (frame-parameter nil 'background-mode)))
+            (shell-quote-argument "--override=*:C++"))
            (car
             (difftastic--build-git-process-environment
              42
@@ -411,8 +418,12 @@
 (ert-deftest difftastic--build-git-process-environment:with-difftastic-args-override ()
   (should (equal
            (format
-            "GIT_EXTERNAL_DIFF=%s --color=foo --width=bar --background=baz --override=*:Emacs\\ Lisp"
-            difftastic-executable)
+            "GIT_EXTERNAL_DIFF=%s %s %s %s %s"
+            difftastic-executable
+            (shell-quote-argument "--color=foo")
+            (shell-quote-argument "--width=bar")
+            (shell-quote-argument "--background=baz")
+            (shell-quote-argument "--override=*:Emacs Lisp"))
            (car
             (difftastic--build-git-process-environment
              42

@@ -1658,8 +1658,7 @@ It adds \\='--color=always\\=', \\='--background=(light|dark)\\=', and
 The DIFFTASTIC-ARGS is a list of extra arguments to pass to
 `difftastic-executable'."
   (let ((difftastic-args
-         (mapcar (lambda (arg)
-                   (replace-regexp-in-string (rx " ") "\\\\ " arg))
+         (mapcar #'shell-quote-argument
                  (difftastic--add-standard-args difftastic-args
                                                 requested-width))))
     (cons (format

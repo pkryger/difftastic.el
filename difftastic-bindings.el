@@ -195,7 +195,13 @@ or file (string) that defines the MAP."
      (("M-d" difftastic-magit-diff-buffer-file "Difftastic")))
     (((keymaps . ((dired-mode-map . dired))))
      .
-     (("M-=" difftastic-dired-diff))))
+     (("M-=" difftastic-dired-diff)))
+    (((prefixes . ((forge-post-menu "C-c" forge-post))))
+     .
+     (("C-M-d" difftastic-forge-pullreq-show-diff "Difftastic diff")))
+    (((keymaps . ((forge-post-mode-map . forge-post))))
+     .
+     (("C-c C-M-d" difftastic-forge-pullreq-show-diff))))
   "Define `difftastic' bindings.
 This variable defines all bindings together with prefixes and keymaps
 where they should be installed.  It is an alist where each entry in in a

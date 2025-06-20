@@ -6,6 +6,7 @@ test_files = $(wildcard test/difftastic*.t.el)
 
 cask_filename = $(or $(CASK_FILENAME),Cask) # Until Emacs-28
 
+.PHONY: cask-install
 cask-install:
 	if [ -z "${CASK_FILENAME}" ]; then \
        cask install; \

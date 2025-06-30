@@ -1896,11 +1896,7 @@ argument extracted from ARGS with the one from DIFFTASTIC-ARGS."
    '("Text")
    (cl-remove-if (lambda (line)
                    (string-match-p "^ \\*" line))
-                 (compat-call ;; Since Emacs-29
-                  string-split
-                  (shell-command-to-string
-                   (concat difftastic-executable " --list-languages"))
-                  "\n" t))))
+                 (process-lines difftastic-executable "--list-languages"))))
 
 (defclass difftastic--extra-arguments-prefix (transient-prefix)
   ())
@@ -2387,9 +2383,11 @@ difftastic call."
        (cl-remove-if-not
         (lambda (str)
           (string-match (rx string-start "*.") str))
-        (string-split
-         (shell-command-to-string
-          (concat difftastic-executable " --list-languages")))))))
+        (apply #'append
+               (mapcar (lambda (line)
+                         (compat-call string-split line)) ;; Since Emacs-29
+                       (process-lines
+                        difftastic-executable "--list-languages")))))))
     :test (lambda (lhs rhs)
             (eq (car lhs) (car rhs))))))
 

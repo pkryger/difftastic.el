@@ -124,6 +124,7 @@
 
 (ert-deftest difftastic--file-extension-for-mode:parse-output ()
   (let ((file "difft--list-languages.out")
+        (difftastic-executable "test-difftastic-executable")
         out)
     (should (or (file-exists-p file)
                 (file-exists-p (format "test/%s" file))))
@@ -131,9 +132,11 @@
                   file
                 (format "test/%s" file)))
     (eval
-     `(mocklet ((shell-command-to-string => (ert-with-test-buffer ()
-                                              (insert-file-contents ,out)
-                                              (buffer-string))))
+     `(mocklet (((process-lines ,difftastic-executable "--list-languages")
+                 => (ert-with-test-buffer ()
+                      (insert-file-contents ,out)
+                      (compat-call ;; Since Emacs-29
+                       string-split (buffer-string) "\n"))))
         ;; Hints for updating the test when difft output changes:
         ;; $ difft --list-languages > difft--list-languages.out
         ;; (insert (format "%S" (difftastic--get-languages)))
@@ -6060,6 +6063,7 @@ test/difftastic.t.el --- Emacs Lisp
 
 (ert-deftest difftastic--get-languages:parse-output ()
   (let ((file "difft--list-languages.out")
+        (difftastic-executable "test-difft-executable")
         out)
     (should (or (file-exists-p file)
                 (file-exists-p (format "test/%s" file))))
@@ -6067,9 +6071,11 @@ test/difftastic.t.el --- Emacs Lisp
                   file
                 (format "test/%s" file)))
     (eval
-     `(mocklet ((shell-command-to-string => (ert-with-test-buffer ()
-                                              (insert-file-contents ,out)
-                                              (buffer-string))))
+     `(mocklet (((process-lines ,difftastic-executable "--list-languages")
+                 => (ert-with-test-buffer ()
+                      (insert-file-contents ,out)
+                      (compat-call ;; Since Emacs-29
+                       string-split (buffer-string) "\n" t))))
         ;; Hints for updating the test when difft output changes:
         ;; $ difft --list-languages > difft--list-languages.out
         ;; (insert (format "%S" (difftastic--get-languages)))

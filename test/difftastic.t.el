@@ -495,16 +495,17 @@
   (let (file-buf)
     (unwind-protect
         (let ((metadata '((file-buf-test . ("test-file" . t)))))
-          (ert-with-test-buffer ()
-            (setq file-buf
-                  (difftastic--rerun-file-buf
-                   "test"
-                   (cons "test-file" (current-buffer))
-                   metadata))
-            (should-not (equal "test-file" (car file-buf)))
-            (should (file-exists-p (car file-buf)))
-            (should (equal file-buf
-                           (alist-get 'file-buf-test metadata)))))
+          (mocklet ((difftastic--file-extension-for-mode))
+            (ert-with-test-buffer ()
+              (setq file-buf
+                    (difftastic--rerun-file-buf
+                     "test"
+                     (cons "test-file" (current-buffer))
+                     metadata))
+              (should-not (equal "test-file" (car file-buf)))
+              (should (file-exists-p (car file-buf)))
+              (should (equal file-buf
+                             (alist-get 'file-buf-test metadata))))))
 
       (when (and (cdr file-buf) (file-exists-p (car file-buf)))
         (delete-file (car file-buf))))))
@@ -514,21 +515,22 @@
         (test-file (make-temp-file "difftastic-t")))
     (unwind-protect
         (let ((metadata '((file-buf-test . (test-file . t)))))
-          (ert-with-test-buffer ()
-            (set-visited-file-name test-file)
-            (should (buffer-modified-p))
-            (setq file-buf
-                  (difftastic--rerun-file-buf
-                   "test"
-                   (cons test-file (current-buffer))
-                   metadata
-                   test-file))
-            (should (buffer-modified-p))
-            (set-buffer-modified-p nil)
-            (should-not (equal test-file (car file-buf)))
-            (should (file-exists-p (car file-buf)))
-            (should (equal file-buf
-                           (alist-get 'file-buf-test metadata)))))
+          (mocklet ((difftastic--file-extension-for-mode))
+            (ert-with-test-buffer ()
+              (set-visited-file-name test-file)
+              (should (buffer-modified-p))
+              (setq file-buf
+                    (difftastic--rerun-file-buf
+                     "test"
+                     (cons test-file (current-buffer))
+                     metadata
+                     test-file))
+              (should (buffer-modified-p))
+              (set-buffer-modified-p nil)
+              (should-not (equal test-file (car file-buf)))
+              (should (file-exists-p (car file-buf)))
+              (should (equal file-buf
+                             (alist-get 'file-buf-test metadata))))))
 
       (when (and (cdr file-buf) (file-exists-p (car file-buf)))
         (delete-file (car file-buf)))

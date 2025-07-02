@@ -5,4 +5,6 @@
                             (alist-get 'pk/emacs-package projectile-project-types))
                    (setq projectile-project-type 'pk/emacs-package)))))
  (emacs-lisp-mode . ((indent-tabs-mode . nil)
-                     (flycheck-emacs-lisp-load-path . inherit))))))
+                     (flycheck-emacs-lisp-load-path . inherit)))
+ (org-mode . ((eval . (when (fboundp 'org-make-toc)
+                        (add-hook 'before-save-hook #'org-make-toc nil t))))))

@@ -517,7 +517,3 @@ please don't hesitate to reach out on the
 is highly appreciated.
 
 # LocalWords: MELPA DWIM
-
-# Local Variables:
-# before-save-hook: org-make-toc
-# End:

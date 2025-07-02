@@ -89,10 +89,12 @@ jobs:
       env:
         CASK_FILENAME: ${{ steps.cask-filename.outputs.value }} # Until Emacs-28
     - name: 'Lint: commentary'
+      if: ${{ ! startsWith(matrix.emacs_version, '28.') }}
       run: 'make commentary'
       env:
         CASK_FILENAME: ${{ steps.cask-filename.outputs.value }} # Until Emacs-28
     - name: 'Lint: checktoc'
+      if: ${{ ! startsWith(matrix.emacs_version, '28.') }}
       run: 'make checktoc'
       env:
         CASK_FILENAME: ${{ steps.cask-filename.outputs.value }} # Until Emacs-28

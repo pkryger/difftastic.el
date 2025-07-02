@@ -4,7 +4,12 @@
 ;;; Commentary:
 ;;
 ;; This is a Cask file for Emacs-28.  It is needed, since `forge' is not
-;; installable on Emacs-28. Example usage:
+;; installable on Emacs-28.  Also `org' has started to complain about
+;; `org-assert-version`, for example:
+;;
+;; Debugger entered--Lisp error: (invalid-function org-assert-version)
+;;
+;; Example usage:
 ;;
 ;; cask eval "(progn
 ;;              (require 'cask)
@@ -17,10 +22,6 @@
 (package-file "difftastic.el")
 
 (development
- (depends-on "org" "9.7.17")
- (depends-on "org-commentary"
-             :git "https://github.com/pkryger/org-commentary.el.git")
- (depends-on "org-make-toc")
  (depends-on "package-lint")
  (depends-on "relint")
  (depends-on "checkdoc-batch"

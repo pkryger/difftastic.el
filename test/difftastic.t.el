@@ -11,8 +11,7 @@
 (require 'ert-x)
 (require 'difftastic)
 (require 'el-mock)
-(require 'org)
-(require 'ox-ascii)
+(require 'treesit nil t)
 
 
 (ert-deftest difftastic--copy-tree:basic ()
@@ -47,7 +46,7 @@
 
 (ert-deftest difftastic--make-suggestion:basic ()
   (let ((languages '("Emacs Lisp" "C++" "Text"))
-        elisp-buffer c++-buffer org-buffer)
+        elisp-buffer c++-buffer difftastic-buffer)
     (ert-with-test-buffer (:name "elisp")
       (emacs-lisp-mode)
       (setq elisp-buffer (current-buffer))
@@ -62,9 +61,9 @@
                 (c++-ts-mode)))
           (c++-mode))
         (setq c++-buffer (current-buffer))
-        (ert-with-test-buffer (:name "org")
-          (org-mode)
-          (setq org-buffer (current-buffer))
+        (ert-with-test-buffer (:name "difftastic")
+          (difftastic-mode)
+          (setq difftastic-buffer (current-buffer))
 
           (should
            (string= "Emacs Lisp"
@@ -72,7 +71,7 @@
                                                  elisp-buffer)))
           (should-not
            (difftastic--make-suggestion languages
-                                        org-buffer))
+                                        difftastic-buffer))
 
           (should
            (string= "Emacs Lisp"
@@ -81,15 +80,15 @@
           (should
            (string= "Emacs Lisp"
                     (difftastic--make-suggestion languages
-                                                 elisp-buffer org-buffer)))
+                                                 elisp-buffer difftastic-buffer)))
           (should
            (string= "Emacs Lisp"
                     (difftastic--make-suggestion languages
-                                                 org-buffer elisp-buffer)))
+                                                 difftastic-buffer elisp-buffer)))
           (should
            (string= "C++"
                     (difftastic--make-suggestion languages
-                                                 c++-buffer org-buffer)))
+                                                 c++-buffer difftastic-buffer)))
           (should
            (string= "C++"
                     (difftastic--make-suggestion languages
@@ -97,10 +96,10 @@
           (should
            (string= "C++"
                     (difftastic--make-suggestion languages
-                                                 org-buffer c++-buffer)))
+                                                 difftastic-buffer c++-buffer)))
           (should-not
            (difftastic--make-suggestion languages
-                                        org-buffer org-buffer)))))))
+                                        difftastic-buffer difftastic-buffer)))))))
 
 
 (ert-deftest difftastic--transform-diff-arguments:basic ()

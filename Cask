@@ -7,6 +7,7 @@
  (depends-on "org" "9.7.17")
  (depends-on "org-commentary"
              :git "https://github.com/pkryger/org-commentary.el.git")
+ (depends-on "org-make-toc")
  (depends-on "forge")
  (depends-on "package-lint")
  (depends-on "relint")

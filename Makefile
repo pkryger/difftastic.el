@@ -57,6 +57,23 @@ commentary: cask
       --load org-commentary \
       --funcall org-commentary-check-batch
 
+.PHONY: checktoc
+checktoc: cask
+	cask emacs -batch \
+       --eval "(progn \
+                 (find-file \"README.org\") \
+                 (let ((before (buffer-string)) \
+                       (readme-buffer (current-buffer))) \
+                   (org-make-toc) \
+                   (when (not (equal before (buffer-string))) \
+                     (require 'diff) \
+                     (with-temp-buffer \
+                       (insert before) \
+                       (with-current-buffer \
+                         (diff-no-select (current-buffer) readme-buffer nil t) \
+                         (error \"Table of contens has not been updated\n%s\" \
+                                (buffer-string)))))))"
+
 .PHONY: test
 test: cask
 	cask emacs -batch \

@@ -464,11 +464,19 @@ bytecompile lint relint checkdoc commentary test~.
 :properties:
 :custom_id: documentation-authoring
 :end:
-This package uses
-[[https://github.com/pkryger/org-commentary.el][org-commentary.el]] (different
-from the one available on MELPA!) to generate and validate commentary section
-in =difftastic.el=.  Please see the package documentation for usage
-instructions.
+This package uses the following packages to help with documentation authoring:
+
+- [[https://github.com/pkryger/org-commentary.el][org-commentary.el]] (which is
+  different from the one available on MELPA!) to generate and validate
+  commentary section in =difftastic.el=.  Please see the package documentation
+  for usage instructions.
+
+- [[https://github.com/alphapapa/org-make-toc][org-make-toc]] to generate and
+  validate table of contents in the =README.org= file.
+
+Appropriate functions from both of these packages are added to
+=after-save-hook= and =before-save-hook= respectively, when packages are
+available in user's Emacs (see =dir-locals.el=).
 
 ** Acknowledgments                                                 :noexport:
 :properties:

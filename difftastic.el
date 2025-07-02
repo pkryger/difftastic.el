@@ -23,8 +23,11 @@
 
 ;;; Commentary:
 
-;; Description
-;; ===========
+;;                  ________________________________________
+;;
+;;                   DIFFTASTIC.EL - WRAPPER FOR DIFFTASTIC
+;;                  ________________________________________
+;;
 ;;
 ;; The `difftastic' Emacs package is designed to integrate [difftastic] - a
 ;; structural diff tool - into your Emacs workflow, enhancing your code review

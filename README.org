@@ -1,18 +1,14 @@
-#+STARTUP: showeverything
-#+STARTUP: literallinks
-#+OPTIONS: toc:nil num:nil author:nil
-* difftastic.el - Wrapper for difftastic
-:PROPERTIES:
-:CUSTOM_ID: difftastic.el---wrapper-for-difftastic
-:END:
-[[https://melpa.org/#/difftastic][https://melpa.org/packages/difftastic-badge.svg]]
-[[https://github.com/pkryger/difftastic.el/actions/workflows/test.yml][https://github.com/pkryger/difftastic.el/actions/workflows/test.yml/badge.svg]]
-[[https://coveralls.io/github/pkryger/difftastic.el?branch=main][https://coveralls.io/repos/github/pkryger/difftastic.el/badge.svg?branch=main]]
+#+title: difftastic.el - Wrapper for difftastic
+#+author: Przemysław Kryger
+#+language: en
+#+startup: showeverything
+#+startup: literallinks
+#+options: toc:nil num:nil author:nil
 
-** Description
-:PROPERTIES:
-:CUSTOM_ID: description
-:END:
+#+html: <a href="https://melpa.org/#/difftastic"><img alt="MELPA" src="https://melpa.org/packages/difftastic-badge.svg"/></a>
+#+html: <a href="https://github.com/pkryger/difftastic.el/actions/workflows/test.yml"><img alt="CI Tests" src="https://github.com/pkryger/difftastic.el/actions/workflows/test.yml/badge.svg"/></a>
+#+html: <a href="https://coveralls.io/github/pkryger/difftastic.el?branch=main"><img alt="Coveralls" src="https://coveralls.io/repos/github/pkryger/difftastic.el/badge.svg?branch=main"/></a>
+
 The =difftastic= Emacs package is designed to integrate
 [[https://github.com/wilfred/difftastic][difftastic]] - a structural diff
 tool - into your Emacs workflow, enhancing your code review and comparison
@@ -21,9 +17,9 @@ Emacs using faces from your user theme, ensuring consistency with your overall
 coding environment.
 
 ** Features
-:PROPERTIES:
-:CUSTOM_ID: features
-:END:
+:properties:
+:custom_id: features
+:end:
 - Configure faces to your likening.  By default =magit-diff-*= faces from your
   user them are used for consistent visual experience.
 - Chunks and file navigation using ~n~ / ~N~ (or ~M-n~) and ~p~ / ~P~ (or
@@ -37,13 +33,13 @@ coding environment.
 - Use double prefix argument to specify all =difftastic= arguments.
 
 ** Installation
-:PROPERTIES:
-:CUSTOM_ID: installation
-:END:
+:properties:
+:custom_id: installation
+:end:
 *** Installing from MELPA
-:PROPERTIES:
-:CUSTOM_ID: installing-from-melpa
-:END:
+:properties:
+:custom_id: installing-from-melpa
+:end:
 The easiest way to install and keep =difftastic= up-to-date is using Emacs'
 built-in package manager.  =difftastic= is available in the MELPA
 repository.  Refer to https://melpa.org/#/getting-started for how to install a
@@ -62,9 +58,9 @@ for example (in alphabetical order)
 
 
 *** Installing from GitHub
-:PROPERTIES:
-:CUSTOM_ID: installing-from-github
-:END:
+:properties:
+:custom_id: installing-from-github
+:end:
 The preferred method is to use built-in =use-package=.  Add the following to
 your Emacs configuration file (usually =~/.emacs= or =~/.emacs.d/init.el=):
 
@@ -112,9 +108,9 @@ managers that can generate autoloads when package is installed.
  #+end_src
 
 ** Configuration
-:PROPERTIES:
-:CUSTOM_ID: configuration
-:END:
+:properties:
+:custom_id: configuration
+:end:
 This section assumes you have =difftastic='s autoloads set up at Emacs startup.
 If you have installed =difftastic= using built-in =package= or =use-package=
 then you should be all set.
@@ -152,9 +148,9 @@ reasonably fast to load, while providing a mechanism to bind =difftastic=
 commands, such that they are available in relevant contexts.
 
 *** Manual Key Bindings Configuration
-:PROPERTIES:
-:CUSTOM_ID: manual_key_Bindings_configuration
-:END:
+:properties:
+:custom_id: manual_key_Bindings_configuration
+:end:
 
 If you don't want to use mechanism delivered by =difftastic-bindings-mode= you
 can write your own configuration.  As a starting point the following snippets
@@ -211,14 +207,14 @@ Or, if you use =use-package=:
 #+end_src
 
 ** Usage
-:PROPERTIES:
-:CUSTOM_ID: usage
-:END:
+:properties:
+:custom_id: usage
+:end:
 
 *** General Usage
-:PROPERTIES:
-:CUSTOM_ID: general-usage
-:END:
+:properties:
+:custom_id: general-usage
+:end:
 
 The following commands and functions are meant to help invoking =difftastic=
 depending on context and desired outcome.
@@ -254,9 +250,9 @@ depending on context and desired outcome.
   result of =git diff ARGS REV-OR-RANGE -- FILES= with =difftastic=.
 
 *** Specifying =difftastic= Arguments
-:PROPERTIES:
-:CUSTOM_ID: specifying-difftastic-arguments
-:END:
+:properties:
+:custom_id: specifying-difftastic-arguments
+:end:
 
 All [[#general-usage][above]] commands (and =difftastic-rerun= described
 [[#difftastic-mode-commands][below]]) support specification of =difft=
@@ -274,9 +270,9 @@ Note that in some cases arguments will take precedence over standard and
 computed values, for example =--width= is one such a argument.
 
 *** =difftastic-mode= Commands
-:PROPERTIES:
-:CUSTOM_ID: difftastic-mode-commands
-:END:
+:properties:
+:custom_id: difftastic-mode-commands
+:end:
 When a buffer shows =difftastic= output the following commands can be
 used.  Commands are followed by their default keybindings (in parenthesis).
 
@@ -321,13 +317,13 @@ used.  Commands are followed by their default keybindings (in parenthesis).
   documentation for =difftastic-diff-visit-worktree-file=.
 
 ** Customization
-:PROPERTIES:
-:CUSTOM_ID: customization
-:END:
+:properties:
+:custom_id: customization
+:end:
 *** Face Customization
-:PROPERTIES:
-:CUSTOM_ID: face-customization
-:END:
+:properties:
+:custom_id: face-customization
+:end:
 You can customize the appearance of =difftastic= output by adjusting the faces
 used for highlighting.  To customize a faces, use the following code snippet in
 your configuration:
@@ -359,9 +355,9 @@ your configuration:
 #+end_src
 
 *** Window Management
-:PROPERTIES:
-:CUSTOM_ID: window-management
-:END:
+:properties:
+:custom_id: window-management
+:end:
 The =difftastic= relies on the =difft= command line tool to produce an output
 that can be displayed in an Emacs buffer window.  In short: it runs the
 =difft=, converts ANSI codes into user defined colors and displays it in
@@ -384,25 +380,25 @@ interaction with =difft=:
   display the =difft= output.
 
 *** =difftastic-mode= Behavior
-:PROPERTIES:
-:CUSTOM_ID: difftastic-mode-behavior
-:END:
+:properties:
+:custom_id: difftastic-mode-behavior
+:end:
 - =difftastic-visibility-indicator= - controls whether and how to show
   hidden/visible chunk/files.
 - =difftastic-diff-visit-avoid-head-blob= - controls whether to avoid visiting
   blob of a =HEAD= revision when visiting file form a =difftastic-mode= buffer.
 
 ** Contributing
-:PROPERTIES:
-:CUSTOM_ID: contributing
-:END:
+:properties:
+:custom_id: contributing
+:end:
 Contributions are welcome! Feel free to submit issues and pull requests on the
 [[https://github.com/pkryger/difftastic.el][GitHub repository]].
 
 *** Testing
-:PROPERTIES:
-:CUSTOM_ID: testing
-:END:
+:properties:
+:custom_id: testing
+:end:
 When creating a pull request make sure all tests in
 [[file:test/difftastic.t.el]] are passing.  When adding a new functionality,
 please strive to add tests for it as well.
@@ -437,9 +433,9 @@ You can run all checks performed by Github Actions, by typing: ~make
 bytecompile lint relint checkdoc commentary test~.
 
 *** Documentation Autoring
-:PROPERTIES:
-:CUSTOM_ID: documentation-authoring
-:END:
+:properties:
+:custom_id: documentation-authoring
+:end:
 This package uses
 [[https://github.com/pkryger/org-commentary.el][org-commentary.el]] (different
 from the one available on MELPA!) to generate and validate commentary section
@@ -447,9 +443,9 @@ in =difftastic.el=.  Please see the package documentation for usage
 instructions.
 
 ** Acknowledgments                                                 :noexport:
-:PROPERTIES:
-:CUSTOM_ID: acknowledgments
-:END:
+:properties:
+:custom_id: acknowledgments
+:end:
 This package was inspired by the need for an integration of =difftastic= within
 Emacs, enhancing the code review process for developers.
 
@@ -466,22 +462,22 @@ This all has been strongly influenced by - a class in itself -
 Bernoulli.
 
 ** Similar Packages                                                :noexport:
-:PROPERTIES:
-:CUSTOM_ID: similar-packages
-:END:
+:properties:
+:custom_id: similar-packages
+:end:
 *** Diff ANSI
-:PROPERTIES:
-:CUSTOM_ID: diff-ansi
-:END:
+:properties:
+:custom_id: diff-ansi
+:end:
 There's a [[https://codeberg.org/ideasman42/emacs-diff-ansi][diff-ansi]]
 package available.  I haven't spent much time on it, but at a first glance it
 doesn't seem that it supports =difftastic= out of box.  Perhaps it is possible
 to configure it to support =difftastic= as a custom tool.
 
 ** License                                                         :noexport:
-:PROPERTIES:
-:CUSTOM_ID: license
-:END:
+:properties:
+:custom_id: license
+:end:
 This package is licensed under the
 [[https://www.gnu.org/licenses/gpl-3.0.en.html][GPLv3 License]].
 

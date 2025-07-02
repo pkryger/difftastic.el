@@ -117,8 +117,9 @@
 ;;
 ;; [Installing from MELPA] See section Installing from MELPA
 ;;
+;;
 ;; Manual Installation
-;; -------------------
+;; ~~~~~~~~~~~~~~~~~~~
 ;;
 ;; Note, that this method does not generate autoloads.  As a consequence it
 ;; will cause the whole package and it's dependencies (including `magit') to

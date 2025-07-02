@@ -25,7 +25,7 @@ coding environment.
 - [[#installation][Installation]]
   - [[#installing-from-melpa][Installing from MELPA]]
   - [[#installing-from-github][Installing from GitHub]]
-    - [[#manual-installation][Manual Installation]]
+  - [[#manual-installation][Manual Installation]]
 - [[#configuration][Configuration]]
   - [[#manual-key-bindings-configuration][Manual Key Bindings Configuration]]
 - [[#usage][Usage]]
@@ -115,7 +115,7 @@ installation from GitHub or a an existing checkout.  That could be
 =package-vc=, or any of package managers listed in
 [[#installing-from-melpa][Installing from MELPA]].
 
-**** Manual Installation
+*** Manual Installation
 :properties:
 :custom_id: manual-installation
 :end:

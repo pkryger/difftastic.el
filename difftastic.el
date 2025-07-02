@@ -316,7 +316,7 @@
 ;; - `difftastic-toggle-chunk' (`TAB' or `C-i') - toggle visibility of a chunk
 ;;   at point.  The point has to be in a chunk header.  When called with a
 ;;   prefix toggle all file chunks from the header to the end of the file.
-;;   See also `difftastic-hide-chunk' and `difftastic=show-chunk'.
+;;   See also `difftastic-hide-chunk' and `difftastic-show-chunk'.
 ;; - `forward-sexp' (`C-M-f') - move point to end of current chunk or to an
 ;;   end of next chunk when point is already at the end of the chunk.  When
 ;;   called with argument move by that many chunks.  Binding is from a default

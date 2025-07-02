@@ -16,6 +16,31 @@ experience.  This package automatically displays =difftastic='s output within
 Emacs using faces from your user theme, ensuring consistency with your overall
 coding environment.
 
+** Table of Contents                                               :noexport:
+:properties:
+:toc:      :include all
+:end:
+:contents:
+- [[#features][Features]]
+- [[#installation][Installation]]
+  - [[#installing-from-melpa][Installing from MELPA]]
+  - [[#installing-from-github][Installing from GitHub]]
+    - [[#manual-installation][Manual Installation]]
+- [[#configuration][Configuration]]
+  - [[#manual-key-bindings-configuration][Manual Key Bindings Configuration]]
+- [[#usage][Usage]]
+  - [[#general-usage][General Usage]]
+  - [[#specifying-difftastic-arguments][Specifying difftastic Arguments]]
+  - [[#difftastic-mode-commands][difftastic-mode Commands]]
+- [[#customization][Customization]]
+  - [[#face-customization][Face Customization]]
+  - [[#window-management][Window Management]]
+  - [[#difftastic-mode-behavior][difftastic-mode Behavior]]
+- [[#contributing][Contributing]]
+  - [[#testing][Testing]]
+  - [[#documentation-autoring][Documentation Autoring]]
+:end:
+
 ** Features
 :properties:
 :custom_id: features
@@ -492,3 +517,7 @@ please don't hesitate to reach out on the
 is highly appreciated.
 
 # LocalWords: MELPA DWIM
+
+# Local Variables:
+# before-save-hook: org-make-toc
+# End:

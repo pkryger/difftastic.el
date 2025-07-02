@@ -6,5 +6,8 @@
                    (setq projectile-project-type 'pk/emacs-package)))))
  (emacs-lisp-mode . ((indent-tabs-mode . nil)
                      (flycheck-emacs-lisp-load-path . inherit)))
- (org-mode . ((eval . (when (fboundp 'org-make-toc)
-                        (add-hook 'before-save-hook #'org-make-toc nil t))))))
+ (org-mode . ((eval . (progn
+                        (when (fboundp 'org-make-toc)
+                          (add-hook 'before-save-hook #'org-make-toc nil t))
+                        (when (fboundp 'org-commentary-update)
+                          (add-hook 'after-save-hook #'org-commentary-update nil t)))))))

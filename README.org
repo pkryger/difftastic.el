@@ -91,6 +91,9 @@ installation from GitHub or a an existing checkout.  That could be
 [[#installing-from-melpa][Installing from MELPA]].
 
 **** Manual Installation
+:properties:
+:custom_id: manual-installation
+:end:
 Note, that this method does not generate autoloads.  As a consequence it will
 cause the whole package and it's dependencies (including =magit=) to be loaded
 at startup.  If you want to avoid this, ensure autoloads set up on Emacs

@@ -6,15 +6,19 @@ test_files = $(wildcard test/difftastic*.t.el)
 
 cask_filename = $(or $(CASK_FILENAME),Cask) # Until Emacs-28
 
+define cask_install
+"(progn                                                         \
+   (require 'cask)                                              \
+   (let ((cask-filename \"${CASK_FILENAME}\"))                  \
+     (cask-install (cask-setup \"${GITHUB_WORKSPACE}\"))))";
+endef
+
 .PHONY: cask-install
 cask-install:
-	if [ -z "${CASK_FILENAME}" ]; then \
-       cask install; \
-    else \
-       cask eval "(progn \
-                    (require 'cask) \
-                    (let ((cask-filename \"${CASK_FILENAME}\")) \
-                      (cask-install (cask-setup \"${GITHUB_WORKSPACE}\"))))"; \
+	if [ -z "${CASK_FILENAME}" ]; then          \
+       cask install;                            \
+    else                                        \
+       cask eval $(cask_install)                \
     fi
 
 $(CASK_DIR): $(cask_filename)
@@ -27,52 +31,56 @@ cask: $(CASK_DIR)
 
 .PHONY: bytecompile
 bytecompile: cask
-	cask emacs -batch -L . -L test \
-      --eval "(setq byte-compile-error-on-warn t)" \
+	cask emacs -batch -L . -L test                  \
+      --eval "(setq byte-compile-error-on-warn t)"  \
       -f batch-byte-compile $(files) $(test_files)
 	(ret=$$? ; cask clean-elc ; rm -f test/*.elc ; exit $$ret)
 
 .PHONY: lint
 lint: cask
-	cask emacs -batch -L . \
-      --load package-lint \
-      --eval '(setq package-lint-main-file "difftastic.el")' \
+	cask emacs -batch -L .                                      \
+      --load package-lint                                       \
+      --eval '(setq package-lint-main-file "difftastic.el")'    \
       --funcall package-lint-batch-and-exit $(files)
 
 .PHONY: relint
 relint: cask
-	cask emacs -batch -L . -L test \
-      --load relint \
+	cask emacs -batch -L . -L test                  \
+      --load relint                                 \
       --funcall relint-batch $(files) $(test_files)
 
 .PHONY: checkdoc
 checkdoc: cask
-	cask emacs -batch -L . \
-      --load checkdoc-batch \
+	cask emacs -batch -L .                      \
+      --load checkdoc-batch                     \
       --funcall checkdoc-batch $(files)
 
 .PHONY: commentary
 commentary: cask
-	cask emacs -batch -L . \
-      --load org-commentary \
+	cask emacs -batch -L .                      \
+      --load org-commentary                     \
       --funcall org-commentary-check-batch
+
+define checktoc_batch
+"(progn                                                             \
+   (find-file \"README.org\")                                       \
+   (let ((before (buffer-string))                                   \
+         (readme-buffer (current-buffer)))                          \
+     (org-make-toc)                                                 \
+     (when (not (equal before (buffer-string)))                     \
+       (require 'diff)                                              \
+       (with-temp-buffer                                            \
+         (insert before)                                            \
+         (with-current-buffer                                       \
+           (diff-no-select (current-buffer) readme-buffer nil t)    \
+           (error \"Table of contens has not been updated\n%s\"     \
+                  (buffer-string)))))))"
+endef
 
 .PHONY: checktoc
 checktoc: cask
-	cask emacs -batch \
-       --eval "(progn \
-                 (find-file \"README.org\") \
-                 (let ((before (buffer-string)) \
-                       (readme-buffer (current-buffer))) \
-                   (org-make-toc) \
-                   (when (not (equal before (buffer-string))) \
-                     (require 'diff) \
-                     (with-temp-buffer \
-                       (insert before) \
-                       (with-current-buffer \
-                         (diff-no-select (current-buffer) readme-buffer nil t) \
-                         (error \"Table of contens has not been updated\n%s\" \
-                                (buffer-string)))))))"
+	cask emacs -batch                           \
+       --eval $(checktoc_batch)
 
 ifeq ($(RUNNER_DEBUG),1)
     define test_debug

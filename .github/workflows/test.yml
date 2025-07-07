@@ -103,6 +103,9 @@ jobs:
       env:
         CASK_FILENAME: ${{ steps.cask-filename.outputs.value }} # Until Emacs-28
 
+    - name: Install difftastic
+      run: nix profile install nixpkgs#difftastic
+
     - name: Publish test report
       uses: mikepenz/action-junit-report@v5
       if: success() || failure() # always run even if the previous step fails

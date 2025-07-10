@@ -1763,9 +1763,9 @@ Indicators are added up to the current line (exclusive)."
 
 (defun difftastic--run-command-filter (process string)
   "A process filter for `difftastic--run-command'.
-It applies ANSI colors with `apply-ansi-colors' using difftastic
-custom colors vectors.  The PROCESS and STRING are filter
-arguments, like in `make-process''s filter."
+It applies ANSI colors with `apply-ansi-colors' using difftastic custom
+colors vectors and add visibility indicators.  The PROCESS and STRING
+are filter arguments, like in `make-process''s filter, which see."
   (when-let* ((buffer (and string
                            (process-buffer process)))
               ((buffer-live-p buffer)))

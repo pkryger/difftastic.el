@@ -6793,17 +6793,17 @@ test/difftastic.t.el --- Emacs Lisp
                (difftastic-mode--do-exit #'exit-action))))))
 
 
-(ert-deftest difftascit-leave:basic ()
+(ert-deftest difftasitc-leave:basic ()
   (mocklet (((difftastic-mode--do-exit)))
     (funcall-interactively #'difftastic-leave)))
 
 
-(ert-deftest difftascit-quit:basic ()
+(ert-deftest difftasitc-quit:basic ()
   (mocklet (((difftastic-mode--do-exit 'kill-buffer)))
     (funcall-interactively #'difftastic-quit)))
 
 
-(ert-deftest difftascit-quit-all:basic ()
+(ert-deftest difftasitc-quit-all:basic ()
   (mocklet (((difftastic-mode--do-exit 'kill-buffer t)))
     (funcall-interactively #'difftastic-quit-all)))
 

@@ -6958,7 +6958,7 @@ test/difftastic.t.el --- Emacs Lisp
       (should (equal display-buffer-called 1)))))
 
 
-(ert-deftest difftstic--buffers-args-read-buffer-predicate ()
+(ert-deftest difftastic--buffers-args-read-buffer-predicate ()
   (let ((pred (difftastic--buffers-args-read-buffer-predicate "test-buffer-A")))
     (should (functionp pred))
     (should (funcall pred "test-buffer-B"))

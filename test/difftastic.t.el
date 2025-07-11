@@ -629,7 +629,11 @@
                                   (if suffix
                                       (format " %s"  (format suffix language))
                                     ""))))
-              (ert-with-test-buffer ()
+              (ert-with-test-buffer (:name (format "%s-%s-%s-%s"
+                                                   file
+                                                   chunk
+                                                   language
+                                                   suffix))
                 (difftastic-mode)
                 (should-not difftastic--chunk-regexp-chunk)
                 (should-not difftastic--chunk-regexp-file)

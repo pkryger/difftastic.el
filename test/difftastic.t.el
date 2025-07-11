@@ -6313,6 +6313,18 @@ test/difftastic.t.el --- Emacs Lisp
     (should (equal (oref obj value) '("*.1:test-language-1"
                                       "*.2:test-language-2")))))
 
+(ert-deftest difftastic--extra-arguments-override-init-value:transient-values ()
+  (let ((obj (transient-option))
+        (transient-values '((difftastic--with-extra-arguments
+                             . (("--override=" "*.1:test-language-1" "*.2:test-language-2")
+                                "--context=5"))))
+        difftastic--metadata)
+    (mocklet (((transient-scope) => '(nil
+                                      "test-fun" "test-args")))
+      (difftastic--extra-arguments-override-init-value obj))
+    (should (equal (oref obj value) '("*.1:test-language-1"
+                                      "*.2:test-language-2")))))
+
 (ert-deftest difftastic--extra-arguments-override-init-value:nil ()
   (let ((obj (transient-option))
         difftastic--metadata)
@@ -6331,6 +6343,17 @@ test/difftastic.t.el --- Emacs Lisp
   (let ((obj (difftastic--extra-arguments-prefix))
         (difftastic--metadata '((difftastic-args . ("--override=test-lang-2"
                                                     "--context=5")))))
+    (transient-init-value obj)
+    (should (slot-boundp obj 'value))
+    (should (equal '("--context=5")
+                   (oref obj value)))))
+
+(ert-deftest transient-init-value:transient-value ()
+  (let ((obj (difftastic--extra-arguments-prefix))
+        (transient-values '((difftastic--with-extra-arguments
+                             . (("--override=" "test-lang-1" "test-lang-2")
+                                "--context=5"))))
+        difftastic--metadata)
     (transient-init-value obj)
     (should (slot-boundp obj 'value))
     (should (equal '("--context=5")

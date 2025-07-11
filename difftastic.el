@@ -283,7 +283,8 @@
 ;; example, some - less commonly used - arguments are not visible in default
 ;; configuration.  Type `C-x l' in the menu to make them visible.  Type `C-h
 ;; C-h' for `difftastic' help (`man difft').  Any other `transient' commands
-;; should work as well.
+;; should work as well, for example saving values as described in Info node
+;; `(transient)Saving Values'.
 ;;
 ;; Note that in some cases arguments will take precedence over standard and
 ;; computed values, for example `--width' is one such a argument.
@@ -2037,16 +2038,23 @@ Otherwise, when the language override is a list use it removing
                         (mapcar (lambda (o)
                                   (string-remove-prefix "--override=" o))
                                 lang-override)))
-    (oset obj value (delq
-                     nil
-                     (mapcar
-                      (lambda (arg)
-                        (when (string-match (rx string-start
-                                                "--override="
-                                                (group (one-or-more any)))
-                                            arg)
-                          (match-string 1 arg)))
-                      (alist-get 'difftastic-args difftastic--metadata))))))
+    (oset obj value
+          (if-let* ((metadata (alist-get 'difftastic-args difftastic--metadata)))
+              (delq
+               nil
+               (mapcar
+                (lambda (arg)
+                  (when (string-match (rx string-start
+                                          "--override="
+                                          (group (one-or-more any)))
+                                      arg)
+                    (match-string 1 arg)))
+                metadata))
+            (cdr (cl-find-if (lambda (arg)
+                               (and (listp arg)
+                                    (equal "--override=" (car arg))))
+                             (alist-get 'difftastic--with-extra-arguments
+                                        transient-values)))))))
 
 (cl-defmethod transient-init-value ((obj difftastic--extra-arguments-prefix))
   "Set default values in OBJ from `difftastic-metadata'.
@@ -2054,10 +2062,17 @@ The \\='--override\\=' argument is handled in
 `difftastic--extra-arguments-override-init-value', which see."
   (oset obj value
         (cl-remove-if (lambda (arg)
-                        (string-match (rx string-start
-                                          "--override=")
-                                      arg))
-                      (alist-get 'difftastic-args difftastic--metadata))))
+                        (pcase arg
+                          ((pred stringp)
+                           (string-match (rx string-start
+                                             "--override=")
+                                         arg))
+                          ((pred listp)
+                           (equal "--override=" (car arg)))))
+                      (or
+                       (alist-get 'difftastic-args difftastic--metadata)
+                       (alist-get 'difftastic--with-extra-arguments
+                                  transient-values)))))
 
 (transient-define-infix difftastic--extra-arguments-override-infix ()
   :prompt #'difftastic--extra-arguments-override-prompt

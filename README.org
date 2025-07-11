@@ -291,8 +291,9 @@ command specific handling of a single prefix argument.
 In order to aid arguments entry and provide similarity to workflows in =magit=
 and =forge=, a =transient= prefix is used for the popup.  For example, some -
 less commonly used - arguments are not visible in default configuration.  Type
-~C-x l~ in the menu to make them visible.  Type ~C-h C-h~ for =difftastic=
-help (=man difft=).  Any other =transient= commands should work as well.
+~C-x l~ in the menu to make them visible.  Type ~C-h C-h~ for =difftastic= help
+(=man difft=).  Any other =transient= commands should work as well, for example
+saving values as described in Info node =(transient)Saving Values=.
 
 Note that in some cases arguments will take precedence over standard and
 computed values, for example =--width= is one such a argument.

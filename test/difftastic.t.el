@@ -595,6 +595,83 @@
         (delete-file (car file-buf))))))
 
 
+(ert-deftest difftastic--url-matcher:basic ()
+  ;; N.B. no / in punctuation [sic!]
+  (let ((difftastic-buttonize-urls t)
+        (punctuation '("" "." "," ":" ";" "?" "!" "@" "#" "$" "%" "^" "&" "*"
+                       "(" ")" "[" "]" "{" "}" "<" ">"
+                       "\"" "'" "-" "_" "~" "|" "\\")))
+    (dolist (prefix '("http://" "https://" "ftp://" "www."))
+      (dolist (domain '("gnu.org" "gnu-with-minus.org" "gnu_with_underscore.org"))
+        (dolist (suffix '("" "/" "/gnu/gnu.html" "/gnu/gnu.html?arg1=1&arg2=2" "/gnu/gnu.html#hash"))
+          (dolist (trailer-1 punctuation)
+            (dolist (trailer-2 punctuation)
+              (let ((address (concat prefix domain suffix))
+                    (trailer (concat trailer-1 trailer-2)))
+                (ert-with-test-buffer (:name (format "address: %s trailer: '%s' (no new line)"
+                                                     address trailer))
+                  (insert "test text\n")
+                  (insert address)
+                  (insert trailer)
+                  (goto-char (point-min))
+                  (should (difftastic--url-matcher (point-max)))
+                  (should (equal address (match-string-no-properties 1))))
+                (ert-with-test-buffer (:name (format "address: %s trailer: '%s' (new line)"
+                                                     address trailer))
+                  (insert "test text \n")
+                  (insert address)
+                  (insert trailer)
+                  (insert "\n")
+                  (goto-char (point-min))
+                  (should (difftastic--url-matcher (point-max)))
+                  (should (equal address (match-string-no-properties 1))))))))))))
+
+(ert-deftest difftastic--url-matcher:invalid-url ()
+  (let ((difftastic-buttonize-urls t))
+    (ert-with-test-buffer ()
+      (insert "brokenhttps://gnu.org")
+      (goto-char (point-min))
+      (should-not (difftastic--url-matcher (point-max))))))
+
+(ert-deftest difftastic--url-matcher:suppress ()
+  (let (difftastic-buttonize-urls)
+    (ert-with-test-buffer ()
+      (insert "https://gnu.org")
+      (goto-char (point-min))
+      (should-not (difftastic--url-matcher (point-max))))))
+
+(ert-deftest difftastic--url-matcher:beyond-limit ()
+  (let ((difftastic-buttonize-urls t))
+    (ert-with-test-buffer ()
+      (insert "foo")
+      (insert "https://gnu.org")
+      (goto-char (point-min))
+      (should-not (difftastic--url-matcher 4)))))
+
+
+(ert-deftest difftastic--make-url-button:match ()
+  (let ((difftastic-buttonize-urls t)
+        make-button-called)
+    (ert-with-test-buffer ()
+      (insert "before https://gnu.org, and after")
+      (goto-char (point-min))
+      (should (re-search-forward (rx (group "https://gnu.org")) nil t))
+      (cl-letf (((symbol-function #'make-button)
+                 (lambda (beg end &rest properties)
+                   (should (equal beg (match-beginning 1)))
+                   (should (equal end (match-end 1)))
+                   (should (equal "Click to open URL"
+                                  (plist-get properties 'help-echo)))
+                   (should (plist-get properties 'follow-link))
+                   (let ((action (plist-get properties 'action)))
+                     (should (functionp action))
+                     (mocklet (((browse-url "https://gnu.org")))
+                       (funcall action 'ignore)))
+                   (setq make-button-called t))))
+         (difftastic--make-url-button)
+         (should make-button-called)))))
+
+
 (ert-deftest difftastic--chunk-regexp:file-chunk-extracted ()
   (mocklet ((difftastic--get-languages => '("Text" "Emacs Lisp" "C++" "Java")))
     (dolist (file '("difftastic.el"

@@ -413,6 +413,8 @@ interaction with =difft=:
 :end:
 - =difftastic-visibility-indicator= - controls whether and how to show
   hidden/visible chunk/files.
+- =difftastic-buttonize-urls= - controls whether to transform URLs into buttons
+  in difftastic buffers.
 - =difftastic-diff-visit-avoid-head-blob= - controls whether to avoid visiting
   blob of a =HEAD= revision when visiting file form a =difftastic-mode= buffer.
 

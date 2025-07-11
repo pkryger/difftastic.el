@@ -409,6 +409,8 @@
 ;;
 ;; - `difftastic-visibility-indicator' - controls whether and how to show
 ;;   hidden/visible chunk/files.
+;; - `difftastic-buttonize-urls' - controls whether to transform URLs into
+;;   buttons in difftastic buffers.
 ;; - `difftastic-diff-visit-avoid-head-blob' - controls whether to avoid
 ;;   visiting blob of a `HEAD' revision when visiting file form a
 ;;   `difftastic-mode' buffer.
@@ -643,6 +645,11 @@ used to indicate a visible chunk."
                         (variable :tag "Visible chunk bitmap variable")))
   :group 'difftastic)
 
+(defcustom difftastic-buttonize-urls t
+  "When non-nil turn URLs into buttons in difftastic buffers."
+  :type 'boolean
+  :group 'difftastic)
+
 (defcustom difftastic-requested-window-width-function
   #'difftastic-requested-window-width
   "Function used to calculate a requested width for a first difftastic call."
@@ -800,13 +807,46 @@ See `advice-add' for explanation of SYMBOL, HOW, and FUNCTION arguments."
  "?"     #'describe-mode	; Maybe do as less instead? See above.
  "h"     #'describe-mode)
 
+(defun difftastic--url-matcher (limit)
+  "Match URL from point to LIMIT."
+  (when difftastic-buttonize-urls
+    (re-search-forward (rx word-start
+                           (group (or
+                                (seq (or (seq "http" (zero-or-one "s"))
+                                         "ftp")
+                                     "://")
+                                "www.")
+                               alphanumeric
+                               (+? (not space))
+                               (zero-or-one "/"))
+                           ;; alternative could be (any ".,:;?!\"')]}>")
+                           (zero-or-more punctuation)
+                           (or space line-end string-end))
+                       limit
+                       t)))
+
+(defun difftastic--make-url-button ()
+  "Make a URL button of the match data from `difftastic--url-matcher'."
+  (when-let* ((url (match-string-no-properties 1)))
+    (make-button (match-beginning 1)
+                 (match-end 1)
+                 'action (lambda (_)
+                           (browse-url url))
+                 'help-echo "Click to open URL"
+                 'follow-link t)))
+
 (define-derived-mode difftastic-mode fundamental-mode "difftastic"
   "Major mode to display output of difftastic.
 It uses many keybindings from `view-mode' to provide a familiar
 behaviour to view diffs."
   :group 'difftastic
   (setq buffer-read-only t)
-  (setq font-lock-defaults '(nil t))
+  (setq font-lock-defaults '(((difftastic--url-matcher
+                               (1 (prog1
+                                      nil
+                                    (difftastic--make-url-button))
+                                  append t)))
+                             t t))
   (setq-local forward-sexp-function #'difftastic--forward-chunk)
   (add-to-invisibility-spec '(difftastic . t)))
 

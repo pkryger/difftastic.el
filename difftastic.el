@@ -283,8 +283,16 @@
 ;; example, some - less commonly used - arguments are not visible in default
 ;; configuration.  Type `C-x l' in the menu to make them visible.  Type `C-h
 ;; C-h' for `difftastic' help (`man difft').  Any other `transient' commands
-;; should work as well, for example saving values as described in Info node
-;; `(transient)Saving Values'.
+;; should work as well.
+;;
+;; When `difftastic-use-transient-arguments' is non-nil, and extra difftastic
+;; arguments were saved in `transient' (as described in Info node
+;; `(transient)Saving Values'), these values will be used for future `difft'
+;; invocations.  However, when there's a need to tune these arguments for a
+;; specific `difft' call, a difftastic command can be called with double
+;; prefix argument to bring a popup allowing to specify arguments.  Any
+;; arguments changed in the popup (that were not saved) will be used for the
+;; following `difft' invocation only.
 ;;
 ;; Note that in some cases arguments will take precedence over standard and
 ;; computed values, for example `--width' is one such a argument.
@@ -672,6 +680,19 @@ It will be called with two arguments: BUFFER-OR-NAME: a buffer to
 display and REQUESTED-WIDTH: a with requested for difftastic
 call."
   :type 'function
+  :group 'difftastic)
+
+(defcustom difftastic-use-transient-arguments t
+  "When non-nil use arguments saved in `transient' for a difftastic call.
+Saved arguments will only be used when no extra arguments have been
+specified for the difftastic call.
+
+Arguments can be viewed and edited by calling any of difftastic commands
+with a double prefix argument.  New default values (to be used for
+future difftastic calls without extra arguments) can be saved by calling
+`transient-save'.  See info node (transient) Saving Values for more
+information."
+  :type 'boolean
   :group 'difftastic)
 
 (defcustom difftastic-exits-all-viewing-windows nil
@@ -1695,6 +1716,28 @@ Utilise `difftastic--ansi-color-add-background-cache' to cache
             difftastic--ansi-color-add-background-cache)
       face)))
 
+(defun difftastic--transient-arguments-to-difftastic (args)
+  "Convert ARGS from transient format to a difftastic one."
+  (apply #'append
+         (mapcar (lambda (arg)
+                   (if (and (listp arg)
+                            (equal "--override=" (car arg)))
+                       (mapcar (lambda (lang)
+                                 (concat "--override=" lang))
+                               (cdr arg))
+                     (list arg)))
+                 args)))
+
+(defun difftastic--args-or-saved (difftastic-args)
+  "Return DIFFTASTIC-ARGS or arguments saved in `transient' state.
+Arguments saved in `transient' state are returned only when DIFFTASTIC-ARGS is
+nil and `difftastic-use-transient-arguments' is non-nil.  Otherwise
+return DIFFTASTIC-ARGS."
+  (or difftastic-args
+      (when difftastic-use-transient-arguments
+        (difftastic--transient-arguments-to-difftastic
+         (transient-args 'difftastic--with-extra-arguments)))))
+
 (defun difftastic--add-standard-args (difftastic-args requested-width)
   "Add standard arguments to DIFFTASTIC-ARGS, unless these are already present.
 It adds \\='--color=always\\=', \\='--background=(light|dark)\\=', and
@@ -1724,7 +1767,8 @@ The DIFFTASTIC-ARGS is a list of extra arguments to pass to
 `difftastic-executable'."
   (let ((difftastic-args
          (mapcar #'shell-quote-argument
-                 (difftastic--add-standard-args difftastic-args
+                 (difftastic--add-standard-args (difftastic--args-or-saved
+                                                 difftastic-args)
                                                 requested-width))))
     (cons (format
            "GIT_EXTERNAL_DIFF=%s%s"
@@ -2537,7 +2581,9 @@ and cdr is a buffer when it is a temporary file and nil otherwise.
 REQUESTED-WIDTH is passed to difftastic as \\='--width\\=' argument.
 DIFFTASTIC-ARGS are passed to difftastic."
   `(,difftastic-executable
-    ,@(difftastic--add-standard-args difftastic-args requested-width)
+    ,@(difftastic--add-standard-args (difftastic--args-or-saved
+                                      difftastic-args)
+                                     requested-width)
     ,(car file-buf-A)
     ,(car file-buf-B)))
 

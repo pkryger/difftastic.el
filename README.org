@@ -292,8 +292,16 @@ In order to aid arguments entry and provide similarity to workflows in =magit=
 and =forge=, a =transient= prefix is used for the popup.  For example, some -
 less commonly used - arguments are not visible in default configuration.  Type
 ~C-x l~ in the menu to make them visible.  Type ~C-h C-h~ for =difftastic= help
-(=man difft=).  Any other =transient= commands should work as well, for example
-saving values as described in Info node =(transient)Saving Values=.
+(=man difft=).  Any other =transient= commands should work as well.
+
+When =difftastic-use-transient-arguments= is non-nil, and extra difftastic
+arguments were saved in =transient= (as described in Info node
+=(transient)Saving Values=), these values will be used for future =difft=
+invocations.  However, when there's a need to tune these arguments for a
+specific =difft= call, a difftastic command can be called with double prefix
+argument to bring a popup allowing to specify arguments.  Any arguments changed
+in the popup (that were not saved) will be used for the following =difft=
+invocation only.
 
 Note that in some cases arguments will take precedence over standard and
 computed values, for example =--width= is one such a argument.

@@ -2147,16 +2147,8 @@ Difftastic arguments are like `transient-args', but ensure the
   (interactive)
   (pcase-let ((`(,_ ,fun ,args) (transient-scope))
               (difft-args
-               (apply #'append
-                      (mapcar (lambda (arg)
-                                (if (and (listp arg)
-                                         (equal "--override=" (car arg)))
-                                    (mapcar (lambda (o)
-                                              (format "--override=%s" o))
-                                            (cdr arg))
-                                  (list arg)))
-                              (transient-args
-                               (oref transient-current-prefix command))))))
+               (difftastic--transient-arguments-to-difftastic
+                (transient-args (oref transient-current-prefix command)))))
     (when (functionp fun)
       (apply fun (append args (list difft-args))))))
 

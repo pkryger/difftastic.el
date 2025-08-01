@@ -441,6 +441,10 @@
 ;; <file:test/difftastic.t.el> are passing.  When adding a new functionality,
 ;; please strive to add tests for it as well.
 ;;
+;; This repository uses a [custom fork of `el-mock'] which has a few more
+;; features and some slight semantic differences.  Please make sure you're
+;; using that fork before you report issues with tests.
+;;
 ;; To run tests interactively:
 ;; - open the <file:test/difftastic.t.el>
 ;; - type `M-x eval-buffer <RET>'
@@ -468,6 +472,8 @@
 ;; You can run all checks performed by Github Actions, by typing: `make
 ;; bytecompile lint relint checkdoc commentary test'.
 ;;
+;;
+;; [custom fork of `el-mock'] <https://github.com/pkryger/el-mock.el>
 ;;
 ;; [Cask] <https://github.com/cask/cask>
 ;;

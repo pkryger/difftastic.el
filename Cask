@@ -14,4 +14,5 @@
  (depends-on "checkdoc-batch"
              :git "https://github.com/pkryger/ckeckdoc-batch.el.git")
  (depends-on "undercover")
- (depends-on "el-mock"))
+ (depends-on "el-mock"
+             :git "https://github.com/pkryger/el-mock.el.git"))

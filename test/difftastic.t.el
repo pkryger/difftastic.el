@@ -6028,9 +6028,6 @@ test/difftastic.t.el --- Emacs Lisp
       (difftastic-forge-create-pulreq-show-diff))))
 
 (ert-deftest difftastic-forge-create-pulreq-show-diff:not-new-pullreq ()
-  :expected-result (if (version< "29" emacs-version) ;; since Emacs-29
-                       :passed
-                     :failed)
   (let ((forge--buffer-base-branch "base")
         (forge--buffer-head-branch "head")
         (forge-edit-post-action 'not-new-pullreq))

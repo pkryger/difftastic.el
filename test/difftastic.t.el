@@ -6151,25 +6151,13 @@ test/difftastic.t.el --- Emacs Lisp
               ((get-buffer-create "*difftastic git show test-rev*") => "test-buffer")
               ((difftastic--git-with-difftastic
                 "test-buffer"
-                '
-                ("git" "--no-pager" "show" "--ext-diff" "test-rev" "--" "test-file")
+                '("git" "--no-pager" "show" "--ext-diff" "test-rev" "--" "test-file")
                 "test-rev"
                 '("test-difftastic-args"))))
       (difftastic--magit-diff-buffer-file '("test-difftastic-args")))))
 
 (ert-deftest difftastic--magit-diff-buffer-file:file-on-branch ()
-  (cl-letf* ((call-count 0)
-             ((symbol-function #'difftastic--git-with-difftastic)
-              (lambda (buffer command rev-or-range &optional difftastic-args action)
-                (should (equal buffer "test-buffer"))
-                (should (equal command
-                               '("git" "--no-pager" "diff" "--ext-diff" "test-branch" "--" "test-file")))
-                (should (equal rev-or-range 'unstaged))
-                (should (equal difftastic-args '("test-difftastic-args")))
-                (should (functionp action))
-                (funcall action)
-                (cl-incf call-count)))
-             (magit-buffer-refname nil))
+  (let ((magit-buffer-refname nil))
     (mocklet (((magit-file-relative-name) => "test-file")
               ((magit-toplevel) => "test-toplevel")
               ;; mock native functions `line-number-at-pos' and `current-column'
@@ -6179,23 +6167,20 @@ test/difftastic.t.el --- Emacs Lisp
               ((current-column) => 17)
               ((get-buffer-create "*difftastic git diff unstaged*")  => "test-buffer")
               ((magit-get-current-branch) => "test-branch")
+              ((difftastic--git-with-difftastic
+                "test-buffer"
+                '("git" "--no-pager" "diff" "--ext-diff" "test-branch" "--" "test-file")
+                'unstaged
+                '("test-difftastic-args")
+                (~= (lambda (action)
+                      (when (functionp action)
+                        (funcall action)
+                        t)))))
               ((difftastic--goto-line-col-in-chunk 42 17)))
-      (difftastic--magit-diff-buffer-file '("test-difftastic-args"))
-      (should (equal 1 call-count)))))
+      (difftastic--magit-diff-buffer-file '("test-difftastic-args")))))
 
 (ert-deftest difftastic--magit-diff-buffer-file:file ()
-  (cl-letf* ((call-count 0)
-             ((symbol-function #'difftastic--git-with-difftastic)
-              (lambda (buffer command rev-or-range &optional difftastic-args action)
-                (should (equal buffer "test-buffer"))
-                (should (equal command
-                               '("git" "--no-pager" "diff" "--ext-diff" "HEAD" "--" "test-file")))
-                (should (equal rev-or-range 'unstaged))
-                (should (equal difftastic-args '("test-difftastic-args")))
-                (should (functionp action))
-                (funcall action)
-                (cl-incf call-count)))
-             (magit-buffer-refname nil))
+  (let ((magit-buffer-refname nil))
     (mocklet (((magit-file-relative-name) => "test-file")
               ((magit-toplevel) => "test-toplevel")
               ;; mock native functions `line-number-at-pos' and `current-column'
@@ -6205,9 +6190,17 @@ test/difftastic.t.el --- Emacs Lisp
               ((current-column) => 17)
               ((get-buffer-create "*difftastic git diff unstaged*")  => "test-buffer")
               ((magit-get-current-branch))
+              ((difftastic--git-with-difftastic
+                "test-buffer"
+                '("git" "--no-pager" "diff" "--ext-diff" "HEAD" "--" "test-file")
+                'unstaged
+                '("test-difftastic-args")
+                (~= (lambda (action)
+                      (when (functionp action)
+                        (funcall action)
+                        t)))))
               ((difftastic--goto-line-col-in-chunk 42 17)))
-      (difftastic--magit-diff-buffer-file '("test-difftastic-args"))
-      (should (equal 1 call-count)))))
+      (difftastic--magit-diff-buffer-file '("test-difftastic-args")))))
 
 (ert-deftest difftastic--magit-diff-buffer-file:no-file ()
   (mocklet (((magit-file-relative-name)))

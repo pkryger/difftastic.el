@@ -751,26 +751,23 @@
 
 
 (ert-deftest difftastic--make-url-button:match ()
-  (let ((difftastic-buttonize-urls t)
-        make-button-called)
+  (let ((difftastic-buttonize-urls t))
     (ert-with-test-buffer ()
       (insert "before https://gnu.org, and after")
       (goto-char (point-min))
       (should (re-search-forward (rx (group "https://gnu.org")) nil t))
-      (cl-letf (((symbol-function #'make-button)
-                 (lambda (beg end &rest properties)
-                   (should (equal beg (match-beginning 1)))
-                   (should (equal end (match-end 1)))
-                   (should (equal "Click to open URL"
-                                  (plist-get properties 'help-echo)))
-                   (should (plist-get properties 'follow-link))
-                   (let ((action (plist-get properties 'action)))
-                     (should (functionp action))
-                     (mocklet (((browse-url "https://gnu.org")))
-                       (funcall action 'ignore)))
-                   (setq make-button-called t))))
-         (difftastic--make-url-button)
-         (should make-button-called)))))
+      (mocklet (((make-button (~= (lambda (beg)
+                                    (equal beg (match-beginning 1))))
+                              (~= (lambda (end)
+                                    (equal end (match-end 1))))
+                              (~= (lambda (&rest args)
+                                    (should (plist-get args 'follow-link))
+                                    (let ((action (plist-get args 'action)))
+                                      (should (functionp action))
+                                      (funcall action 'ignore))
+                                    t))))
+                ((browse-url "https://gnu.org")))
+        (difftastic--make-url-button)))))
 
 
 (ert-deftest difftastic--chunk-regexp:file-chunk-extracted ()

@@ -6353,7 +6353,7 @@ test/difftastic.t.el --- Emacs Lisp
 
 
 (ert-deftest difftastic--extra-arguments-override-prompt:basic ()
-  (should (equal (concat "Comma separated list of glob:language, type "
+  (should (equal (concat "Comma separated list of GLOB:LANGUAGE, type "
                          (propertize "TAB"
                                      'face 'help-key-binding
                                      'font-lock-face 'help-key-binding)

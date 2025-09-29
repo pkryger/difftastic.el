@@ -2073,7 +2073,7 @@ functions to read language overrides."
   (with-temp-buffer
     (let ((overriding-local-map crm-local-completion-map))
       (concat
-       "Comma separated list of glob:language, type "
+       "Comma separated list of GLOB:LANGUAGE, type "
        (substitute-command-keys "\\[crm-complete]")
        " for languages: "))))
 

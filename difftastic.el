@@ -2166,7 +2166,7 @@ The LANG-OVERRIDE will be used to initialize language overrides."
   :class 'difftastic--extra-arguments-prefix
   :man-page "difft"
   ["Difftastic arguments"
-   ("-o" "language overrides" difftastic--extra-arguments-override-infix)
+   ("-l" "language overrides" difftastic--extra-arguments-override-infix)
    ("-s" "strip cr" "--strip-cr="
     :choices ("on" "off"))
    ("-c" "context" "--context="

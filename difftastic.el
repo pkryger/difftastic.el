@@ -1722,6 +1722,11 @@ Utilise `difftastic--ansi-color-add-background-cache' to cache
             difftastic--ansi-color-add-background-cache)
       face)))
 
+(defun difftastic--override-binary-available-p ()
+  "Return non-nil when \\='--override-binary\\=' argument is supported."
+  (save-match-data
+    (version<= "0.65" (difftastic--get-version))))
+
 (defun difftastic--transient-arguments-to-difftastic (args)
   "Convert ARGS from transient format to a difftastic one."
   (apply #'append
@@ -1733,7 +1738,11 @@ Utilise `difftastic--ansi-color-add-background-cache' to cache
                                  (concat argument lang))
                                (cdr arg))
                      (list arg)))
-                 args)))
+                 (if (difftastic--override-binary-available-p)
+                     args
+                   (cl-remove-if (lambda (arg)
+                                   (equal (car-safe arg) "--override-binary="))
+                                 args)))))
 
 (defun difftastic--args-or-saved (difftastic-args)
   "Return DIFFTASTIC-ARGS or arguments saved in `transient' state.
@@ -2006,6 +2015,22 @@ argument extracted from ARGS with the one from DIFFTASTIC-ARGS."
                    (string-match-p "^ \\*" line))
                  (process-lines difftastic-executable "--list-languages"))))
 
+(defun difftastic--get-version ()
+  "Return version of difftastic binary."
+  (or
+   (car-safe
+    (delq nil
+          (mapcar (lambda (line)
+                    (when (string-match
+                           (rx string-start "Difftastic "
+                               (group (one-or-more digit)
+                                      (zero-or-more
+                                       (seq "." (one-or-more digit)))))
+                           line)
+                      (match-string 1 line)))
+                  (process-lines difftastic-executable "--version"))))
+   "0"))
+
 (defclass difftastic--extra-arguments-prefix (transient-prefix)
   ())
 
@@ -2146,6 +2171,7 @@ while the \\='--override-binary\\=' is handled in
 
 (transient-define-infix difftastic--extra-arguments-override-binary-infix ()
   :prompt "Comma separated list of GLOB: "
+  :if #'difftastic--override-binary-available-p
   :multi-value t
   :class 'transient-option
   :argument "--override-binary=")

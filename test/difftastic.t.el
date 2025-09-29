@@ -392,64 +392,105 @@
         (delete-file temp-file)))))
 
 
+(ert-deftest difftastic--override-binary-available-p:basic ()
+  (with-temp-buffer
+    (insert "test")
+    (goto-char (point-min))
+    (re-search-forward "test")
+    (let ((match-data-orig (copy-sequence (match-data))))
+      (mocklet ((difftastic--get-version => "0.65.0"))
+        (should (difftastic--override-binary-available-p)))
+      (should (equal match-data-orig (match-data)))
+      (mocklet ((difftastic--get-version => "0.64.999"))
+        (should-not (difftastic--override-binary-available-p)))
+      (should (equal match-data-orig (match-data))))))
+
+
 (ert-deftest difftastic--transient-arguments-to-difftastic:basic ()
-  (should (equal '("--override=lang1" "--override=lang2" "--context=5")
-                 (difftastic--transient-arguments-to-difftastic
-                  '(("--override=" "lang1" "lang2") "--context=5"))))
-  (should (equal '("--override-binary=foo" "--override-binary=bar" "--context=5")
-                 (difftastic--transient-arguments-to-difftastic
-                  '(("--override-binary=" "foo" "bar") "--context=5"))))
-  (should (equal '(("--foo=" "bar" "baz"))
-                 (difftastic--transient-arguments-to-difftastic
-                  '(("--foo=" "bar" "baz")))))
-  (should (equal '("--width=42" "--context=5")
-                 (difftastic--transient-arguments-to-difftastic
-                  '("--width=42" "--context=5"))))
-  (should-not (difftastic--transient-arguments-to-difftastic nil)))
+  (mocklet ((difftastic--override-binary-available-p => t))
+    (should (equal '("--override=lang1" "--override=lang2" "--context=5")
+                   (difftastic--transient-arguments-to-difftastic
+                    '(("--override=" "lang1" "lang2") "--context=5"))))
+    (should (equal '("--override-binary=foo" "--override-binary=bar" "--context=5")
+                   (difftastic--transient-arguments-to-difftastic
+                    '(("--override-binary=" "foo" "bar") "--context=5"))))
+    (should (equal '(("--foo=" "bar" "baz"))
+                   (difftastic--transient-arguments-to-difftastic
+                    '(("--foo=" "bar" "baz")))))
+    (should (equal '("--width=42" "--context=5")
+                   (difftastic--transient-arguments-to-difftastic
+                    '("--width=42" "--context=5"))))
+    (should-not (difftastic--transient-arguments-to-difftastic nil)))
+  (mocklet ((difftastic--override-binary-available-p => nil))
+    (should  (equal '("--context=5")
+                    (difftastic--transient-arguments-to-difftastic
+                     '(("--override-binary=" "foo" "bar") "--context=5"))))
+    (should-not (difftastic--transient-arguments-to-difftastic
+                  '(("--override-binary=" "foo" "bar"))))))
 
 
 (ert-deftest difftastic--build-git-process-environment:without-difftastic-args ()
-  (should (equal
-           (format "GIT_EXTERNAL_DIFF=%s %s %s %s"
-                   difftastic-executable
-                   (shell-quote-argument "--color=always")
-                   (shell-quote-argument "--width=42")
-                   (shell-quote-argument (format "--background=%s"
-                                                 (frame-parameter nil 'background-mode))))
-           (car (difftastic--build-git-process-environment 42)))))
+  (mocklet ((difftastic--override-binary-available-p => t))
+    (should (equal
+             (format "GIT_EXTERNAL_DIFF=%s %s %s %s"
+                     difftastic-executable
+                     (shell-quote-argument "--color=always")
+                     (shell-quote-argument "--width=42")
+                     (shell-quote-argument (format "--background=%s"
+                                                   (frame-parameter nil 'background-mode))))
+             (car (difftastic--build-git-process-environment 42))))))
 
 (ert-deftest difftastic--build-git-process-environment:with-transient-args ()
-  (let ((difftastic-use-transient-arguments t)
-        (transient-values '((difftastic--with-extra-arguments . (("--override=" "*:Java"))))))
-    (should (equal
-             (format
-              "GIT_EXTERNAL_DIFF=%s %s %s %s %s"
-              difftastic-executable
-              (shell-quote-argument "--color=always")
-              (shell-quote-argument "--width=42")
-              (shell-quote-argument (format "--background=%s"
-                                            (frame-parameter nil 'background-mode)))
-              (shell-quote-argument "--override=*:Java"))
-             (car
-              (difftastic--build-git-process-environment 42))))))
+  (mocklet ((difftastic--override-binary-available-p => t))
+    (let ((difftastic-use-transient-arguments t)
+          (transient-values '((difftastic--with-extra-arguments . (("--override=" "*:Java"))))))
+      (should (equal
+               (format
+                "GIT_EXTERNAL_DIFF=%s %s %s %s %s"
+                difftastic-executable
+                (shell-quote-argument "--color=always")
+                (shell-quote-argument "--width=42")
+                (shell-quote-argument (format "--background=%s"
+                                              (frame-parameter nil 'background-mode)))
+                (shell-quote-argument "--override=*:Java"))
+               (car
+                (difftastic--build-git-process-environment 42)))))))
 
 (ert-deftest difftastic--build-git-process-environment:with-suppressed-transient-args ()
-  (let (difftastic-use-transient-arguments
-        (transient-values '((difftastic--with-extra-arguments . (("--override=" "*:Java"))))))
-    (should (equal
-             (format
-              "GIT_EXTERNAL_DIFF=%s %s %s %s"
-              difftastic-executable
-              (shell-quote-argument "--color=always")
-              (shell-quote-argument "--width=42")
-              (shell-quote-argument (format "--background=%s"
-                                            (frame-parameter nil 'background-mode))))
-             (car
-              (difftastic--build-git-process-environment 42))))))
+  (mocklet ((difftastic--override-binary-available-p => t))
+    (let (difftastic-use-transient-arguments
+          (transient-values '((difftastic--with-extra-arguments . (("--override=" "*:Java"))))))
+      (should (equal
+               (format
+                "GIT_EXTERNAL_DIFF=%s %s %s %s"
+                difftastic-executable
+                (shell-quote-argument "--color=always")
+                (shell-quote-argument "--width=42")
+                (shell-quote-argument (format "--background=%s"
+                                              (frame-parameter nil 'background-mode))))
+               (car
+                (difftastic--build-git-process-environment 42)))))))
 
 (ert-deftest difftastic--build-git-process-environment:with-transient-and-difftastic-args ()
-  (let ((difftastic-use-transient-arguments t)
-        (transient-values '((difftastic--with-extra-arguments . (("--override=" "*:Java"))))))
+  (mocklet ((difftastic--override-binary-available-p => t))
+    (let ((difftastic-use-transient-arguments t)
+          (transient-values '((difftastic--with-extra-arguments . (("--override=" "*:Java"))))))
+      (should (equal
+               (format
+                "GIT_EXTERNAL_DIFF=%s %s %s %s %s"
+                difftastic-executable
+                (shell-quote-argument "--color=always")
+                (shell-quote-argument "--width=42")
+                (shell-quote-argument (format "--background=%s"
+                                              (frame-parameter nil 'background-mode)))
+                (shell-quote-argument "--override=*:C++"))
+               (car
+                (difftastic--build-git-process-environment
+                 42
+                 '("--override=*:C++"))))))))
+
+(ert-deftest difftastic--build-git-process-environment:with-difftastic-args ()
+  (mocklet ((difftastic--override-binary-available-p => t))
     (should (equal
              (format
               "GIT_EXTERNAL_DIFF=%s %s %s %s %s"
@@ -464,80 +505,84 @@
                42
                '("--override=*:C++")))))))
 
-(ert-deftest difftastic--build-git-process-environment:with-difftastic-args ()
-  (should (equal
-           (format
-            "GIT_EXTERNAL_DIFF=%s %s %s %s %s"
-            difftastic-executable
-            (shell-quote-argument "--color=always")
-            (shell-quote-argument "--width=42")
-            (shell-quote-argument (format "--background=%s"
-                                          (frame-parameter nil 'background-mode)))
-            (shell-quote-argument "--override=*:C++"))
-           (car
-            (difftastic--build-git-process-environment
-             42
-             '("--override=*:C++"))))))
-
 (ert-deftest difftastic--build-git-process-environment:with-difftastic-args-override ()
-  (should (equal
-           (format
-            "GIT_EXTERNAL_DIFF=%s %s %s %s %s"
-            difftastic-executable
-            (shell-quote-argument "--color=foo")
-            (shell-quote-argument "--width=bar")
-            (shell-quote-argument "--background=baz")
-            (shell-quote-argument "--override=*:Emacs Lisp"))
-           (car
-            (difftastic--build-git-process-environment
-             42
-             '("--color=foo"
-               "--width=bar"
-               "--background=baz"
-               "--override=*:Emacs Lisp"))))))
+  (mocklet ((difftastic--override-binary-available-p => t))
+    (should (equal
+             (format
+              "GIT_EXTERNAL_DIFF=%s %s %s %s %s"
+              difftastic-executable
+              (shell-quote-argument "--color=foo")
+              (shell-quote-argument "--width=bar")
+              (shell-quote-argument "--background=baz")
+              (shell-quote-argument "--override=*:Emacs Lisp"))
+             (car
+              (difftastic--build-git-process-environment
+               42
+               '("--color=foo"
+                 "--width=bar"
+                 "--background=baz"
+                 "--override=*:Emacs Lisp")))))))
 
 
 (ert-deftest difftastic--build-files-command:without-difftastic-args ()
-  (should (equal
-           `(,difftastic-executable
-             "--color=always"
-             "--width=42"
-             ,(format "--background=%s" (frame-parameter nil 'background-mode))
-             "test-file-A" "test-file-B")
-           (difftastic--build-files-command (cons "test-file-A" nil)
-                                            (cons "test-file-B" nil)
-                                            42))))
+  (mocklet ((difftastic--override-binary-available-p => t))
+    (should (equal
+             `(,difftastic-executable
+               "--color=always"
+               "--width=42"
+               ,(format "--background=%s" (frame-parameter nil 'background-mode))
+               "test-file-A" "test-file-B")
+             (difftastic--build-files-command (cons "test-file-A" nil)
+                                              (cons "test-file-B" nil)
+                                              42)))))
 
 (ert-deftest difftastic--build-files-command:with-transient-args ()
-  (let ((difftastic-use-transient-arguments t)
-        (transient-values '((difftastic--with-extra-arguments . (("--override=" "*:Java"))))))
-    (should (equal
-             `(,difftastic-executable
-               "--color=always"
-               "--width=42"
-               ,(format "--background=%s" (frame-parameter nil 'background-mode))
-               "--override=*:Java"
-               "test-file-A" "test-file-B")
-             (difftastic--build-files-command (cons "test-file-A" nil)
-                                              (cons "test-file-B" nil)
-                                              42)))))
+  (mocklet ((difftastic--override-binary-available-p => t))
+    (let ((difftastic-use-transient-arguments t)
+          (transient-values '((difftastic--with-extra-arguments . (("--override=" "*:Java"))))))
+      (should (equal
+               `(,difftastic-executable
+                 "--color=always"
+                 "--width=42"
+                 ,(format "--background=%s" (frame-parameter nil 'background-mode))
+                 "--override=*:Java"
+                 "test-file-A" "test-file-B")
+               (difftastic--build-files-command (cons "test-file-A" nil)
+                                                (cons "test-file-B" nil)
+                                                42))))))
 
 (ert-deftest difftastic--build-files-command:with-suppressed-transient-args ()
-  (let (difftastic-use-transient-arguments
-        (transient-values '((difftastic--with-extra-arguments . (("--override=" "*:Java"))))))
-    (should (equal
-             `(,difftastic-executable
-               "--color=always"
-               "--width=42"
-               ,(format "--background=%s" (frame-parameter nil 'background-mode))
-               "test-file-A" "test-file-B")
-             (difftastic--build-files-command (cons "test-file-A" nil)
-                                              (cons "test-file-B" nil)
-                                              42)))))
+  (mocklet ((difftastic--override-binary-available-p => t))
+    (let (difftastic-use-transient-arguments
+          (transient-values '((difftastic--with-extra-arguments . (("--override=" "*:Java"))))))
+      (should (equal
+               `(,difftastic-executable
+                 "--color=always"
+                 "--width=42"
+                 ,(format "--background=%s" (frame-parameter nil 'background-mode))
+                 "test-file-A" "test-file-B")
+               (difftastic--build-files-command (cons "test-file-A" nil)
+                                                (cons "test-file-B" nil)
+                                                42))))))
 
 (ert-deftest difftastic--build-files-command:with-transient-and-difftastic-args ()
-  (let ((difftastic-use-transient-arguments t)
-        (transient-values '((difftastic--with-extra-arguments . (("--override=" "*:Java"))))))
+  (mocklet ((difftastic--override-binary-available-p => t))
+    (let ((difftastic-use-transient-arguments t)
+          (transient-values '((difftastic--with-extra-arguments . (("--override=" "*:Java"))))))
+      (should (equal
+               `(,difftastic-executable
+                 "--color=always"
+                 "--width=42"
+                 ,(format "--background=%s" (frame-parameter nil 'background-mode))
+                 "--override=*:test-language"
+                 "test-file-A" "test-file-B")
+               (difftastic--build-files-command (cons "test-file-A" nil)
+                                                (cons "test-file-B" nil)
+                                                42
+                                                '("--override=*:test-language")))))))
+
+(ert-deftest difftastic--build-files-command:with-difftastic-args ()
+  (mocklet ((difftastic--override-binary-available-p => t))
     (should (equal
              `(,difftastic-executable
                "--color=always"
@@ -550,34 +595,22 @@
                                               42
                                               '("--override=*:test-language"))))))
 
-(ert-deftest difftastic--build-files-command:with-difftastic-args ()
-  (should (equal
-           `(,difftastic-executable
-             "--color=always"
-             "--width=42"
-             ,(format "--background=%s" (frame-parameter nil 'background-mode))
-             "--override=*:test-language"
-             "test-file-A" "test-file-B")
-           (difftastic--build-files-command (cons "test-file-A" nil)
-                                            (cons "test-file-B" nil)
-                                            42
-                                            '("--override=*:test-language")))))
-
 (ert-deftest difftastic--build-files-command:with-difftastic-args-override ()
-  (should (equal
-           `(,difftastic-executable
-             "--color=foo"
-             "--width=bar"
-             "--background=baz"
-             "--override=*:test-language"
-             "test-file-A" "test-file-B")
-           (difftastic--build-files-command (cons "test-file-A" nil)
-                                            (cons "test-file-B" nil)
-                                            42
-                                            '("--color=foo"
-                                              "--width=bar"
-                                              "--background=baz"
-                                              "--override=*:test-language")))))
+  (mocklet ((difftastic--override-binary-available-p => t))
+    (should (equal
+             `(,difftastic-executable
+               "--color=foo"
+               "--width=bar"
+               "--background=baz"
+               "--override=*:test-language"
+               "test-file-A" "test-file-B")
+             (difftastic--build-files-command (cons "test-file-A" nil)
+                                              (cons "test-file-B" nil)
+                                              42
+                                              '("--color=foo"
+                                                "--width=bar"
+                                                "--background=baz"
+                                                "--override=*:test-language"))))))
 
 
 (ert-deftest difftastic--rerun-file-buf:non-temporary-no-temporary-created ()
@@ -6253,8 +6286,29 @@ test/difftastic.t.el --- Emacs Lisp
                          "SCSS" "Solidity" "SQL" "Swift" "TOML" "TypeScript"
                          "TypeScript TSX" "VHDL" "XML" "YAML" "Zig")
                        (difftastic--get-languages)))))))
-
 
+
+(ert-deftest difftastic--get-version:parse-output ()
+  (let ((file "difft--version.out")
+        (difftastic-executable "test-difft-executable")
+        out)
+    (should (or (file-exists-p file)
+                (file-exists-p (format "test/%s" file))))
+    (setq out (if (file-exists-p file)
+                  file
+                (format "test/%s" file)))
+    (eval
+     `(mocklet (((process-lines ,difftastic-executable "--version")
+                 => (ert-with-test-buffer ()
+                      (insert-file-contents ,out)
+                      (compat-call ;; Since Emacs-29
+                       string-split (buffer-string) "\n" t))))
+        ;; Hints for updating the test when difft output changes:
+        ;; $ difft --version > difft--version.out
+        (should (equal "0.65.0"
+                       (difftastic--get-version)))))))
+
+
 (ert-deftest difftastic--extra-arguments-completing-overrides:try ()
   (let ((fun (difftastic--extra-arguments-completing-overrides '("bar" "baz" "qux"))))
     (should (equal "*:" (funcall fun "" nil nil)))
@@ -6516,12 +6570,15 @@ test/difftastic.t.el --- Emacs Lisp
 
 (ert-deftest difftastic--extra-arguments-call-command:basic ()
   (let ((transient-current-prefix (transient-prefix :command "test-command")))
-    (mocklet (((transient-args "test-command")
+    (mocklet ((difftastic--override-binary-available-p => t)
+              ((transient-args "test-command")
                => '(("--override=" "foo" "bar")
+                    ("--override-binary=" "foo" "bar")
                     "--foo" "--bar"
                     ("--baz" "qux" "quux")))
               ((difftastic--test-fun "test-arg1" "test-arg2"
                                      '("--override=foo" "--override=bar"
+                                       "--override-binary=foo" "--override-binary=bar"
                                        "--foo" "--bar"
                                        ("--baz" "qux" "quux")))
                => "test-value")

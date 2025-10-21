@@ -96,7 +96,7 @@
 ;; (use-package difftastic
 ;;   :defer t
 ;;   :vc (:url "https://github.com/pkryger/difftastic.el.git"
-;;        :rev :newest)))
+;;        :rev :newest))
 ;;
 ;; Alternatively, you can do a manual checkout and install it from there, for
 ;; example:

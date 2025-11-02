@@ -425,6 +425,18 @@
 ;;   `difftastic-mode' buffer.
 ;;
 ;;
+;; Process Environment
+;; ~~~~~~~~~~~~~~~~~~~
+;;
+;; The `difftastic-difft-environment' variable allows users to customize the
+;; environment in which `difft' runs.  This is particularly useful for
+;; temporary configurations via `let'-binding.
+;;
+;; This variable is defined as a `defvar' (not `defcustom') since it's
+;; primarily intended for programmatic use rather than permanent
+;; customization.
+;;
+;;
 ;; Contributing
 ;; ============
 ;;
@@ -574,6 +586,9 @@ display buffer at bottom."
   "Location of difftastic executable."
   :type 'file
   :group 'difftastic)
+
+(defvar difftastic-difft-environment nil
+  "Prepended to `process-environment' while running difft.")
 
 (defcustom difftastic-normal-colors-vector
   (vector
@@ -1776,6 +1791,11 @@ It adds \\='--color=always\\=', \\='--background=(light|dark)\\=', and
                                 difftastic-args)))
   difftastic-args)
 
+(defun difftastic--build-process-environment ()
+  "Build process environment with difftastic-specific variables.
+Prepends `difftastic-difft-environment' to `process-environment'."
+  (append difftastic-difft-environment process-environment))
+
 (defun difftastic--build-git-process-environment (requested-width
                                                   &optional difftastic-args)
   "Build a difftastic git command with REQUESTED-WIDTH.
@@ -1786,13 +1806,13 @@ The DIFFTASTIC-ARGS is a list of extra arguments to pass to
                  (difftastic--add-standard-args (difftastic--args-or-saved
                                                  difftastic-args)
                                                 requested-width))))
-    (cons (format
-           "GIT_EXTERNAL_DIFF=%s%s"
-           difftastic-executable
-           (if difftastic-args
-               (format " %s" (string-join difftastic-args " "))
-             ""))
-          process-environment)))
+    (append (list (format
+                   "GIT_EXTERNAL_DIFF=%s%s"
+                   difftastic-executable
+                   (if difftastic-args
+                       (format " %s" (string-join difftastic-args " "))
+                     "")))
+            (difftastic--build-process-environment))))
 
 (defun difftastic--git-with-difftastic (buffer command rev-or-range
                                                &optional difftastic-args action)
@@ -2639,7 +2659,8 @@ The FILE-BUF-A and FILE-BUF-B are conses where car is the file
 and cdr is a buffer when it is a temporary file and nil otherwise.
 DIFFTASTIS-ARGS are passed to difftastic."
   (let ((requested-width (funcall difftastic-requested-window-width-function))
-        (difftastic-display-buffer-function difftastic-display-buffer-function))
+        (difftastic-display-buffer-function difftastic-display-buffer-function)
+        (process-environment (difftastic--build-process-environment)))
     (difftastic--run-command
      buffer
      (difftastic--build-files-command file-buf-A
@@ -2962,7 +2983,7 @@ otherwise."
                       (difftastic--build-git-process-environment
                        requested-width
                        difftastic-args)
-                    process-environment))
+                    (difftastic--build-process-environment)))
                  (command (or .git-command
                               (difftastic--build-files-command
                                file-buf-A

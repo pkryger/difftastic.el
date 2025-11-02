@@ -36,6 +36,7 @@ coding environment.
   - [[#face-customization][Face Customization]]
   - [[#window-management][Window Management]]
   - [[#difftastic-mode-behavior][difftastic-mode Behavior]]
+  - [[#process-environment][Process Environment]]
 - [[#contributing][Contributing]]
   - [[#testing][Testing]]
   - [[#documentation-autoring][Documentation Autoring]]
@@ -426,6 +427,17 @@ interaction with =difft=:
   in difftastic buffers.
 - =difftastic-diff-visit-avoid-head-blob= - controls whether to avoid visiting
   blob of a =HEAD= revision when visiting file form a =difftastic-mode= buffer.
+
+*** Process Environment
+:properties:
+:custom_id: process-environment
+:end:
+The =difftastic-difft-environment= variable allows users to customize the
+environment in which =difft= runs.  This is particularly useful for temporary
+configurations via =let=-binding.
+
+This variable is defined as a =defvar= (not =defcustom=) since it's primarily
+intended for programmatic use rather than permanent customization.
 
 ** Contributing
 :properties:

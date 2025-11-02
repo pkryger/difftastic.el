@@ -523,6 +523,21 @@
                  "--background=baz"
                  "--override=*:Emacs Lisp")))))))
 
+(ert-deftest difftastic--build-git-process-environment:with-difftastic-difft-environment ()
+  (mocklet ((difftastic--override-binary-available-p => t))
+    (let ((difftastic-difft-environment '("TEST_VAR=test-value"))
+          (process-environment '("ENV_VAR=env-value")))
+      (should (equal
+               (list (format "GIT_EXTERNAL_DIFF=%s %s %s %s"
+                             difftastic-executable
+                             (shell-quote-argument "--color=always")
+                             (shell-quote-argument "--width=42")
+                             (shell-quote-argument (format "--background=%s"
+                                                           (frame-parameter nil 'background-mode))))
+                     "TEST_VAR=test-value"
+                     "ENV_VAR=env-value")
+               (difftastic--build-git-process-environment 42))))))
+
 
 (ert-deftest difftastic--build-files-command:without-difftastic-args ()
   (mocklet ((difftastic--override-binary-available-p => t))
@@ -5713,6 +5728,32 @@ test/difftastic.t.el --- Emacs Lisp
             '("test-difftastic-args-2"))
       (should (equal difftastic--metadata metadata)))))
 
+(ert-deftest difftastic--rerun:git-command-with-difftastic-difft-environment ()
+  (let ((metadata '((default-directory . "test-default-directory")
+                    (git-command . "test-command")
+                    (difftastic-args . ("test-difftastic-args"))))
+        (difftastic-rerun-requested-window-width-function
+         (lambda ()
+           "test-difftastic-width"))
+        (difftastic-difft-environment '("TEST_VAR=test-value")))
+    (ert-with-test-buffer ()
+      (difftastic-mode)
+      (setq difftastic--metadata metadata)
+      (eval
+       `(mocklet (((difftastic--run-command
+                    ,(current-buffer)
+                    "test-command"
+                    (~= (lambda (sentinel)
+                          (should (equal default-directory "test-default-directory"))
+                          (should (member "TEST_VAR=test-value" process-environment))
+                          (should (functionp sentinel))
+                          (funcall sentinel)
+                          t)))))
+          (difftastic--rerun nil))
+       t)
+      (should-not (eq difftastic--metadata metadata))
+      (should (equal difftastic--metadata metadata)))))
+
 (ert-deftest difftastic--rerun:files-command-rerun-requested-width ()
   (let ((metadata '((default-directory . "test-default-directory")
                     (difftastic-args . ("test-difftastic-arg-1"))
@@ -5835,6 +5876,37 @@ test/difftastic.t.el --- Emacs Lisp
       (should-not (eq difftastic--metadata metadata))
       (setf (alist-get 'difftastic-args metadata)
             '("test-difftastic-arg-2"))
+      (should (equal difftastic--metadata metadata)))))
+
+(ert-deftest difftastic--rerun:files-command-with-difftastic-difft-environment ()
+  (let ((metadata '((default-directory . "test-default-directory")
+                    (difftastic-args . ("test-difftastic-arg-1"))
+                    (file-buf-A . ("test-file-buf-A" . nil))
+                    (file-buf-B . ("test-file-buf-B" . nil))))
+        (difftastic-rerun-requested-window-width-function
+         (lambda ()
+           "test-difftastic-width"))
+        (difftastic-difft-environment '("TEST_VAR=test-value")))
+    (ert-with-test-buffer ()
+      (difftastic-mode)
+      (setq difftastic--metadata metadata)
+      (eval
+       `(mocklet (((difftastic--build-files-command
+                    '("test-file-buf-A" . nil) '("test-file-buf-B". nil)
+                    "test-difftastic-width" '("test-difftastic-arg-1"))
+                   => "test-command")
+                  ((difftastic--run-command
+                    ,(current-buffer)
+                    "test-command"
+                    (~= (lambda (sentinel)
+                          (should (equal default-directory "test-default-directory"))
+                          (should (member "TEST_VAR=test-value" process-environment))
+                          (should (functionp sentinel))
+                          (funcall sentinel)
+                          t)))))
+          (difftastic--rerun nil))
+       t)
+      (should-not (eq difftastic--metadata metadata))
       (should (equal difftastic--metadata metadata)))))
 
 
@@ -7209,6 +7281,50 @@ test/difftastic.t.el --- Emacs Lisp
                                (ert-fail "timeout"))
                   (while (accept-process-output process))))
               (should (equal (buffer-string) "test output"))
+              (should (equal (alist-get 'default-directory difftastic--metadata)
+                             default-directory))
+              (should (equal (alist-get 'difftastic-args difftastic--metadata)
+                             '("test-arg-1" "test-arg-2")))
+              (should (equal (alist-get 'file-buf-A difftastic--metadata)
+                             ',file-buf-A))
+              (should (equal (alist-get 'file-buf-B difftastic--metadata)
+                             ',file-buf-B))
+              (should-not (file-exists-p (car ',file-buf-A)))
+              (should-not (file-exists-p (car ',file-buf-B)))))
+        (when (file-exists-p (car file-buf-A))
+          (delete-file (car file-buf-A)))
+        (when (file-exists-p (car file-buf-B))
+          (delete-file (car file-buf-B))))
+      (should (equal display-buffer-called 1)))))
+
+(ert-deftest difftastic--files-internal:with-difftastic-difft-environment ()
+  (ert-with-test-buffer ()
+    (let* ((display-buffer-called 0)
+           (buffer (current-buffer))
+           (file-buf-A (cons (make-temp-file "difftastic.t") t))
+           (file-buf-B (cons (make-temp-file "difftastic.t") t))
+           (difftastic-requested-window-width-function (lambda () "test-width"))
+           (difftastic-display-buffer-function (lambda (buf width)
+                                                 (should (equal buffer buf))
+                                                 (should (equal width "test-width"))
+                                                 (cl-incf display-buffer-called)))
+           (difftastic-difft-environment '("TEST_VAR=test-value")))
+      (unwind-protect
+          (eval
+           `(mocklet (((difftastic--build-files-command
+                        ',file-buf-A ',file-buf-B "test-width"
+                        '("test-arg-1" "test-arg-2"))
+                       => '("sh" "-c" "echo -n $TEST_VAR")))
+              (let ((process
+                     (difftastic--files-internal ,buffer
+                                                 ',file-buf-A
+                                                 ',file-buf-B
+                                                 '("test-arg-1" "test-arg-2"))))
+                (with-timeout (5
+                               (signal-process process 'SIGKILL)
+                               (ert-fail "timeout"))
+                  (while (accept-process-output process))))
+              (should (equal (buffer-string) "test-value"))
               (should (equal (alist-get 'default-directory difftastic--metadata)
                              default-directory))
               (should (equal (alist-get 'difftastic-args difftastic--metadata)

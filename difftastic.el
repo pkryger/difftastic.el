@@ -549,25 +549,21 @@ into (in the following order):
  - other window if it exists,
  - side by side by inspecting `split-width-threshold',
  - current window."
-  (- (if (< 1 (count-windows))
-         (save-window-excursion
-           (other-window 1)
-           (window-width))
-       (if (and split-width-threshold
-                (< split-width-threshold (- (window-width)
-                                            (fringe-columns 'left)
-                                            (fringe-columns 'right))))
-           (/ (window-width) 2)
-         (window-width)))
-     (fringe-columns 'left)
-     (fringe-columns 'rigth)))
+  (let (face-remapping-alist)
+    (if (< 1 (count-windows))
+        (save-window-excursion
+          (other-window 1)
+          (window-max-chars-per-line))
+      (if-let* ((width (window-max-chars-per-line))
+                ((window-splittable-p (selected-window) t)))
+          (/ (- width (- (frame-width) width)) 2)
+        width))))
 
 (defun difftastic-rerun-requested-window-width ()
   "Get a window width for a rerun of a difftastic call.
 It returns the current window width, to let difftastic fit content into it."
-  (- (window-width)
-     (fringe-columns 'left)
-     (fringe-columns 'right)))
+  (let (face-remapping-alist)
+    (window-max-chars-per-line)))
 
 (defun difftastic-pop-to-buffer (buffer-or-name requested-width)
   "Display BUFFER-OR-NAME with REQUESTED-WIDTH and select its window.

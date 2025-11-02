@@ -5538,35 +5538,33 @@ test/difftastic.t.el --- Emacs Lisp
 
 (ert-deftest difftastic-rerun-requested-window-width:basic ()
   (eval
-   '(mocklet (((window-width) => 160)
-              ((fringe-columns *) => 2 :times 2))
+   '(mocklet (((window-max-chars-per-line) => 160))
       (should (equal (difftastic-rerun-requested-window-width)
-                     156)))))
+                     160)))))
 
-
 (ert-deftest difftastic-requested-window-width:other-window ()
   (eval
    '(mocklet (((count-windows) => 2)
-              ((window-width) => 42)
-              ((fringe-columns *) => 2 :times 2))
+              ((window-max-chars-per-line) => 42))
       (should (equal (difftastic-requested-window-width)
-                     38)))))
+                     42)))))
 
 (ert-deftest difftastic-requested-window-width:within-split-width-threshold ()
-  (let ((split-width-threshold 37))
+  (let ((split-width-threshold 42))
     (eval
      '(mocklet (((count-windows) => 1)
-                ((window-width) => 42 :times 2)
-                ((fringe-columns *) => 2 :times 4))
+                ((window-max-chars-per-line) => 38)
+                ((window-width *) => 42)
+                ((frame-width) => 45 :times 1))
         (should (equal (difftastic-requested-window-width)
-                       17))))))
+                       15))))))
 
 (ert-deftest difftastic-requested-window-width:outside-split-width-threshold ()
-  (let ((split-width-threshold 38))
+  (let ((split-width-threshold 43))
     (eval
      '(mocklet (((count-windows) => 1)
-                ((window-width) => 42 :times 2)
-                ((fringe-columns *) => 2 :times 4))
+                ((window-max-chars-per-line) => 38)
+                ((window-width *) => 42))
         (should (equal (difftastic-requested-window-width)
                        38))))))
 
@@ -5574,10 +5572,9 @@ test/difftastic.t.el --- Emacs Lisp
   (let (split-width-threshold)
     (eval
      '(mocklet (((count-windows) => 1)
-                ((window-width) => 42)
-                ((fringe-columns *) => 2 :times 2))
+                ((window-max-chars-per-line) => 42))
         (should (equal (difftastic-requested-window-width)
-                       38))))))
+                       42))))))
 
 
 (ert-deftest difftastic-pop-to-buffer:actual-bigger-than-requested-at-bottom ()

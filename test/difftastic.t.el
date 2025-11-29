@@ -7311,7 +7311,7 @@ test/difftastic.t.el --- Emacs Lisp
            `(mocklet (((difftastic--build-files-command
                         ',file-buf-A ',file-buf-B "test-width"
                         '("test-arg-1" "test-arg-2"))
-                       => '("sh" "-c" "echo -n $TEST_VAR")))
+                       => '("sh" "-c" "printf '%s' $TEST_VAR")))
               (let ((process
                      (difftastic--files-internal ,buffer
                                                  ',file-buf-A

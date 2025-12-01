@@ -2156,7 +2156,7 @@ Prefer a language override from `transient-scope', then from
     (difftastic--extra-arguments-override-init-value obj)))
 
 (cl-defmethod transient-init-value ((obj difftastic--extra-arguments-prefix))
-  "Set default values in OBJ from `difftastic-metadata'.
+  "Set default values in OBJ from `difftastic--metadata'.
 The \\='--override\\=' argument is handled in
 `difftastic--extra-arguments-override-language-init-value' (which see),
 while the \\='--override-binary\\=' is handled in

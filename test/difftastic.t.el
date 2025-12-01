@@ -5728,11 +5728,12 @@ test/difftastic.t.el --- Emacs Lisp
 (ert-deftest difftastic--rerun:git-command-with-difftastic-difft-environment ()
   (let ((metadata '((default-directory . "test-default-directory")
                     (git-command . "test-command")
-                    (difftastic-args . ("test-difftastic-args"))))
+                    (difftastic-args . ("test-difftastic-args"))
+                    (difft-environment . '("TEST_VAR=test=value"))))
         (difftastic-rerun-requested-window-width-function
          (lambda ()
            "test-difftastic-width"))
-        (difftastic-difft-environment '("TEST_VAR=test-value")))
+        (difftastic-difft-environment '("TEST_VAR=new-test-value")))
     (ert-with-test-buffer ()
       (difftastic-mode)
       (setq difftastic--metadata metadata)
@@ -5742,7 +5743,8 @@ test/difftastic.t.el --- Emacs Lisp
                     "test-command"
                     (~= (lambda (sentinel)
                           (should (equal default-directory "test-default-directory"))
-                          (should (member "TEST_VAR=test-value" process-environment))
+                          (should (member "TEST_VAR=new-test-value" process-environment))
+                          (should-not (member "TEST_VAR=test-value" process-environment))
                           (should (functionp sentinel))
                           (funcall sentinel)
                           t)))))
@@ -5754,6 +5756,7 @@ test/difftastic.t.el --- Emacs Lisp
 (ert-deftest difftastic--rerun:files-command-rerun-requested-width ()
   (let ((metadata '((default-directory . "test-default-directory")
                     (difftastic-args . ("test-difftastic-arg-1"))
+                    (difft-environment . nil)
                     (file-buf-A . ("test-file-buf-A" . nil))
                     (file-buf-B . ("test-file-buf-B" . nil))))
         (difftastic-rerun-requested-window-width-function
@@ -5772,6 +5775,7 @@ test/difftastic.t.el --- Emacs Lisp
                     "test-command"
                     (~= (lambda (sentinel)
                           (should (equal default-directory "test-default-directory"))
+                          (should-not (member "TEST_VAR=test-value" process-environment))
                           (should (functionp sentinel))
                           (funcall sentinel)
                           t)))))
@@ -5783,6 +5787,7 @@ test/difftastic.t.el --- Emacs Lisp
 (ert-deftest difftastic--rerun:files-command-requested-width ()
   (let ((metadata '((default-directory . "test-default-directory")
                     (difftastic-args . ("test-difftastic-arg-1"))
+                    (difft-environment . nil)
                     (file-buf-A . ("test-file-buf-A" . nil))
                     (file-buf-B . ("test-file-buf-B" . nil))))
         (difftastic-rerun-requested-window-width-function nil)
@@ -5802,6 +5807,7 @@ test/difftastic.t.el --- Emacs Lisp
                     "test-command"
                     (~=(lambda (sentinel)
                          (should (equal default-directory "test-default-directory"))
+                         (should-not (member "TEST_VAR=test-value" process-environment))
                          (should (functionp sentinel))
                          (funcall sentinel)
                          t)))))
@@ -5814,6 +5820,7 @@ test/difftastic.t.el --- Emacs Lisp
   (let ((metadata '((default-directory . "test-default-directory")
                     (difftastic-args . ("--override=*:test-lang-override-1"
                                         "test-difftastic-arg-1"))
+                    (difft-environment . ("TEST_VAR=test-value"))
                     (file-buf-A . ("test-file-buf-A" . nil))
                     (file-buf-B . ("test-file-buf-B" . nil))))
         (difftastic-rerun-requested-window-width-function
@@ -5833,6 +5840,7 @@ test/difftastic.t.el --- Emacs Lisp
                     "test-command"
                     (~= (lambda (sentinel)
                           (should (equal default-directory "test-default-directory"))
+                          (should (member "TEST_VAR=test-value" process-environment))
                           (should (functionp sentinel))
                           (funcall sentinel)
                           t)))))
@@ -5847,6 +5855,7 @@ test/difftastic.t.el --- Emacs Lisp
   (let ((metadata '((default-directory . "test-default-directory")
                     (difftastic-args . ("--override=*:test-lang-override-1"
                                         "test-difftastic-arg-1"))
+                    (difft-environment . ("TEST_VAR=test-value"))
                     (file-buf-A . ("test-file-buf-A" . nil))
                     (file-buf-B . ("test-file-buf-B" . nil))))
         (difftastic-rerun-requested-window-width-function
@@ -5865,6 +5874,7 @@ test/difftastic.t.el --- Emacs Lisp
                     "test-command"
                     (~= (lambda (sentinel)
                           (should (equal default-directory "test-default-directory"))
+                          (should (member "TEST_VAR=test-value" process-environment))
                           (should (functionp sentinel))
                           (funcall sentinel)
                           t)))))
@@ -5878,12 +5888,13 @@ test/difftastic.t.el --- Emacs Lisp
 (ert-deftest difftastic--rerun:files-command-with-difftastic-difft-environment ()
   (let ((metadata '((default-directory . "test-default-directory")
                     (difftastic-args . ("test-difftastic-arg-1"))
+                    (difft-environment . ("TEST_VAR=test-value"))
                     (file-buf-A . ("test-file-buf-A" . nil))
                     (file-buf-B . ("test-file-buf-B" . nil))))
         (difftastic-rerun-requested-window-width-function
          (lambda ()
            "test-difftastic-width"))
-        (difftastic-difft-environment '("TEST_VAR=test-value")))
+        (difftastic-difft-environment '("TEST_VAR=new-test-value")))
     (ert-with-test-buffer ()
       (difftastic-mode)
       (setq difftastic--metadata metadata)
@@ -5897,7 +5908,8 @@ test/difftastic.t.el --- Emacs Lisp
                     "test-command"
                     (~= (lambda (sentinel)
                           (should (equal default-directory "test-default-directory"))
-                          (should (member "TEST_VAR=test-value" process-environment))
+                          (should (member "TEST_VAR=new-test-value" process-environment))
+                          (should-not (member "TEST_VAR=test-value" process-environment))
                           (should (functionp sentinel))
                           (funcall sentinel)
                           t)))))
@@ -5930,7 +5942,9 @@ test/difftastic.t.el --- Emacs Lisp
   (let ((metadata '((default-directory . "test-default-directory")
                     (rev-or-range . "test-rev-or-range")
                     (git-command . "test-command")
-                    (difftastic-args . "test-difftastic-args")))
+                    (difftastic-args . "test-difftastic-args")
+                    (difft-environment . "test-difft-environment")))
+        (difftastic-difft-environment "test-difft-environment")
         (default-directory "test-default-directory")
         (difftastic-requested-window-width-function
          (lambda ()
@@ -7330,6 +7344,8 @@ test/difftastic.t.el --- Emacs Lisp
                              ',file-buf-A))
               (should (equal (alist-get 'file-buf-B difftastic--metadata)
                              ',file-buf-B))
+              (should (equal (alist-get 'difft-environment difftastic--metadata)
+                             '("TEST_VAR=test-value")))
               (should-not (file-exists-p (car ',file-buf-A)))
               (should-not (file-exists-p (car ',file-buf-B)))))
         (when (file-exists-p (car file-buf-A))

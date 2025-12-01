@@ -1830,7 +1830,8 @@ process sentinel."
              `((default-directory . ,default-directory)
                (rev-or-range . ,rev-or-range)
                (git-command . ,command)
-               (difftastic-args . ,difftastic-args)))
+               (difftastic-args . ,difftastic-args)
+               (difft-environment . ,difftastic-difft-environment)))
        (when action (funcall action))
        (funcall difftastic-display-buffer-function buffer requested-width)))))
 
@@ -2668,7 +2669,8 @@ DIFFTASTIS-ARGS are passed to difftastic."
              `((default-directory . ,default-directory)
                (difftastic-args . ,difftastic-args)
                (file-buf-A . ,file-buf-A)
-               (file-buf-B . ,file-buf-B)))
+               (file-buf-B . ,file-buf-B)
+               (difft-environment . ,difftastic-difft-environment)))
        (funcall difftastic-display-buffer-function buffer requested-width)
        (difftastic--delete-temp-file-buf file-buf-A)
        (difftastic--delete-temp-file-buf file-buf-B)))))
@@ -2974,6 +2976,9 @@ otherwise."
                   (funcall (or
                             difftastic-rerun-requested-window-width-function
                             difftastic-requested-window-width-function)))
+                 (difftastic-difft-environment (or difftastic-difft-environment
+                                                   (alist-get 'difft-environment
+                                                              metadata)))
                  (process-environment
                   (if .git-command
                       (difftastic--build-git-process-environment

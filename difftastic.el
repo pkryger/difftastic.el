@@ -2994,6 +2994,8 @@ otherwise."
                  (buffer (current-buffer)))
             (setf (alist-get 'difftastic-args metadata)
                   difftastic-args)
+            (setf (alist-get 'difft-environment metadata)
+                  difftastic-difft-environment)
             (difftastic--run-command
              buffer
              command

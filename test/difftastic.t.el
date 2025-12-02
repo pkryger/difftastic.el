@@ -5608,7 +5608,8 @@ test/difftastic.t.el --- Emacs Lisp
 (ert-deftest difftastic--rerun:git-command-rerun-requested-width ()
   (let ((metadata '((default-directory . "test-default-directory")
                     (git-command . "test-command")
-                    (difftastic-args . ("test-difftastic-args"))))
+                    (difftastic-args . ("test-difftastic-args"))
+                    (difft-environment . nil)))
         (difftastic-rerun-requested-window-width-function
          (lambda ()
            "test-difftastic-width")))
@@ -5636,7 +5637,8 @@ test/difftastic.t.el --- Emacs Lisp
 (ert-deftest difftastic--rerun:git-command-requested-width ()
   (let ((metadata '((default-directory . "test-default-directory")
                     (git-command . "test-command")
-                    (difftastic-args . ("test-difftastic-args"))))
+                    (difftastic-args . ("test-difftastic-args"))
+                    (difft-environment . nil)))
         (difftastic-rerun-requested-window-width-function nil)
         (difftastic-requested-window-width-function
          (lambda ()
@@ -5666,7 +5668,8 @@ test/difftastic.t.el --- Emacs Lisp
   (let ((metadata '((default-directory . "test-default-directory")
                     (git-command . "test-command")
                     (difftastic-args . ("--override=*:test-lang-override-1"
-                                        "test-difftastic-args"))))
+                                        "test-difftastic-args"))
+                    (difft-environment . nil)))
         (difftastic-rerun-requested-window-width-function
          (lambda ()
            "test-difftastic-width")))
@@ -5698,7 +5701,8 @@ test/difftastic.t.el --- Emacs Lisp
   (let ((metadata '((default-directory . "test-default-directory")
                     (git-command . "test-command")
                     (difftastic-args . ("test-difftastic-args-1"
-                                        "--override=*:test-lang-override-1"))))
+                                        "--override=*:test-lang-override-1"))
+                    (difft-environment . nil)))
         (difftastic-rerun-requested-window-width-function
          (lambda ()
            "test-difftastic-width")))
@@ -5729,7 +5733,7 @@ test/difftastic.t.el --- Emacs Lisp
   (let ((metadata '((default-directory . "test-default-directory")
                     (git-command . "test-command")
                     (difftastic-args . ("test-difftastic-args"))
-                    (difft-environment . '("TEST_VAR=test=value"))))
+                    (difft-environment . ("TEST_VAR=test=value"))))
         (difftastic-rerun-requested-window-width-function
          (lambda ()
            "test-difftastic-width"))
@@ -5751,6 +5755,8 @@ test/difftastic.t.el --- Emacs Lisp
           (difftastic--rerun nil))
        t)
       (should-not (eq difftastic--metadata metadata))
+      (setf (alist-get 'difft-environment metadata)
+            '("TEST_VAR=new-test-value"))
       (should (equal difftastic--metadata metadata)))))
 
 (ert-deftest difftastic--rerun:files-command-rerun-requested-width ()
@@ -5916,6 +5922,8 @@ test/difftastic.t.el --- Emacs Lisp
           (difftastic--rerun nil))
        t)
       (should-not (eq difftastic--metadata metadata))
+      (setf (alist-get 'difft-environment metadata)
+            '("TEST_VAR=new-test-value"))
       (should (equal difftastic--metadata metadata)))))
 
 

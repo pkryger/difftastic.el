@@ -906,7 +906,9 @@ data."
                 `(seq
                   line-start
                   ;; non greedy filename to let following group match
-                  (group (not " ") ,(if file-chunk '(+? any) '(+ any)))
+                  (group (not " ") ,(if file-chunk
+                                        '(+? not-newline)
+                                      '(+ not-newline)))
                   ;; search for optional chunk info only when searching for a
                   ;; file-chunk
                   ,@(when file-chunk
@@ -952,7 +954,7 @@ regexp from `difftastic--chunk-regexp'."
     (looking-at-p (rx bol
                       (or (1+ ".")
                           (1+ digit))
-                      " " (1+ any)))))
+                      " " (1+ not-newline)))))
 
 (defun difftastic--next-chunk (&optional file-chunk)
   "Find line beginning position of next chunk.
@@ -1180,7 +1182,7 @@ The value of 6 allows for line numbers of up to 999,999.")
              (goto-char (match-end 0))
              (and
               (not (looking-at (rx difftastic--line-num-rx)))
-              (looking-at (rx (one-or-more any)
+              (looking-at (rx (one-or-more not-newline)
                               difftastic--line-num-rx))))
            (cl-incf side-by-side)))
          ((looking-at (rx line-start
@@ -2133,7 +2135,7 @@ Prefer an override from `difftasitc--metadata', and lastly from
                 (when (string-match (rx string-start
                                         (or "--override="
                                             "--override-binary=")
-                                        (group (one-or-more any)))
+                                        (group (one-or-more not-newline)))
                                     arg)
                   (match-string 1 arg)))
               metadata))

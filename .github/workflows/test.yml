@@ -17,7 +17,7 @@ permissions:
   checks: write
 
 jobs:
-  ci-tests:
+  lint-and-tests:
     runs-on: ${{ matrix.os }}
     env:
       EMACS_TEST_VERBOSE: true
@@ -118,7 +118,7 @@ jobs:
         flag-name: ${{ join(matrix.*, '-emacs-') }}
         parallel: true
 
-  ci-itests:
+  integration-tests:
     runs-on: ${{ matrix.os }}
     env:
       EMACS_TEST_VERBOSE: true
@@ -186,8 +186,8 @@ jobs:
 
   finish:
     needs:
-      - ci-tests
-      - ci-itests
+      - lint-and-tests
+      - integration-tests
     runs-on: ubuntu-latest
     steps:
     - name: Coveralls finished

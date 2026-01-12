@@ -547,17 +547,28 @@
 It returns a number that will let difftastic to fit content
 into (in the following order):
  - other window if it exists,
- - side by side by inspecting `split-width-threshold',
+ - a new window, as created by `split-window-sensibly',
  - current window."
   (let (face-remapping-alist)
     (if (< 1 (count-windows))
         (save-window-excursion
           (other-window 1)
           (window-max-chars-per-line))
-      (if-let* ((width (window-max-chars-per-line))
-                ((window-splittable-p (selected-window) t)))
-          (/ (- width (- (frame-width) width)) 2)
-        width))))
+      (let* ((width (window-max-chars-per-line))
+             (frame-width (frame-width))
+             (window (selected-window))
+             (horizontal
+              (if-let* ((direction
+                         (bound-and-true-p split-window-preferred-direction)))
+                  (and (or (eq direction 'horizontal)
+                           (and (eq direction 'longest)
+                                (> frame-width (frame-height))))
+                       (window-splittable-p window t))
+                (and (not (window-splittable-p window))
+                     (window-splittable-p window t)))))
+        (if horizontal
+            (/ (- width (- frame-width width)) 2)
+          width)))))
 
 (defun difftastic-rerun-requested-window-width ()
   "Get a window width for a rerun of a difftastic call.

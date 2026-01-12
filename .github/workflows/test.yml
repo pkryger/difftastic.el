@@ -106,7 +106,9 @@ jobs:
 
     - name: Publish test report
       uses: mikepenz/action-junit-report@v5
-      if: success() || failure() # always run even if the previous step fails
+      if: >-
+        ${{ always()
+            && ! startsWith(matrix.emacs_version, '28.') }}
       with:
         include_passed: true
         report_paths: 'test/*.t.xml'
@@ -172,7 +174,9 @@ jobs:
 
     - name: Publish test report
       uses: mikepenz/action-junit-report@v5
-      if: success() || failure() # always run even if the previous step fails
+      if: >-
+        ${{ always()
+            && ! startsWith(matrix.emacs_version, '28.') }}
       with:
         include_passed: true
         report_paths: 'test/*.t.xml'

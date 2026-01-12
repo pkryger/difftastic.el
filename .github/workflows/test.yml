@@ -104,9 +104,67 @@ jobs:
       env:
         CASK_FILENAME: ${{ steps.cask-filename.outputs.value }} # Until Emacs-28
 
+    - name: Publish test report
+      uses: mikepenz/action-junit-report@v5
+      if: success() || failure() # always run even if the previous step fails
+      with:
+        include_passed: true
+        report_paths: 'test/*.t.xml'
+
+    - name: Coveralls parallel
+      uses: coverallsapp/github-action@v2
+      with:
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        flag-name: ${{ join(matrix.*, '-emacs-') }}
+        parallel: true
+
+  ci-itests:
+    runs-on: ${{ matrix.os }}
+    env:
+      EMACS_TEST_VERBOSE: true
+      EMACS_TEST_JUNIT_REPORT: true
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+        emacs_version:
+          - 28.2
+          - 29.4
+          - 30.2
+          - snapshot
+
+    steps:
+    - uses: purcell/setup-emacs@master
+      with:
+        version: ${{ matrix.emacs_version }}
+    - uses: actions/checkout@v4
+
+    - name: Determine Cask filename # Until Emacs-28
+      id: cask-filename
+      run: |
+        if [[ "${{ matrix.emacs_version }}" == "28."* ]]; then
+          echo "value=Cask-28" >> "$GITHUB_OUTPUT"
+        else
+          echo "value=Cask" >> "$GITHUB_OUTPUT"
+        fi
+
+    - uses: pkryger/setup-cached-cask@main
+      with:
+        emacs-version: ${{ matrix.emacs_version }}
+        cask-filename: ${{ steps.cask-filename.outputs.value }} # Until Emacs-28
+
+    - name: Install dependencies
+      run: 'make cask-install' # Since Emacs-29: cask install
+      env:
+        CASK_FILENAME: ${{ steps.cask-filename.outputs.value }} # Until Emacs-28
+    - name: Byte compation
+      run: 'make bytecompile'
+      env:
+        CASK_FILENAME: ${{ steps.cask-filename.outputs.value }} # Until Emacs-28
+
     - name: Install difftastic
       run: nix profile install nixpkgs#difftastic
-
     - name: Run integration tests
       run: 'make itest'
       env:
@@ -127,7 +185,9 @@ jobs:
         parallel: true
 
   finish:
-    needs: ci-tests
+    needs:
+      - ci-tests
+      - ci-itests
     runs-on: ubuntu-latest
     steps:
     - name: Coveralls finished

@@ -5,7 +5,11 @@
 ;; Author: Przemyslaw Kryger <pkryger@gmail.com>
 ;; Keywords: tools diff
 ;; Homepage: https://github.com/pkryger/difftastic.el
-;; Package-Requires: ((emacs "28.1") (compat "29.1.4.2") (magit "4.0.0") (transient "0.4.0"))
+;; Package-Requires: (
+;;     (emacs "28.1")
+;;     (compat "29.1.4.2")
+;;     (magit "4.0.0")
+;;     (transient "0.4.0"))
 ;; Version: 0.0.0
 
 ;; This program is free software; you can redistribute it and/or modify

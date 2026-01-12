@@ -10,7 +10,7 @@
 ;;     (compat "29.1.4.2")
 ;;     (magit "4.0.0")
 ;;     (transient "0.4.0"))
-;; Version: 0.0.0
+;; Version: 1.0.0
 
 ;; This program is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by

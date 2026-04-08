@@ -90,7 +90,7 @@ jobs:
       env:
         CASK_FILENAME: ${{ steps.cask-filename.outputs.value }} # Until Emacs-28
     - name: 'Lint: commentary'
-      if: ${{ ! startsWith(matrix.emacs_version, '28.') }}
+      if: ${{ (! startsWith(matrix.emacs_version, '28.')) && (! startsWith(matrix.emacs_version, '29.')) }}
       run: 'make commentary'
       env:
         CASK_FILENAME: ${{ steps.cask-filename.outputs.value }} # Until Emacs-28

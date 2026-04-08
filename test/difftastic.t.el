@@ -39,7 +39,7 @@
   (should-error (eval
                  '(difftastic--with-temp-advice
                       'identity :around (lambda (&rest _)
-                                          (signal 'error "test-error"))
+                                          (signal 'error nil))
                     (identity nil))))
   (should-not (identity nil)))
 
@@ -273,7 +273,7 @@
                (setq file-buf-A (cons ,temp-file-A t)
                      file-buf-B (cons ,temp-file-B nil)
                      file-buf-C (cons ,temp-file-C t))
-               (signal 'error "test-error"))))
+               (signal 'error nil))))
           (should-not (file-exists-p temp-file-A))
           (should (file-exists-p temp-file-B))
           (should-not (file-exists-p temp-file-C)))
@@ -322,7 +322,7 @@
                (should (equal file-buf-A (cons ,temp-file-A t)))
                (should (equal file-buf-B (cons ,temp-file-B nil)))
                (should (equal file-buf-C (cons ,temp-file-C t)))
-               (signal 'error "test-error"))))
+               (signal 'error nil))))
           (should-not (file-exists-p temp-file-A))
           (should (file-exists-p temp-file-B))
           (should-not (file-exists-p temp-file-C)))
@@ -343,7 +343,7 @@
             `(difftastic--with-file-bufs ((file-buf-A (cons ,temp-file-A t))
                                           (file-buf-B (cons ,temp-file-B nil))
                                           (file-buf-C (cons ,temp-file-C t))
-                                          (file-buf-D (signal 'error "test-error"))))))
+                                          (file-buf-D (signal 'error nil))))))
           (should-not (file-exists-p temp-file-A))
           (should (file-exists-p temp-file-B))
           (should-not (file-exists-p temp-file-C)))

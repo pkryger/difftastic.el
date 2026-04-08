@@ -1418,17 +1418,13 @@ and run `difftastic-diff-visit-file-hook'."
                                              difftastic--metadata))
                (rev (if-let* ((rev-or-range (alist-get 'rev-or-range
                                                        difftastic--metadata))
-                              (range (cond
-                                      ((and
-                                        (stringp rev-or-range)
-                                        (string-match-p (rx "..") rev-or-range))
-                                       (string-split rev-or-range (rx "..")))
-                                      ((stringp rev-or-range)
-                                       (list (concat rev-or-range "^")
-                                             rev-or-range)))))
+                              (range (when (stringp rev-or-range)
+                                       (or (magit-split-range rev-or-range)
+                                           (cons (concat rev-or-range "^")
+                                                 rev-or-range)))))
                         (if (eq side 'left)
                             (car range)
-                          (cadr range))
+                          (cdr range))
                       rev-or-range))
                (buf (if (or force-worktree
                             (and (not (stringp rev))

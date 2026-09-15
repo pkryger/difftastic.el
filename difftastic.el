@@ -1666,28 +1666,52 @@ conses."
       (copy-sequence tree))
      (t tree))))
 
-(defun difftastic--ansi-color-add-background (face)
+(defun difftastic--ansi-color-vector-face (face-vec)
+  "Return difftastic face selected by foreground index in FACE-VEC.
+FACE-VEC is as in `ansi-color--face-vec-face'.  The face is taken
+from `difftastic-normal-colors-vector' or
+`difftastic-bright-colors-vector', the same way
+`ansi-color--face-vec-face' does it.  Return nil when FACE-VEC has
+no foreground or the foreground is not one of the 16 basic colors."
+  (when-let* ((basic-faces (car face-vec))
+              (fg (cadr face-vec))
+              ((numberp fg))
+              ((< fg 16)))
+    (aref (if (or (and ansi-color-bold-is-bright (aref basic-faces 1))
+                  (>= fg 8))
+              difftastic-bright-colors-vector
+            difftastic-normal-colors-vector)
+          (mod fg 8))))
+
+(defun difftastic--ansi-color-add-background (face &optional difftastic-face)
   "Add :background to FACE.
+When DIFFTASTIC-FACE is non-nil it is the only candidate for the
+face to take the background from.  Otherwise the candidate is
+searched for by foreground in `difftastic-normal-colors-vector' and
+`difftastic-bright-colors-vector', which is ambiguous when several
+faces share the same foreground.
 N.B.  This is meant to filter-result of either
 `ansi-color--face-vec-face' or `ansi-color-get-face-1' by
 adding background to faces if they have a foreground set."
   (when-let* ((difftastic-face
                (and (listp face)
                     (cl-find-if
-                     (lambda (difftastic-face)
+                     (lambda (candidate)
                        (and (string=
-                             (face-foreground difftastic-face nil t)
+                             (face-foreground candidate nil t)
                              (or
                               (plist-get face :foreground)
                               (car (alist-get :foreground face))))
-                            (face-background difftastic-face nil t)
+                            (face-background candidate nil t)
                             ;; ansi-color-* faces have the same
                             ;; foreground and background - don't use them
                             (not (string=
-                                  (face-foreground difftastic-face nil t)
-                                  (face-background difftastic-face nil t)))))
-                     (vconcat difftastic-normal-colors-vector
-                              difftastic-bright-colors-vector)))))
+                                  (face-foreground candidate nil t)
+                                  (face-background candidate nil t)))))
+                     (if difftastic-face
+                         (vector difftastic-face)
+                       (vconcat difftastic-normal-colors-vector
+                                difftastic-bright-colors-vector))))))
     ;; difftastic uses underline to highlight some changes.  It uses bold as
     ;; well, but it's not as unambiguous as underline.  Use underline to detect
     ;; highlight, but remove all attributes that are in
@@ -1741,7 +1765,8 @@ Utilise `difftastic--ansi-color-add-background-cache' to cache
                            difftastic--ansi-color-add-background-cache)))
       (cdr cached)
     (let ((face (difftastic--ansi-color-add-background
-                 (funcall orig-fun face-vec))))
+                 (funcall orig-fun face-vec)
+                 (difftastic--ansi-color-vector-face face-vec))))
       (push (cons (difftastic--copy-tree face-vec) face)
             difftastic--ansi-color-add-background-cache)
       face)))

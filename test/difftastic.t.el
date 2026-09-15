@@ -5297,6 +5297,108 @@ This only happens when `noninteractive' to avoid messing up with faces."
                       ansi-color-italic
                       (:foreground ,difftastic-t-string-fg))))))))
 
+(ert-deftest difftastic--ansi-color-apply:shared-foreground-ansi-colors-applied ()
+  (skip-unless (fboundp 'ansi-color--face-vec-face)) ;; since Emacs-29
+  (make-face 'difftastic-t-shared-added)
+  (set-face-attribute 'difftastic-t-shared-added nil
+                      :foreground "#00ff00" :background "#003300")
+  (make-face 'difftastic-t-shared-string)
+  (set-face-attribute 'difftastic-t-shared-string nil
+                      :foreground "#00ff00" :background 'unspecified)
+  (let* (difftastic--ansi-color-add-background-cache
+         (difftastic-normal-colors-vector
+          (copy-sequence difftastic-normal-colors-vector))
+         (difftastic-bright-colors-vector
+          (copy-sequence difftastic-bright-colors-vector)))
+    (aset difftastic-normal-colors-vector 2 'difftastic-t-shared-added)
+    (aset difftastic-normal-colors-vector 5 'difftastic-t-shared-string)
+    (aset difftastic-bright-colors-vector 2 'difftastic-t-shared-added)
+    (aset difftastic-bright-colors-vector 5 'difftastic-t-shared-string)
+    (if (and (fboundp 'ert-equal-including-properties)
+             (not (get 'ert-equal-including-properties 'byte-obsolete-info))) ;; until Emacs-28
+        (progn
+          (should
+           (ert-equal-including-properties
+            (difftastic--ansi-color-apply
+             "[35mstring[0m")
+            (propertize "string"
+                        'font-lock-face
+                        '(:foreground "#00ff00"))))
+          (should
+           (ert-equal-including-properties
+            (difftastic--ansi-color-apply
+             "[32madded[0m")
+            (propertize "added"
+                        'font-lock-face
+                        '((:background "#003300")
+                          (:foreground "#00ff00"))))))
+      (should
+       (equal-including-properties
+        (difftastic--ansi-color-apply
+         "[35mstring[0m")
+        (propertize "string"
+                    'font-lock-face
+                    '(:foreground "#00ff00"))))
+      (should
+       (equal-including-properties
+        (difftastic--ansi-color-apply
+         "[32madded[0m")
+        (propertize "added"
+                    'font-lock-face
+                    '((:background "#003300")
+                      (:foreground "#00ff00"))))))))
+
+(ert-deftest difftastic--ansi-color-apply:shared-foreground-bright-ansi-colors-applied ()
+  (skip-unless (fboundp 'ansi-color--face-vec-face)) ;; since Emacs-29
+  (make-face 'difftastic-t-shared-added)
+  (set-face-attribute 'difftastic-t-shared-added nil
+                      :foreground "#00ff00" :background "#003300")
+  (make-face 'difftastic-t-shared-string)
+  (set-face-attribute 'difftastic-t-shared-string nil
+                      :foreground "#00ff00" :background 'unspecified)
+  (let* (difftastic--ansi-color-add-background-cache
+         (difftastic-normal-colors-vector
+          (copy-sequence difftastic-normal-colors-vector))
+         (difftastic-bright-colors-vector
+          (copy-sequence difftastic-bright-colors-vector)))
+    (aset difftastic-normal-colors-vector 2 'difftastic-t-shared-added)
+    (aset difftastic-bright-colors-vector 5 'difftastic-t-shared-string)
+    (if (and (fboundp 'ert-equal-including-properties)
+             (not (get 'ert-equal-including-properties 'byte-obsolete-info))) ;; until Emacs-28
+        (progn
+          (should
+           (ert-equal-including-properties
+            (difftastic--ansi-color-apply
+             "[95mstring[0m")
+            (propertize "string"
+                        'font-lock-face
+                        '(:foreground "#00ff00"))))
+          (let ((ansi-color-bold-is-bright t))
+            (should
+             (ert-equal-including-properties
+              (difftastic--ansi-color-apply
+               "[1;35mstring[0m")
+              (propertize "string"
+                          'font-lock-face
+                          '(ansi-color-bold
+                            (:foreground "#00ff00")))))))
+      (should
+       (equal-including-properties
+        (difftastic--ansi-color-apply
+         "[95mstring[0m")
+        (propertize "string"
+                    'font-lock-face
+                    '(:foreground "#00ff00"))))
+      (let ((ansi-color-bold-is-bright t))
+        (should
+         (equal-including-properties
+          (difftastic--ansi-color-apply
+           "[1;35mstring[0m")
+          (propertize "string"
+                      'font-lock-face
+                      '(ansi-color-bold
+                        (:foreground "#00ff00")))))))))
+
 
 (ert-deftest difftastic--add-visibility-indicators:from-beginning ()
   (ert-with-test-buffer ()

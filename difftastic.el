@@ -940,7 +940,7 @@ data."
                               ", exceeded DFT_PARSE_ERROR_LIMIT")
                          (seq "exceeded DFT_GRAPH_LIMIT")
                          (seq (1+ digit)
-                              (or (seq "." (= 2 digit) " " (any "KMGTPE") "iB")
+                              (or (seq "." (** 1 2 digit) " " (any "KMGTPE") "iB")
                                   (seq " " (? (any "KMGTPE") "i") "B"))
                               " exceeded DFT_BYTE_LIMIT"))
                         ")"))

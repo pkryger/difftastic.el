@@ -849,7 +849,9 @@
                      "(3.00 KiB exceeded DFT_BYTE_LIMIT)"
                      "(4.44 MiB exceeded DFT_BYTE_LIMIT)"
                      "(50.00 GiB exceeded DFT_BYTE_LIMIT)"
-                     "(66.66 TiB exceeded DFT_BYTE_LIMIT)"))
+                     "(66.66 TiB exceeded DFT_BYTE_LIMIT)"
+                     "(2.0 KiB exceeded DFT_BYTE_LIMIT)"
+                     "(1.9 MiB exceeded DFT_BYTE_LIMIT)"))
 
             (let ((header (format "%s%s--- %s%s"
                                   file
@@ -906,7 +908,9 @@
                      "(3.00 KiB exceeded DFT_BYTE_LIMIT)"
                      "(4.44 MiB exceeded DFT_BYTE_LIMIT)"
                      "(50.00 GiB exceeded DFT_BYTE_LIMIT)"
-                     "(66.66 TiB exceeded DFT_BYTE_LIMIT)"))
+                     "(66.66 TiB exceeded DFT_BYTE_LIMIT)"
+                     "(2.0 KiB exceeded DFT_BYTE_LIMIT)"
+                     "(1.9 MiB exceeded DFT_BYTE_LIMIT)"))
 
             (let ((header (format "%s%s--- %s%s"
                                   file
@@ -954,8 +958,8 @@
                      "1 B exceeded DFT_BYTE_LIMIT"
                      "(1.00 B exceeded DFT_BYTE_LIMIT)"
                      "(1.0 B exceeded DFT_BYTE_LIMIT)"
-                     "(2.0 KiB exceeded DFT_BYTE_LIMIT)"
-                     "(2.1 KiB exceeded DFT_BYTE_LIMIT)"
+                     "(2. KiB exceeded DFT_BYTE_LIMIT)"
+                     "(2.123 KiB exceeded DFT_BYTE_LIMIT)"
                      "(2 XiB exceeded DFT_BYTE_LIMIT)"
                      "(2.10 XiB exceeded DFT_BYTE_LIMIT)"
                      "(3.0x KiB exceeded DFT_BYTE_LIMIT)"
@@ -1034,7 +1038,9 @@
                      "(3.00 KiB exceeded DFT_BYTE_LIMIT)"
                      "(4.44 MiB exceeded DFT_BYTE_LIMIT)"
                      "(50.00 GiB exceeded DFT_BYTE_LIMIT)"
-                     "(66.66 TiB exceeded DFT_BYTE_LIMIT)"))
+                     "(66.66 TiB exceeded DFT_BYTE_LIMIT)"
+                     "(2.0 KiB exceeded DFT_BYTE_LIMIT)"
+                     "(1.9 MiB exceeded DFT_BYTE_LIMIT)"))
 
             (let ((header (format "%s%s--- %s%s"
                                   file

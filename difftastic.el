@@ -937,7 +937,9 @@ data."
                               " " (or ,@(cl-remove "Text" languages
                                                    :test #'string=))
                               " parse error" (? "s")
-                              ", exceeded DFT_PARSE_ERROR_LIMIT")
+                              ", exceeded DFT_PARSE_ERROR_LIMIT"
+                              ;; newer difftastic reports first error position
+                              (? ", first at " (1+ digit) ":" (1+ digit)))
                          (seq "exceeded DFT_GRAPH_LIMIT")
                          (seq (1+ digit)
                               (or (seq "." (** 1 2 digit) " " (any "KMGTPE") "iB")
